@@ -1,0 +1,370 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from thermal_utils import read_geo_file
+from thermal_parameters import get_parameters, ThermalParameters
+from thermal_analysis import create_layer_coordinates, LayerMapping
+from boundary_conditions import ElementBoundary, BoundaryCondition
+from typing import List, Tuple
+import json5
+
+def plot_layer_surface(coords, title, ax=None, mapped_elements_list=None, colors=None):
+    """
+    Plot the top surface (z=z_max) of a layer.
+    
+    Args:
+        coords: ElementCoordinates object
+        title: Plot title
+        ax: Matplotlib axis (optional)
+        mapped_elements_list: List of lists of (i, j) tuples for mapped elements
+        colors: List of colors for each mapped elements list
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 10))
+    
+    print(f"\nPlotting layer surface for {title}")
+    print(f"Grid dimensions: Nx={coords.Nx}, Ny={coords.Ny}, Nz={coords.Nz}")
+    
+    # Get the top surface coordinates
+    x_coords = []
+    y_coords = []
+    for i in range(coords.Nx):
+        for j in range(coords.Ny):
+            x, y, _ = coords.get_coordinates_from_3d(i, j, coords.Nz-1)
+            x_coords.append(x)
+            y_coords.append(y)
+    
+    print(f"Number of points: {len(x_coords)}")
+    print(f"X range: {min(x_coords):.2f} to {max(x_coords):.2f}")
+    print(f"Y range: {min(y_coords):.2f} to {max(y_coords):.2f}")
+    
+    # Create mesh grid
+    X = np.array(x_coords).reshape(coords.Ny, coords.Nx)
+    Y = np.array(y_coords).reshape(coords.Ny, coords.Nx)
+    
+    # Plot vertical grid lines
+    for i in range(coords.Nx):
+        ax.plot(X[:, i], Y[:, i], 'k-', alpha=0.2, linewidth=0.5)
+    
+    # Plot horizontal grid lines
+    for j in range(coords.Ny):
+        ax.plot(X[j, :], Y[j, :], 'k-', alpha=0.2, linewidth=0.5)
+    
+    # Plot element centers
+    for i in range(coords.Nx):
+        for j in range(coords.Ny):
+            x, y, _ = coords.get_coordinates_from_3d(i, j, coords.Nz-1)
+            ax.plot(x, y, 'k.', markersize=1, alpha=0.5)  # Small dots at element centers
+    
+    # Default colors if not provided
+    if colors is None:
+        colors = ['red', 'blue', 'green', 'purple', 'orange']
+    
+    # Highlight mapped elements if provided
+    if mapped_elements_list:
+        for idx, mapped_elements in enumerate(mapped_elements_list):
+            if mapped_elements:
+                print(f"Number of mapped elements (type {idx}): {len(mapped_elements)}")
+                for i, j in mapped_elements:
+                    # Get element center coordinates
+                    x_center, y_center, _ = coords.get_coordinates_from_3d(i, j, coords.Nz-1)
+                    # Get element size
+                    dx = coords.dx
+                    dy = coords.dy
+                    # Create rectangle for mapped element
+                    rect = plt.Rectangle((x_center - dx/2, y_center - dy/2), dx, dy,
+                                       facecolor=colors[idx], alpha=0.3, edgecolor=colors[idx], linewidth=1)
+                    ax.add_patch(rect)
+                    # Add a dot at the center of mapped elements
+                    ax.plot(x_center, y_center, f'{colors[idx][0]}.', markersize=3)
+    
+    ax.set_title(title, fontsize=12, pad=10)
+    ax.set_xlabel('x (mm)', fontsize=10)
+    ax.set_ylabel('y (mm)', fontsize=10)
+    ax.set_aspect('equal')
+    
+    # Set equal limits for x and y
+    x_min, x_max = min(x_coords), max(x_coords)
+    y_min, y_max = min(y_coords), max(y_coords)
+    max_range = max(x_max - x_min, y_max - y_min)
+    x_center = (x_min + x_max) / 2
+    y_center = (y_min + y_max) / 2
+    ax.set_xlim(x_center - max_range/2, x_center + max_range/2)
+    ax.set_ylim(y_center - max_range/2, y_center + max_range/2)
+    
+    return ax
+
+def plot_mapping(coords1, coords2, mapping, title, mapped_elements_list1=None, mapped_elements_list2=None):
+    """
+    Plot the mapping between two layers' top surfaces in separate subplots.
+    
+    Args:
+        coords1: First layer's ElementCoordinates
+        coords2: Second layer's ElementCoordinates
+        mapping: LayerMapping object
+        title: Plot title
+        mapped_elements_list1: List of lists of (i, j) tuples for mapped elements in first layer
+        mapped_elements_list2: List of lists of (i, j) tuples for mapped elements in second layer
+    """
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+    
+    print("\nPlotting mapping visualization")
+    print(f"Number of mappings: {len(mapping.region_mappings)}")
+    
+    # Define colors for different mapping types
+    colors = ['red', 'blue', 'green']
+    
+    # Plot first layer
+    plot_layer_surface(coords1, "First Layer", ax1, mapped_elements_list1, colors)
+    
+    # Plot second layer
+    plot_layer_surface(coords2, "Second Layer", ax2, mapped_elements_list2, colors)
+    
+    # Plot mapping lines
+    mapping_lines_count = 0
+    for mapping_id, mapping_data in mapping.region_mappings.items():
+        if "_source_" in mapping_id:
+            source_key = mapping_id
+            target_key = mapping_id.replace("_source_", "_target_")
+            if target_key in mapping.region_mappings:
+                print(f"\nProcessing mapping: {mapping_id}")
+                print(f"Number of points in source: {len(mapping.region_mappings[source_key])}")
+                print(f"Number of points in target: {len(mapping.region_mappings[target_key])}")
+                
+                for source_idx, target_idx in zip(mapping.region_mappings[source_key], 
+                                                mapping.region_mappings[target_key]):
+                    # Get coordinates of source element
+                    i1, j1, k1 = coords1.get_3d_indices(source_idx)
+                    if k1 != coords1.Nz - 1:  # Only plot for top surface
+                        continue
+                    x1, y1, _ = coords1.get_coordinates_from_3d(i1, j1, k1)
+                    
+                    # Get coordinates of target element
+                    i2, j2, k2 = coords2.get_3d_indices(target_idx)
+                    if k2 != coords2.Nz - 1:  # Only plot for top surface
+                        continue
+                    x2, y2, _ = coords2.get_coordinates_from_3d(i2, j2, k2)
+                    
+                    # Plot mapping line connecting the two points
+                    ax1.plot([x1, x2], [y1, y2], 'g-', alpha=0.3)  # Green lines for mapping
+                    ax2.plot([x1, x2], [y1, y2], 'g-', alpha=0.3)  # Green lines for mapping
+                    mapping_lines_count += 1
+    
+    print(f"Number of mapping lines plotted: {mapping_lines_count}")
+    
+    # Set overall figure title
+    fig.suptitle(title, fontsize=16)
+    
+    # Adjust layout
+    plt.tight_layout()
+    
+    return fig, (ax1, ax2)
+
+def get_mapped_elements(coords, mapping, mapping_type="metal_to_plastic_source"):
+    """
+    Get the indices of mapped elements for a layer.
+    
+    Args:
+        coords: ElementCoordinates object
+        mapping: LayerMapping object
+        mapping_type: Type of mapping:
+            - "metal_to_plastic_source": Source elements in metal layer for metal-to-plastic mapping
+            - "metal_to_plastic_target": Target elements in plastic layer for metal-to-plastic mapping
+            - "metal_to_metal_source": Source elements in metal layer for metal-to-metal mapping
+            - "metal_to_metal_target": Target elements in metal layer for metal-to-metal mapping
+        
+    Returns:
+        List of (i, j) tuples for mapped elements
+    """
+    mapped_elements = set()
+    
+    for mapping_id, mapping_data in mapping.region_mappings.items():
+        if mapping_type == "metal_to_plastic_source":
+            if "_source_" in mapping_id and "metal_layer" in mapping_id:
+                for idx in mapping_data:
+                    i, j, k = coords.get_3d_indices(idx)
+                    if k == coords.Nz - 1:  # Only consider top surface
+                        mapped_elements.add((i, j))
+        elif mapping_type == "metal_to_plastic_target":
+            if "_target_" in mapping_id and "plastic_layer" in mapping_id:
+                for idx in mapping_data:
+                    i, j, k = coords.get_3d_indices(idx)
+                    if k == coords.Nz - 1:  # Only consider top surface
+                        mapped_elements.add((i, j))
+        elif mapping_type == "metal_to_metal_source":
+            if "_source_" in mapping_id and "metal_layer" in mapping_id:
+                for idx in mapping_data:
+                    i, j, k = coords.get_3d_indices(idx)
+                    if k == coords.Nz - 1:  # Only consider top surface
+                        mapped_elements.add((i, j))
+        elif mapping_type == "metal_to_metal_target":
+            if "_target_" in mapping_id and "metal_layer" in mapping_id:
+                for idx in mapping_data:
+                    i, j, k = coords.get_3d_indices(idx)
+                    if k == coords.Nz - 1:  # Only consider top surface
+                        mapped_elements.add((i, j))
+    
+    return list(mapped_elements)
+
+def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, ax=None):
+    """
+    Plot the boundary conditions for a specific surface of a layer.
+    
+    Args:
+        coords: ElementCoordinates object
+        boundary_conditions: Dictionary mapping global indices to boundary condition types
+        title: Plot title
+        surface_level: Z-index of the surface to plot (0 for bottom, Nz-1 for top)
+        ax: Matplotlib axis (optional)
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 10))
+    
+    print(f"\nPlotting boundary conditions for {title} at z-level {surface_level}")
+    print(f"Grid dimensions: Nx={coords.Nx}, Ny={coords.Ny}, Nz={coords.Nz}")
+    
+    # Get the specified surface coordinates
+    x_coords = []
+    y_coords = []
+    for i in range(coords.Nx):
+        for j in range(coords.Ny):
+            x, y, _ = coords.get_coordinates_from_3d(i, j, surface_level)
+            x_coords.append(x)
+            y_coords.append(y)
+    
+    # Create mesh grid
+    X = np.array(x_coords).reshape(coords.Nx, coords.Ny)
+    Y = np.array(y_coords).reshape(coords.Nx, coords.Ny)
+    
+    # Plot grid lines
+    for i in range(coords.Ny):
+        ax.plot(X[:, i], Y[:, i], 'k-', alpha=0.2, linewidth=0.5)
+    for j in range(coords.Nx):
+        ax.plot(X[j, :], Y[j, :], 'k-', alpha=0.2, linewidth=0.5)
+    
+    # Plot element centers with boundary condition colors
+    for i in range(coords.Nx):
+        for j in range(coords.Ny):
+            x, y, _ = coords.get_coordinates_from_3d(i, j, surface_level)
+            global_idx = coords.get_global_index(coords.Nx, coords.Ny, i, j, surface_level)
+            bc = boundary_conditions.get(global_idx, BoundaryCondition.INNER)
+            
+            # Get color based on boundary condition
+            if bc == BoundaryCondition.INNER:
+                color = 'gray'
+            elif bc == BoundaryCondition.ADIABATIC:
+                color = 'blue'
+            else:  # MAPPED
+                color = 'red'
+            
+            # Plot element center
+            ax.plot(x, y, f'{color[0]}.', markersize=3)
+            
+            # Add rectangle for surface elements
+            if bc != BoundaryCondition.INNER:
+                dx = coords.dx
+                dy = coords.dy
+                rect = plt.Rectangle((x - dx/2, y - dy/2), dx, dy,
+                                   facecolor=color, alpha=0.3, edgecolor=color, linewidth=1)
+                ax.add_patch(rect)
+    
+    ax.set_title(title, fontsize=12, pad=10)
+    ax.set_xlabel('x (mm)', fontsize=10)
+    ax.set_ylabel('y (mm)', fontsize=10)
+    ax.set_aspect('equal')
+    
+    # Set equal limits for x and y
+    x_min, x_max = min(x_coords), max(x_coords)
+    y_min, y_max = min(y_coords), max(y_coords)
+    max_range = max(x_max - x_min, y_max - y_min)
+    x_center = (x_min + x_max) / 2
+    y_center = (y_min + y_max) / 2
+    ax.set_xlim(x_center - max_range/2, x_center + max_range/2)
+    ax.set_ylim(y_center - max_range/2, y_center + max_range/2)
+    
+    return ax
+
+def print_boundary_statistics(boundary_conditions: dict, layer_name: str):
+    """Print statistics about boundary conditions for a layer"""
+    total_elements = len(boundary_conditions)
+    inner_count = sum(1 for bc in boundary_conditions.values() if bc == BoundaryCondition.INNER)
+    adiabatic_count = sum(1 for bc in boundary_conditions.values() if bc == BoundaryCondition.ADIABATIC)
+    mapped_count = sum(1 for bc in boundary_conditions.values() if bc == BoundaryCondition.MAPPED)
+    
+    print(f"\nBoundary Condition Statistics for {layer_name}:")
+    print(f"Total elements: {total_elements}")
+    print(f"Inner elements: {inner_count} ({inner_count/total_elements*100:.1f}%)")
+    print(f"Adiabatic elements: {adiabatic_count} ({adiabatic_count/total_elements*100:.1f}%)")
+    print(f"Mapped elements: {mapped_count} ({mapped_count/total_elements*100:.1f}%)")
+
+def main():
+    # Read geometry data
+    with open("GEO.json", "r") as f:
+        geo_data = json5.load(f)
+    
+    # Get parameters
+    params = get_parameters(geo_data)
+    
+    # Create coordinate systems
+    metal_coords, plastic_coords = create_layer_coordinates(params)
+    
+    # Create mappings
+    mapping = LayerMapping(params)
+    
+    # Create boundary condition systems
+    metal_boundary = ElementBoundary(metal_coords, mapping, "metal_layer")
+    plastic_boundary = ElementBoundary(plastic_coords, mapping, "plastic_layer")
+    
+    # Label boundary conditions
+    metal_boundary_conditions = metal_boundary.label_boundary_conditions()
+    plastic_boundary_conditions = plastic_boundary.label_boundary_conditions()
+    
+    # Print statistics
+    print_boundary_statistics(metal_boundary_conditions, "Metal Layer")
+    print_boundary_statistics(plastic_boundary_conditions, "Plastic Layer")
+    
+    # Find and print mapped plastic elements at z=0
+    plastic_mapped_z0_indices = []
+    for i in range(plastic_coords.Nx):
+        for j in range(plastic_coords.Ny):
+            k = 0 # Bottom surface
+            global_idx = plastic_coords.get_global_index(plastic_coords.Nx, plastic_coords.Ny, i, j, k)
+            if plastic_boundary_conditions.get(global_idx) == BoundaryCondition.MAPPED:
+                plastic_mapped_z0_indices.append(global_idx)
+                
+    print("\nPlastic Mapped Element Indices at z=0:")
+    if plastic_mapped_z0_indices:
+        print(plastic_mapped_z0_indices)
+    else:
+        print("No mapped elements found on the bottom surface (z=0) of the plastic layer.")
+    
+    # Create figure with subplots (2 rows, 2 columns)
+    fig, axes = plt.subplots(2, 2, figsize=(20, 20))
+    
+    # Plot boundary conditions for z=0 (bottom surface)
+    plot_boundary_conditions(metal_coords, metal_boundary_conditions, "Metal Layer Boundary Conditions (z=0)", 0, axes[0, 0])
+    plot_boundary_conditions(plastic_coords, plastic_boundary_conditions, "Plastic Layer Boundary Conditions (z=0)", 0, axes[0, 1])
+    
+    # Plot boundary conditions for z=Nz-1 (top surface)
+    plot_boundary_conditions(metal_coords, metal_boundary_conditions, f"Metal Layer Boundary Conditions (z={metal_coords.Nz-1})", metal_coords.Nz - 1, axes[1, 0])
+    plot_boundary_conditions(plastic_coords, plastic_boundary_conditions, f"Plastic Layer Boundary Conditions (z={plastic_coords.Nz-1})", plastic_coords.Nz - 1, axes[1, 1])
+    
+    # Add legend
+    legend_elements = [
+        plt.Rectangle((0, 0), 1, 1, facecolor='gray', alpha=0.3, label='Inner'),
+        plt.Rectangle((0, 0), 1, 1, facecolor='blue', alpha=0.3, label='Adiabatic'),
+        plt.Rectangle((0, 0), 1, 1, facecolor='red', alpha=0.3, label='Mapped')
+    ]
+    fig.legend(handles=legend_elements, loc='upper center', ncol=3)
+    
+    # Set overall figure title
+    fig.suptitle("Boundary Condition Visualization (Bottom and Top Surfaces)", fontsize=16)
+    
+    # Adjust layout
+    plt.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust layout to prevent title overlap
+    
+    # Show the plots
+    plt.show()
+
+if __name__ == "__main__":
+    main() 

@@ -1,0 +1,702 @@
+{
+  // length units: mm
+  // temperature units: degrees C
+  // power units: W
+  // thermal conductivity units: W/mK
+  // density units: kg/m^3
+  // specific heat units: J/kgK
+  "environment": {
+    "ambient_temperature": 30.0, // ambient temperature, degrees C
+    "heat_transfer_coefficient": 7.5 // natural convective heat transfer coefficient, W/m^2K
+  },
+  "initial_conditions": {
+    "temperature": 30.0 // initial temperature, degrees C
+  },
+  "regions": [
+    {
+      "id": "metal_layer",
+      "layer_number": 1,
+      "name": "metal",
+      "shape": "rectangle",
+      "centroid": {
+        "x": 275.0,
+        "y": 185.0,
+        "z": 1.0
+      },
+      "dimensions": {
+        "Lx": 450,
+        "Ly": 370,
+        "Lz": 2.0
+      },
+      "material_properties": {
+        "thermal_conductivity": 100,
+        "density": 2710,
+        "specific_heat": 900
+      },
+      "heat_sources": [
+        {
+          "id": "ambient_convection",
+          "type": "CONVECTIVE",
+          "heat_transfer_coefficient": 7.5,
+          "ambient_temperature": 30.0,
+          "centroid": {
+            "x": 275.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 450.0,
+            "Ly": 370.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipx_mech",
+          "type": "CONST_Qflux",
+          "power": 7.0,
+          "centroid": {
+            "x": 370.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 3.0,
+            "Ly": 71.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipz_elec",
+          "type": "CONST_Qflux",
+          "power": 1.5,
+          "centroid": {
+            "x": 315.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 3.0,
+            "Ly": 240.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipz_mech",
+          "type": "CONST_Qflux",
+          "power": 1.5,
+          "centroid": {
+            "x": 250.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 1.5,
+            "Ly": 225.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "knee_mech",
+          "type": "CONST_Qflux",
+          "power": 27.0,
+          "centroid": {
+            "x": 45.0,
+            "y": 265.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 77.0,
+            "Ly": 77.0,
+            "Lz": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "plastic_layer",
+      "layer_number": 2,
+      "name": "plastic",
+      "shape": "rectangle",
+      "centroid": {
+        "x": 230.0,
+        "y": 280.0,
+        "z": 0.5
+      },
+      "dimensions": {
+        "Lx": 460.0,
+        "Ly": 560.0,
+        "Lz": 1.0
+      },
+      "material_properties": {
+        "thermal_conductivity": 0.23,
+        "density": 1200,
+        "specific_heat": 1050
+      },
+      "heat_sources": [{
+        "id": "ambient_convection",
+        "type": "CONVECTIVE",
+        "heat_transfer_coefficient": 7.5,
+        "ambient_temperature": 30.0,
+        "centroid": {
+          "x": 230.0,
+          "y": 280.0,
+          "z": 1.0
+        },
+        "dimensions": {
+          "Lx": 460.0,
+          "Ly": 560.0,
+          "Lz": 0.0
+        }
+      }]
+    }
+  ],
+  "mappings": [
+    {
+      "id": "KNEE_ACTUATOR_CONNECTION",
+      "type": "CONDUCTIVE",
+      "thermal_conductivity": 120,
+      "L": 85, // distance between the two sides of the actuator, mm
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 42.65,
+            "y": 263.55,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 77.1,
+            "Ly": 77.1,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 42.65,
+            "y": 106.45,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 77.1,
+            "Ly": 77.1,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE1",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 420.0,
+            "y": 236.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 420.0,
+            "y": 440.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE2",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 420.0,
+            "y": 134.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 420.0,
+            "y": 120.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE3",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 403.0,
+            "y": 246.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 403.0,
+            "y": 430.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE4",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 403.0,
+            "y": 124.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 403.0,
+            "y": 130.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE5",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 352.0,
+            "y": 226.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 350.0,
+            "y": 440.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE6",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 352.0,
+            "y": 144.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 350.0,
+            "y": 120.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE7",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 334.0,
+            "y": 265.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 333.0,
+            "y": 390.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE8",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 334.0,
+            "y": 105.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 333.0,
+            "y": 170.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE9",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 308.0,
+            "y": 117.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 310.0,
+            "y": 190.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE10",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 308.0,
+            "y": 253.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 310.0,
+            "y": 370.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE11",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 280.0,
+            "y": 280.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 280.0,
+            "y": 390.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE12",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 280.0,
+            "y": 90.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 280.0,
+            "y": 170.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE13",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 300.0,
+            "y": 200.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 306.0,
+            "y": 300.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE14",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 300.0,
+            "y": 170.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 306.0,
+            "y": 260.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE15",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 270.0,
+            "y": 210.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 275.0,
+            "y": 310.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE16",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 270.0,
+            "y": 160.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 275.0,
+            "y": 250.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 4.0,
+            "Ly": 4.0,
+            "Lz": 0.0
+          }
+      }
+    },
+    {
+      "id": "METAL_PLASTIC_INTERFACE_LOWERBODY",
+      "type": "INTERFACE",
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 95.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 190.0,
+            "Ly": 163.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "plastic_layer",
+        "centroid": {
+            "x": 95.0,
+            "y": 280.0,
+            "z": 1.0
+          },
+          "dimensions": {
+            "Lx": 190.0,
+            "Ly": 163.0,
+            "Lz": 0.0
+          }
+      }
+    }
+  ],
+  "mesh_settings": {
+    "Nx": 30,
+    "Ny": 30,
+    "Nz": 4
+  }
+}
