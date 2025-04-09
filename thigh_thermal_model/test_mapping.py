@@ -7,6 +7,69 @@ from boundary_conditions import ElementBoundary, BoundaryCondition
 from typing import List, Tuple
 import json5
 
+def analyze_layer(boundary, coords, layer_name):
+    """Analyze and print heat source information for a layer."""
+    print(f"\nHeat Source Elements in {layer_name} Layer:")
+    print("-" * 50)
+    
+    # Get all heat source elements
+    heat_source_elements = boundary.get_heat_source_elements()
+    print(f"Total heat source elements: {len(heat_source_elements)}")
+    
+    # Get heat source elements by type
+    convective_elements = boundary.get_heat_source_elements("CONVECTIVE")
+    const_qflux_elements = boundary.get_heat_source_elements("CONST_QFLUX")
+    print(f"Convective heat source elements: {len(convective_elements)}")
+    print(f"Constant heat flux elements: {len(const_qflux_elements)}")
+    
+    # Get heat source elements by ID
+    heat_source_ids = boundary.get_heat_source_ids()
+    for source_id in heat_source_ids:
+        elements = boundary.get_heat_source_elements_by_id(source_id)
+        print(f"Heat source '{source_id}': {len(elements)} elements")
+    
+    # Print boundary condition breakdown
+    total_elements = coords.Nx * coords.Ny * coords.Nz
+    inner_elements = [idx for idx, bc in boundary.boundary_conditions.items() 
+                     if bc == BoundaryCondition.INNER]
+    mapped_elements = boundary.get_mapped_elements()
+    adiabatic_elements = boundary.get_adiabatic_elements()
+    
+    print("\nBoundary Condition Summary:")
+    print(f"Total elements: {total_elements}")
+    print(f"Inner elements: {len(inner_elements)}")
+    print(f"Mapped elements: {len(mapped_elements)}")
+    print(f"Adiabatic elements: {len(adiabatic_elements)}")
+    print(f"Convective elements: {len(convective_elements)}")
+    print(f"Constant heat flux elements: {len(const_qflux_elements)}")
+    
+    # Check for overlapping regions
+    check_overlapping_regions(boundary, layer_name)
+
+def check_overlapping_regions(boundary, layer_name):
+    """Check for overlapping regions between mapped, convective, and constant Q flux elements."""
+    mapped_elements = set(boundary.get_mapped_elements())
+    convective_elements = set(boundary.get_heat_source_elements("CONVECTIVE"))
+    const_qflux_elements = set(boundary.get_heat_source_elements("CONST_QFLUX"))
+    
+    # Check mapped and convective overlap
+    mapped_convective_overlap = mapped_elements & convective_elements
+    if mapped_convective_overlap:
+        print(f"\nWARNING: Found {len(mapped_convective_overlap)} elements in {layer_name} that are both mapped and convective")
+        print("  Mapped boundary condition takes priority over convective")
+    
+    # Check mapped and constant Q flux overlap
+    mapped_const_qflux_overlap = mapped_elements & const_qflux_elements
+    if mapped_const_qflux_overlap:
+        print(f"\nWARNING: Found {len(mapped_const_qflux_overlap)} elements in {layer_name} that are both mapped and constant Q flux")
+        print("  Mapped boundary condition takes priority over constant Q flux")
+    
+    # Check convective and constant Q flux overlap
+    convective_const_qflux_overlap = convective_elements & const_qflux_elements
+    if convective_const_qflux_overlap:
+        print(f"\nWARNING: Found {len(convective_const_qflux_overlap)} elements in {layer_name} that are both convective and constant Q flux")
+        print("  Constant Q flux takes priority over convective")
+
 def plot_layer_surface(coords, title, ax=None, mapped_elements_list=None, colors=None):
     """
     Plot the top surface (z=z_max) of a layer.
@@ -242,26 +305,46 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
     for j in range(coords.Nx):
         ax.plot(X[j, :], Y[j, :], 'k-', alpha=0.2, linewidth=0.5)
     
+    # Define colors for different boundary conditions
+    bc_colors = {
+        BoundaryCondition.INNER: 'gray',
+        BoundaryCondition.ADIABATIC: 'blue',
+        BoundaryCondition.MAPPED: 'red',
+        BoundaryCondition.CONVECTIVE: 'green',
+        BoundaryCondition.CONST_Qflux: 'orange',
+        "MAPPED_CONST_QFLUX": 'purple',  # Special color for combined MAPPED and CONST_Qflux
+        "CONST_QFLUX_CONVECTIVE": 'pink'  # Special color for combined CONST_Qflux and CONVECTIVE
+    }
+    
     # Plot element centers with boundary condition colors
     for i in range(coords.Nx):
         for j in range(coords.Ny):
             x, y, _ = coords.get_coordinates_from_3d(i, j, surface_level)
             global_idx = coords.get_global_index(coords.Nx, coords.Ny, i, j, surface_level)
-            bc = boundary_conditions.get(global_idx, BoundaryCondition.INNER)
             
-            # Get color based on boundary condition
-            if bc == BoundaryCondition.INNER:
-                color = 'gray'
-            elif bc == BoundaryCondition.ADIABATIC:
-                color = 'blue'
-            else:  # MAPPED
-                color = 'red'
+            # Get the combined boundary condition
+            if isinstance(boundary_conditions, dict):
+                bc = boundary_conditions.get(global_idx, [BoundaryCondition.INNER])
+                if len(bc) > 1:
+                    # Handle combined boundary conditions
+                    if BoundaryCondition.MAPPED in bc and BoundaryCondition.CONST_Qflux in bc:
+                        color = bc_colors["MAPPED_CONST_QFLUX"]
+                    elif BoundaryCondition.CONST_Qflux in bc and BoundaryCondition.CONVECTIVE in bc:
+                        color = bc_colors["CONST_QFLUX_CONVECTIVE"]
+                    elif BoundaryCondition.MAPPED in bc:
+                        color = bc_colors[BoundaryCondition.MAPPED]  # MAPPED takes priority
+                    else:
+                        color = bc_colors[bc[0]]
+                else:
+                    color = bc_colors[bc[0]]
+            else:
+                color = bc_colors[boundary_conditions.get(global_idx, BoundaryCondition.INNER)]
             
             # Plot element center
-            ax.plot(x, y, f'{color[0]}.', markersize=3)
+            ax.plot(x, y, '.', color=color, markersize=3)
             
             # Add rectangle for surface elements
-            if bc != BoundaryCondition.INNER:
+            if color != bc_colors[BoundaryCondition.INNER]:
                 dx = coords.dx
                 dy = coords.dy
                 rect = plt.Rectangle((x - dx/2, y - dy/2), dx, dy,
@@ -281,6 +364,13 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
     y_center = (y_min + y_max) / 2
     ax.set_xlim(x_center - max_range/2, x_center + max_range/2)
     ax.set_ylim(y_center - max_range/2, y_center + max_range/2)
+    
+    # Add legend
+    legend_elements = [
+        plt.Rectangle((0, 0), 1, 1, facecolor=color, alpha=0.3, label=bc)
+        for bc, color in bc_colors.items()
+    ]
+    ax.legend(handles=legend_elements, loc='upper right')
     
     return ax
 
@@ -312,32 +402,17 @@ def main():
     mapping = LayerMapping(params)
     
     # Create boundary condition systems
-    metal_boundary = ElementBoundary(metal_coords, mapping, "metal_layer")
-    plastic_boundary = ElementBoundary(plastic_coords, mapping, "plastic_layer")
+    metal_boundary = ElementBoundary(metal_coords, mapping, "metal_layer", params)
+    plastic_boundary = ElementBoundary(plastic_coords, mapping, "plastic_layer", params)
     
     # Label boundary conditions
     metal_boundary_conditions = metal_boundary.label_boundary_conditions()
     plastic_boundary_conditions = plastic_boundary.label_boundary_conditions()
-    
-    # Print statistics
-    print_boundary_statistics(metal_boundary_conditions, "Metal Layer")
-    print_boundary_statistics(plastic_boundary_conditions, "Plastic Layer")
-    
-    # Find and print mapped plastic elements at z=0
-    plastic_mapped_z0_indices = []
-    for i in range(plastic_coords.Nx):
-        for j in range(plastic_coords.Ny):
-            k = 0 # Bottom surface
-            global_idx = plastic_coords.get_global_index(plastic_coords.Nx, plastic_coords.Ny, i, j, k)
-            if plastic_boundary_conditions.get(global_idx) == BoundaryCondition.MAPPED:
-                plastic_mapped_z0_indices.append(global_idx)
+
+    # Analyze and print information for both layers
+    analyze_layer(metal_boundary, metal_coords, "Metal")
+    analyze_layer(plastic_boundary, plastic_coords, "Plastic")
                 
-    print("\nPlastic Mapped Element Indices at z=0:")
-    if plastic_mapped_z0_indices:
-        print(plastic_mapped_z0_indices)
-    else:
-        print("No mapped elements found on the bottom surface (z=0) of the plastic layer.")
-    
     # Create figure with subplots (2 rows, 2 columns)
     fig, axes = plt.subplots(2, 2, figsize=(20, 20))
     
@@ -348,14 +423,6 @@ def main():
     # Plot boundary conditions for z=Nz-1 (top surface)
     plot_boundary_conditions(metal_coords, metal_boundary_conditions, f"Metal Layer Boundary Conditions (z={metal_coords.Nz-1})", metal_coords.Nz - 1, axes[1, 0])
     plot_boundary_conditions(plastic_coords, plastic_boundary_conditions, f"Plastic Layer Boundary Conditions (z={plastic_coords.Nz-1})", plastic_coords.Nz - 1, axes[1, 1])
-    
-    # Add legend
-    legend_elements = [
-        plt.Rectangle((0, 0), 1, 1, facecolor='gray', alpha=0.3, label='Inner'),
-        plt.Rectangle((0, 0), 1, 1, facecolor='blue', alpha=0.3, label='Adiabatic'),
-        plt.Rectangle((0, 0), 1, 1, facecolor='red', alpha=0.3, label='Mapped')
-    ]
-    fig.legend(handles=legend_elements, loc='upper center', ncol=3)
     
     # Set overall figure title
     fig.suptitle("Boundary Condition Visualization (Bottom and Top Surfaces)", fontsize=16)

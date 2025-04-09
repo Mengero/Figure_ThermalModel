@@ -35,14 +35,30 @@
       },
       "heat_sources": [
         {
-          "id": "ambient_convection",
+          "id": "metal_ambient_convection1",
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
           "ambient_temperature": 30.0,
           "centroid": {
-            "x": 275.0,
+            "x": 225.0,
             "y": 185.0,
             "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 450.0,
+            "Ly": 370.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "metal_ambient_convection2",
+          "type": "CONVECTIVE",
+          "heat_transfer_coefficient": 7.5,
+          "ambient_temperature": 30.0,
+          "centroid": {
+            "x": 225.0,
+            "y": 185.0,
+            "z": 0.0
           },
           "dimensions": {
             "Lx": 450.0,
@@ -57,7 +73,7 @@
           "centroid": {
             "x": 370.0,
             "y": 185.0,
-            "z": 2.0
+            "z": 0.0
           },
           "dimensions": {
             "Lx": 3.0,
@@ -72,7 +88,7 @@
           "centroid": {
             "x": 315.0,
             "y": 185.0,
-            "z": 2.0
+            "z": 0.0
           },
           "dimensions": {
             "Lx": 3.0,
@@ -87,7 +103,7 @@
           "centroid": {
             "x": 250.0,
             "y": 185.0,
-            "z": 2.0
+            "z": 0.0
           },
           "dimensions": {
             "Lx": 1.5,
@@ -100,13 +116,13 @@
           "type": "CONST_Qflux",
           "power": 27.0,
           "centroid": {
-            "x": 45.0,
-            "y": 265.0,
-            "z": 2.0
+            "x": 42.65,
+            "y": 263.55,
+            "z": 0.0
           },
           "dimensions": {
-            "Lx": 77.0,
-            "Ly": 77.0,
+            "Lx": 70.0,
+            "Ly": 70.0,
             "Lz": 0.0
           }
         }
@@ -133,7 +149,7 @@
         "specific_heat": 1050
       },
       "heat_sources": [{
-        "id": "ambient_convection",
+        "id": "plastic_ambient_convection1",
         "type": "CONVECTIVE",
         "heat_transfer_coefficient": 7.5,
         "ambient_temperature": 30.0,
@@ -141,6 +157,22 @@
           "x": 230.0,
           "y": 280.0,
           "z": 1.0
+        },
+        "dimensions": {
+          "Lx": 460.0,
+          "Ly": 560.0,
+          "Lz": 0.0
+        }
+      },
+      {
+        "id": "plastic_ambient_convection2",
+        "type": "CONVECTIVE",
+        "heat_transfer_coefficient": 7.5,
+        "ambient_temperature": 30.0,
+        "centroid": {
+          "x": 230.0,
+          "y": 280.0,
+          "z": 0.0
         },
         "dimensions": {
           "Lx": 460.0,
@@ -164,8 +196,8 @@
             "z": 0.0
           },
           "dimensions": {
-            "Lx": 77.1,
-            "Ly": 77.1,
+            "Lx": 77.0,
+            "Ly": 77.0,
             "Lz": 0.0
           }
       },

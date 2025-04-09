@@ -26,6 +26,34 @@ class ThermalParameters:
         self.mappings_by_id = {m["id"]: m for m in self.get_mappings()}
         self.metal_mappings = {}  # Dictionary of lists for metal layer
         self.plastic_mappings = {}  # Dictionary of lists for plastic layer
+        self.convective_mappings = {}  # Dictionary of lists for convective layer
+        self.heat_sources = self._collect_all_heat_sources()
+    
+    def _collect_all_heat_sources(self) -> List[Dict[str, Any]]:
+        """
+        Collect all heat sources from all regions.
+        
+        Returns:
+            List of dictionaries containing heat source information with region_id added
+        """
+        all_sources = []
+        for region_id, region in self.regions_by_id.items():
+            if "heat_sources" in region:
+                for source in region["heat_sources"]:
+                    # Make a copy of the source and add the region_id
+                    source_with_region = source.copy()
+                    source_with_region["region_id"] = region_id
+                    all_sources.append(source_with_region)
+        return all_sources
+    
+    def get_all_heat_sources(self) -> List[Dict[str, Any]]:
+        """
+        Get all heat sources from all regions.
+        
+        Returns:
+            List of dictionaries containing heat source information
+        """
+        return self.heat_sources
     
     # Environment parameters
     def get_ambient_temperature(self) -> float:
@@ -379,6 +407,170 @@ class ThermalParameters:
         }
         
         return source_bounds, target_bounds
+
+    def get_convective_mappings(self) -> Dict[str, Any]:
+        """
+        Get all convective mappings.
+        
+        Returns:
+            Dictionary of convective mappings with their associated data
+        """
+        return self.convective_mappings
+    
+    def identify_heat_source_elements(self, coords) -> Dict[str, List[int]]:
+        """
+        Find elements that belong to heat source regions for a specific coordinate system.
+        
+        Args:
+            coords: ElementCoordinates object for the layer
+            
+        Returns:
+            Dictionary mapping heat source IDs to lists of global indices
+        """
+        heat_source_elements = {}
+        
+        # Get heat sources for this region
+        heat_sources = []
+        region_id = coords.region_id
+        region = self.get_region_by_id(region_id)
+        
+        if region and "heat_sources" in region:
+            for source in region["heat_sources"]:
+                source_copy = source.copy()
+                source_copy["region_id"] = region_id
+                heat_sources.append(source_copy)
+        
+        if not heat_sources:
+            print(f"No heat sources found for region {region_id}")
+            return heat_source_elements
+        
+        print(f"\nFound {len(heat_sources)} heat sources in region {region_id}")
+        
+        # Small tolerance for floating-point comparisons
+        tolerance = 1e-6
+        
+        # Track which elements have been assigned to heat sources
+        assigned_elements = set()
+        
+        # Process each heat source
+        for source in heat_sources:
+            source_id = source.get('id', f"source_{len(heat_source_elements)}")
+            source_type = source.get('type', 'UNKNOWN')
+            
+            print(f"Processing heat source: {source_id} (type: {source_type}) in region {region_id}")
+            
+            # Get heat source position and dimensions
+            centroid = source.get('centroid', {})
+            dimensions = source.get('dimensions', {})
+            
+            # Calculate heat source bounds using centroid and dimensions
+            x_min = centroid.get('x', 0) - dimensions.get('Lx', 0) / 2
+            x_max = centroid.get('x', 0) + dimensions.get('Lx', 0) / 2
+            y_min = centroid.get('y', 0) - dimensions.get('Ly', 0) / 2
+            y_max = centroid.get('y', 0) + dimensions.get('Ly', 0) / 2
+            z_min = centroid.get('z', 0) - dimensions.get('Lz', 0) / 2
+            z_max = centroid.get('z', 0) + dimensions.get('Lz', 0) / 2
+            
+            # Calculate element sizes
+            dx = coords.Lx / coords.Nx
+            dy = coords.Ly / coords.Ny
+            
+            print(f"  Heat source bounds: x=[{x_min:.2f}, {x_max:.2f}], y=[{y_min:.2f}, {y_max:.2f}], z=[{z_min:.2f}, {z_max:.2f}]")
+            print(f"  Element sizes: dx={dx:.2f}, dy={dy:.2f}")
+            
+            # Initialize list for this heat source
+            heat_source_elements[source_id] = []
+            
+            # Find all elements that fall within the heat source bounds
+            for k in range(coords.Nz):
+                for j in range(coords.Ny):
+                    for i in range(coords.Nx):
+                        # Get coordinates of this element
+                        x, y, z = coords.get_coordinates_from_3d(i, j, k)
+                        
+                        # Check if element is within heat source bounds
+                        # Expand bounds by half element size in x and y directions
+                        if (x_min - dx/2 - tolerance <= x <= x_max + dx/2 + tolerance and
+                            y_min - dy/2 - tolerance <= y <= y_max + dy/2 + tolerance and
+                            z_min - tolerance <= z <= z_max + tolerance):
+                            
+                            # For convective and const_qflux elements, they must be on the correct surface
+                            if source_type == "CONVECTIVE" or source_type == "CONST_Qflux":
+                                # Check if this is a surface element (top or bottom surface)
+                                if not (k == 0 or k == coords.Nz - 1):
+                                    continue
+                                
+                                # For z level in centroid, make sure we're on the right surface
+                                target_z = centroid.get('z', 0)
+                                if abs(z - target_z) > tolerance:
+                                    continue
+                            
+                            # Add global index to list
+                            global_idx = coords.get_global_index(coords.Nx, coords.Ny, i, j, k)
+                            
+                            # Check if element was already assigned to another heat source
+                            if global_idx in assigned_elements:
+                                # Get the previous heat source type
+                                prev_sources = [src_id for src_id, elems in heat_source_elements.items() if global_idx in elems]
+                                prev_source = self.get_heat_source_by_id(region_id, prev_sources[0])
+                                prev_type = prev_source.get('type', 'UNKNOWN')
+                                
+                                # Only warn if not reassigning from convective to constant Q flux
+                                if not (prev_type == "CONVECTIVE" and source_type == "CONST_Qflux"):
+                                    print(f"WARNING: Element {global_idx} is assigned to multiple heat sources!")
+                                    print(f"  Previously assigned to: {prev_sources}")
+                                    print(f"  Now being assigned to: {source_id}")
+                            else:
+                                assigned_elements.add(global_idx)
+                            heat_source_elements[source_id].append(global_idx)
+            
+            print(f"  Found {len(heat_source_elements[source_id])} elements in heat source {source_id}")
+        
+        return heat_source_elements
+    
+    def get_heat_source_by_type(self, region_id: str, source_type: str) -> List[Dict[str, Any]]:
+        """
+        Get heat sources of a specific type for a region.
+        
+        Args:
+            region_id: ID of the region
+            source_type: Type of heat source (e.g., "CONVECTIVE", "CONST_Qflux")
+            
+        Returns:
+            List of heat sources matching the type
+        """
+        sources = []
+        region = self.get_region_by_id(region_id)
+        
+        if not region or "heat_sources" not in region:
+            return sources
+        
+        for source in region["heat_sources"]:
+            if source.get('type', '').upper() == source_type.upper():
+                sources.append(source)
+        
+        return sources
+    
+    def get_all_heat_sources_by_type(self, source_type: str) -> List[Dict[str, Any]]:
+        """
+        Get all heat sources of a specific type across all regions.
+        
+        Args:
+            source_type: Type of heat source (e.g., "CONVECTIVE", "CONST_Qflux")
+            
+        Returns:
+            List of heat sources matching the type
+        """
+        all_sources = []
+        
+        for region_id in self.get_region_ids():
+            sources = self.get_heat_source_by_type(region_id, source_type)
+            for source in sources:
+                source_copy = source.copy()
+                source_copy["region_id"] = region_id
+                all_sources.append(source_copy)
+        
+        return all_sources
 
 def get_parameters(geo_data: Dict[str, Any]) -> ThermalParameters:
     """
