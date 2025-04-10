@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from thermal_utils import read_geo_file
 from thermal_parameters import get_parameters, ThermalParameters
-from thermal_analysis import create_layer_coordinates, LayerMapping
+from thermal_analysis import create_layer_coordinates, LayerMapping, create_combined_matrix
 from boundary_conditions import ElementBoundary, BoundaryCondition
 from typing import List, Tuple
 import json5
+import scipy.sparse
 
 def analyze_layer(boundary, coords, layer_name):
     """Analyze and print heat source information for a layer."""
@@ -432,6 +433,58 @@ def main():
     
     # Show the plots
     plt.show()
+    
+    # Initialize matrices using functions from thermal_analysis.py
+    print("\nInitializing matrices...")
+    
+    # Create combined matrix for all layers
+    A = create_combined_matrix(params)
+    
+    # Initialize vectors for each layer
+    b_metal = np.zeros(metal_coords.Nx * metal_coords.Ny * metal_coords.Nz)
+    b_plastic = np.zeros(plastic_coords.Nx * plastic_coords.Ny * plastic_coords.Nz)
+    b = np.concatenate([b_metal, b_plastic])
+    
+    # Update matrices and vectors with boundary conditions
+    update_matrix_with_boundary_conditions(A[:b_metal.size, :b_metal.size], b_metal, metal_coords, metal_boundary)
+    update_matrix_with_boundary_conditions(A[b_metal.size:, b_metal.size:], b_plastic, plastic_coords, plastic_boundary)
+    b = np.concatenate([b_metal, b_plastic])
+    
+    # Print matrix statistics
+    print("\nMatrix Statistics:")
+    print(f"Metal layer - Matrix shape: {A[:b_metal.size, :b_metal.size].shape}")
+    print(f"Metal layer - Non-zero elements: {A[:b_metal.size, :b_metal.size].nnz}")
+    print(f"Plastic layer - Matrix shape: {A[b_metal.size:, b_metal.size:].shape}")
+    print(f"Plastic layer - Non-zero elements: {A[b_metal.size:, b_metal.size:].nnz}")
+    print(f"Combined system - Matrix shape: {A.shape}")
+    print(f"Combined system - Non-zero elements: {A.nnz}")
+    
+    # Save matrices for inspection
+    print("\nSaving matrices for inspection...")
+    np.save("metal_matrix_A.npy", A[:b_metal.size, :b_metal.size].toarray())
+    np.save("metal_vector_b.npy", b_metal)
+    np.save("plastic_matrix_A.npy", A[b_metal.size:, b_metal.size:].toarray())
+    np.save("plastic_vector_b.npy", b_plastic)
+    np.save("combined_matrix_A.npy", A.toarray())
+    np.save("combined_vector_b.npy", b)
+    print("Matrices saved to disk.")
+
+def update_matrix_with_boundary_conditions(A, b, coords, boundary):
+    """Update matrix A and vector b with boundary conditions"""
+    Nx, Ny, Nz = coords.Nx, coords.Ny, coords.Nz
+    dx, dy, dz = coords.dx, coords.dy, coords.dz
+    
+    # Get boundary conditions
+    boundary_conditions = boundary.boundary_conditions
+    
+    # Update matrix and vector based on boundary conditions
+    for i in range(Nx):
+        for j in range(Ny):
+            for k in range(Nz):
+                idx = i + j*Nx + k*Nx*Ny
+                bc = boundary_conditions.get(idx, BoundaryCondition.INNER)
+                
+                
 
 if __name__ == "__main__":
     main() 
