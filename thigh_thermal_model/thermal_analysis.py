@@ -24,7 +24,7 @@ def create_tridiagonal_matrix(n, sub_val=-1, main_val=2, super_val=-1):
     
     return diags([sub_diag, main_diag, super_diag], [-1, 0, 1], shape=(n, n))
 
-def create_layer_matrix(nx, ny, nz, dx, dy, dz):
+def create_layer_matrix(nx, ny, nz, dx, dy, dz, k):
     """
     Create the 3D Laplacian matrix for a single layer.
     
@@ -47,40 +47,56 @@ def create_layer_matrix(nx, ny, nz, dx, dy, dz):
     
     # Create 3D Laplacian using Kronecker product
     A = kron(kron(Az, Iy), Ix) + kron(kron(Iz, Ay), Ix) + kron(kron(Iz, Iy), Ax)
+    A *= k
     return A
 
-def create_combined_matrix(params: ThermalParameters):
+def create_combined_matrix(metal_coords, plastic_coords, params: ThermalParameters):
     """
-    Create the combined matrix for all layers in the thermal model.
+    Create the combined matrix for all layers in the thermal model using NumPy arrays.
     
     Parameters:
         params: ThermalParameters object containing model parameters
         
     Returns:
-        scipy.sparse matrix: Combined matrix for all layers
+        numpy.ndarray: Combined matrix for all layers
     """
     # Get mesh dimensions for each layer
-    metal_nx, metal_ny, metal_nz = params.get_mesh_dimensions()
-    metal_Lx, metal_Ly, metal_Lz = params.get_region_dimensions("metal_layer")
-    metal_dx = metal_Lx / metal_nx
-    metal_dy = metal_Ly / metal_ny
-    metal_dz = metal_Lz / metal_nz
+    metal_nx, metal_ny, metal_nz = metal_coords.Nx, metal_coords.Ny, metal_coords.Nz
+    metal_dx, metal_dy, metal_dz = metal_coords.dx, metal_coords.dy, metal_coords.dz
+    metal_dx_m = metal_dx*1e-3
+    metal_dy_m = metal_dy*1e-3
+    metal_dz_m = metal_dz*1e-3
+    k_metal = params.get_region_thermal_conductivity("metal_layer")
     
-    # Create matrix for metal layer
-    A_metal = create_layer_matrix(metal_nx, metal_ny, metal_nz, metal_dx, metal_dy, metal_dz)
+    # Create matrix for metal layer and convert to dense array
+    A_metal = create_layer_matrix(metal_nx, metal_ny, metal_nz, metal_dx_m, metal_dy_m, metal_dz_m, k_metal)
+    A_metal = A_metal.toarray()  # Convert to dense NumPy array
     
     # Get dimensions for plastic layer
-    plastic_Lx, plastic_Ly, plastic_Lz = params.get_region_dimensions("plastic_layer")
-    plastic_nx = int(round(plastic_Lx / metal_dx))  # Use same dx as metal layer
-    plastic_ny = int(round(plastic_Ly / metal_dy))  # Use same dy as metal layer
-    plastic_nz = metal_nz  # Use same nz as metal layer
-    plastic_dz = plastic_Lz / plastic_nz
+    plastic_nx, plastic_ny, plastic_nz = plastic_coords.Nx, plastic_coords.Ny, plastic_coords.Nz
+    plastic_dx, plastic_dy, plastic_dz = plastic_coords.dx, plastic_coords.dy, plastic_coords.dz
+    plastic_dx_m = plastic_dx*1e-3
+    plastic_dy_m = plastic_dy*1e-3
+    plastic_dz_m = plastic_dz*1e-3
+    k_plastic = params.get_region_thermal_conductivity("plastic_layer")
     
-    # Create matrix for plastic layer
-    A_plastic = create_layer_matrix(plastic_nx, plastic_ny, plastic_nz, metal_dx, metal_dy, plastic_dz)
+    # Create matrix for plastic layer and convert to dense array
+    A_plastic = create_layer_matrix(plastic_nx, plastic_ny, plastic_nz, plastic_dx_m, plastic_dy_m, plastic_dz_m, k_plastic)
+    A_plastic = A_plastic.toarray()  # Convert to dense NumPy array
     
-    # Combine matrices in block diagonal form
-    A_combined = block_diag([A_metal, A_plastic])
+    # Get total dimensions
+    total_metal = metal_nx * metal_ny * metal_nz
+    total_plastic = plastic_nx * plastic_ny * plastic_nz
+    total_size = total_metal + total_plastic
+    
+    # Create combined matrix
+    A_combined = np.zeros((total_size, total_size))
+    
+    # Fill in metal layer
+    A_combined[:total_metal, :total_metal] = A_metal
+    
+    # Fill in plastic layer
+    A_combined[total_metal:, total_metal:] = A_plastic
     
     return A_combined
 
@@ -406,3 +422,431 @@ def create_layer_coordinates(params: ThermalParameters) -> Tuple[ElementCoordina
     plastic_coords = ElementCoordinates(params, "plastic_layer")
     
     return metal_coords, plastic_coords
+
+def update_matrix_with_geometries(A, metal_coords, plastic_coords, params: ThermalParameters):
+    """Update matrix A based on element positions (corner, edge, surface) for both metal and plastic layers"""
+    # Metal layer dimensions
+    Nx_metal, Ny_metal, Nz_metal = metal_coords.Nx, metal_coords.Ny, metal_coords.Nz
+    dx_metal, dy_metal, dz_metal = metal_coords.dx, metal_coords.dy, metal_coords.dz
+    dx_metal_m, dy_metal_m, dz_metal_m = dx_metal * 1e-3, dy_metal * 1e-3, dz_metal * 1e-3
+    
+    # Plastic layer dimensions
+    Nx_plastic, Ny_plastic, Nz_plastic = plastic_coords.Nx, plastic_coords.Ny, plastic_coords.Nz
+    dx_plastic, dy_plastic, dz_plastic = plastic_coords.dx, plastic_coords.dy, plastic_coords.dz
+    dx_plastic_m, dy_plastic_m, dz_plastic_m = dx_plastic * 1e-3, dy_plastic * 1e-3, dz_plastic * 1e-3
+    
+    # Total number of elements in each layer
+    total_metal = Nx_metal * Ny_metal * Nz_metal
+    total_plastic = Nx_plastic * Ny_plastic * Nz_plastic
+    
+    k_metal = params.get_region_thermal_conductivity("metal_layer")
+    k_plastic = params.get_region_thermal_conductivity("plastic_layer")
+    
+    # Update metal layer
+    for i in range(Nx_metal):
+        for j in range(Ny_metal):
+            for k in range(Nz_metal):
+                # Skip inner elements
+                if 0 < i < Nx_metal-1 and 0 < j < Ny_metal-1 and 0 < k < Nz_metal-1:
+                    continue
+                    
+                idx = i + j*Nx_metal + k*Nx_metal*Ny_metal
+                
+                # Determine element position
+                is_corner = (i in [0, Nx_metal-1] and j in [0, Ny_metal-1] and k in [0, Nz_metal-1])
+                is_edge = ((i in [0, Nx_metal-1] and j in [0, Ny_metal-1]) or 
+                          (i in [0, Nx_metal-1] and k in [0, Nz_metal-1]) or 
+                          (j in [0, Ny_metal-1] and k in [0, Nz_metal-1]))
+                is_surface = (i in [0, Nx_metal-1] or j in [0, Ny_metal-1] or k in [0, Nz_metal-1])
+                
+                # Reset row
+                A[idx, :] = 0
+                
+                if is_corner:
+                    # Corner element - 3 surfaces exposed
+                    A[idx, idx] = -1/dx_metal_m**2 - 1/dy_metal_m**2 - 1/dz_metal_m**2
+                    
+                    # Add neighboring elements based on position
+                    if i == 0:
+                        A[idx, idx + 1] = 1/dx_metal_m**2
+                    else:
+                        A[idx, idx - 1] = 1/dx_metal_m**2
+                        
+                    if j == 0:
+                        A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                    else:
+                        A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                        
+                    if k == 0:
+                        A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                    else:
+                        A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        
+                elif is_edge:
+                    # Edge element - 2 surfaces exposed
+                    A[idx, idx] = -1/dx_metal_m**2 - 1/dy_metal_m**2 - 1/dz_metal_m**2
+                    
+                    # Add neighboring elements based on edge type
+                    if i in [0, Nx_metal-1] and j in [0, Ny_metal-1]:  # Edge parallel to z-axis
+                        A[idx, idx] -= 1/dz_metal_m**2
+                        
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_metal_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_metal_m**2
+                            
+                        if j == 0:
+                            A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                            
+                        A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        
+                    elif i in [0, Nx_metal-1] and k in [0, Nz_metal-1]:  # Edge parallel to y-axis
+                        A[idx, idx] -= 1/dy_metal_m**2
+                        
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_metal_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_metal_m**2
+                            
+                        if k == 0:
+                            A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                            
+                        A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                        
+                    elif j in [0, Ny_metal-1] and k in [0, Nz_metal-1]:  # Edge parallel to x-axis
+                        A[idx, idx] -= 1/dx_metal_m**2
+                        
+                        if j == 0:
+                            A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                            
+                        if k == 0:
+                            A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                            
+                        A[idx, idx + 1] = 1/dx_metal_m**2
+                        A[idx, idx - 1] = 1/dx_metal_m**2 
+                        
+                            
+                elif is_surface:
+                    # Surface element - 1 surface exposed
+                    A[idx, idx] = -1/dx_metal_m**2 - 1/dy_metal_m**2 - 1/dz_metal_m**2
+                    
+                    # Add neighboring elements based on surface type
+                    if i in [0, Nx_metal-1]:  # Surface parallel to y-z plane
+                        A[idx, idx] -= 1/dy_metal_m**2 + 1/dz_metal_m**2
+                        
+                        A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                        A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_metal_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_metal_m**2
+                            
+                    elif j in [0, Ny_metal-1]:  # Surface parallel to x-z plane
+                        A[idx, idx] -= 1/dx_metal_m**2 + 1/dz_metal_m**2
+                        
+                        A[idx, idx + 1] = 1/dx_metal_m**2
+                        A[idx, idx - 1] = 1/dx_metal_m**2
+                        A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        if j == 0:
+                            A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                            
+                    elif k in [0, Nz_metal-1]:  # Surface parallel to x-y plane
+                        A[idx, idx] -= 1/dx_metal_m**2 + 1/dy_metal_m**2
+                        
+                        A[idx, idx + 1] = 1/dx_metal_m**2
+                        A[idx, idx - 1] = 1/dx_metal_m**2
+                        A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                        A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                        if k == 0:
+                            A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                        else:
+                            A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
+                            
+                A[idx, :] *= k_metal
+
+    # Update plastic layer (offset by total_metal)
+    for i in range(Nx_plastic):
+        for j in range(Ny_plastic):
+            for k in range(Nz_plastic):
+                # Skip inner elements
+                if 0 < i < Nx_plastic-1 and 0 < j < Ny_plastic-1 and 0 < k < Nz_plastic-1:
+                    continue
+                    
+                idx = total_metal + i + j*Nx_plastic + k*Nx_plastic*Ny_plastic
+                
+                # Determine element position
+                is_corner = (i in [0, Nx_plastic-1] and j in [0, Ny_plastic-1] and k in [0, Nz_plastic-1])
+                is_edge = ((i in [0, Nx_plastic-1] and j in [0, Ny_plastic-1]) or 
+                          (i in [0, Nx_plastic-1] and k in [0, Nz_plastic-1]) or 
+                          (j in [0, Ny_plastic-1] and k in [0, Nz_plastic-1]))
+                is_surface = (i in [0, Nx_plastic-1] or j in [0, Ny_plastic-1] or k in [0, Nz_plastic-1])
+                
+                # Reset row
+                A[idx, :] = 0
+                A[idx, idx] = -1/dx_plastic_m**2 - 1/dy_plastic_m**2 - 1/dz_plastic_m**2
+                if is_corner:
+                    
+                    # Add neighboring elements based on position
+                    if i == 0:
+                        A[idx, idx + 1] = 1/dx_plastic_m**2
+                    else:
+                        A[idx, idx - 1] = 1/dx_plastic_m**2
+                        
+                    if j == 0:
+                        A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                    else:
+                        A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                        
+                    if k == 0:
+                        A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                    else:
+                        A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        
+                elif is_edge:
+                    
+                    # Add neighboring elements based on edge type
+                    if i in [0, Nx_plastic-1] and j in [0, Ny_plastic-1]:  # Edge parallel to z-axis
+                        A[idx, idx] -= 1/dz_plastic_m**2
+                        
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_plastic_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_plastic_m**2
+                            
+                        if j == 0:
+                            A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                            
+                        A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        
+                    elif i in [0, Nx_plastic-1] and k in [0, Nz_plastic-1]:  # Edge parallel to y-axis
+                        A[idx, idx] -= 1/dy_plastic_m**2
+                        
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_plastic_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_plastic_m**2
+                            
+                        A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                        
+                        if k == 0:
+                            A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                            
+                    elif j in [0, Ny_plastic-1] and k in [0, Nz_plastic-1]:  # Edge parallel to x-axis
+                        A[idx, idx] -= 1/dx_plastic_m**2
+                        
+                        A[idx, idx + 1] = 1/dx_plastic_m**2
+                        A[idx, idx - 1] = 1/dx_plastic_m**2
+                        
+                        if j == 0:
+                            A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                            
+                        if k == 0:
+                            A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                            
+                elif is_surface:
+                    
+                    # Add neighboring elements based on surface type
+                    if i in [0, Nx_plastic-1]:  # Surface parallel to y-z plane
+                        A[idx, idx] -= 1/dy_plastic_m**2 + 1/dz_plastic_m**2
+                        
+                        A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                        if i == 0:
+                            A[idx, idx + 1] = 1/dx_plastic_m**2
+                        else:
+                            A[idx, idx - 1] = 1/dx_plastic_m**2
+                            
+                    elif j in [0, Ny_plastic-1]:  # Surface parallel to x-z plane
+                        A[idx, idx] -= 1/dx_plastic_m**2 + 1/dz_plastic_m**2
+                        
+                        A[idx, idx + 1] = 1/dx_plastic_m**2
+                        A[idx, idx - 1] = 1/dx_plastic_m**2
+                        A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        if j == 0:
+                            A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                            
+                    elif k in [0, Nz_plastic-1]:  # Surface parallel to x-y plane
+                        A[idx, idx] -= 1/dx_plastic_m**2 + 1/dy_plastic_m**2
+                        
+                        A[idx, idx + 1] = 1/dx_plastic_m**2
+                        A[idx, idx - 1] = 1/dx_plastic_m**2
+                        A[idx, idx + Nx_plastic] = 1/dy_plastic_m**2
+                        A[idx, idx - Nx_plastic] = 1/dy_plastic_m**2
+                        if k == 0:
+                            A[idx, idx + Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                        else:
+                            A[idx, idx - Nx_plastic*Ny_plastic] = 1/dz_plastic_m**2
+                            
+                A[idx, :] *= k_plastic
+                
+    return A
+
+def update_matrix_with_boundary_conditions(A, b, metal_coords, plastic_coords, params: ThermalParameters, metal_boundary, plastic_boundary, mapping):
+    """Update matrix A based on boundary conditions for both metal and plastic layers"""
+    # Metal layer dimensions
+    Nx_metal, Ny_metal, Nz_metal = metal_coords.Nx, metal_coords.Ny, metal_coords.Nz
+    dx_metal, dy_metal, dz_metal = metal_coords.dx, metal_coords.dy, metal_coords.dz
+    dx_metal_m, dy_metal_m, dz_metal_m = dx_metal * 1e-3, dy_metal * 1e-3, dz_metal * 1e-3
+    
+    # Plastic layer dimensions
+    Nx_plastic, Ny_plastic, Nz_plastic = plastic_coords.Nx, plastic_coords.Ny, plastic_coords.Nz
+    dx_plastic, dy_plastic, dz_plastic = plastic_coords.dx, plastic_coords.dy, plastic_coords.dz
+    dx_plastic_m, dy_plastic_m, dz_plastic_m = dx_plastic * 1e-3, dy_plastic * 1e-3, dz_plastic * 1e-3
+    # Get thermal conductivities
+    k_metal = params.get_region_thermal_conductivity("metal_layer")
+    k_plastic = params.get_region_thermal_conductivity("plastic_layer")
+    
+    # Update metal layer
+    for source_id, elements in metal_boundary.heat_source_elements.items():
+        # Get heat source parameters
+        heat_source = next((hs for hs in params.heat_sources if hs["id"] == source_id), None)
+        if not heat_source:
+            continue
+            
+        # Check if this is a metal layer heat source
+        if not heat_source["region_id"] == "metal_layer":
+            continue
+            
+        for idx in elements:
+            # Get 3D indices from global index
+            k = idx // (Nx_metal * Ny_metal)
+            remainder = idx % (Nx_metal * Ny_metal)
+            j = remainder // Nx_metal
+            i = remainder % Nx_metal
+            
+            if heat_source["type"] == "CONVECTIVE":
+                htc = heat_source["heat_transfer_coefficient"]
+                T_inf = heat_source["ambient_temperature"]
+                
+                # Update diagonal term
+                A[idx, idx] -= htc / dz_metal_m
+                b[idx] = -htc * T_inf / dz_metal_m
+                
+            elif heat_source["type"] == "CONST_Qflux":
+                q = heat_source["power"]
+                Lx_tmp = heat_source["dimensions"]["Lx"]*1e-3
+                Ly_tmp = heat_source["dimensions"]["Ly"]*1e-3
+                qFlux = q / (Lx_tmp * Ly_tmp)
+                b[idx] = -qFlux / dz_metal_m
+    
+    # Update plastic layer (offset by total_metal)
+    total_metal = Nx_metal * Ny_metal * Nz_metal
+    for source_id, elements in plastic_boundary.heat_source_elements.items():
+        # Get heat source parameters
+        heat_source = next((hs for hs in params.heat_sources if hs["id"] == source_id), None)
+        if not heat_source:
+            continue
+            
+        # Check if this is a plastic layer heat source
+        if not heat_source["region_id"] == "plastic_layer":
+            continue
+            
+        for idx in elements:
+            # Convert to global index
+            global_idx = total_metal + idx
+            
+            # Get 3D indices from local index
+            k = idx // (Nx_plastic * Ny_plastic)
+            remainder = idx % (Nx_plastic * Ny_plastic)
+            j = remainder // Nx_plastic
+            i = remainder % Nx_plastic
+            
+            if heat_source["type"] == "CONVECTIVE":
+                htc = heat_source["heat_transfer_coefficient"]
+                T_inf = heat_source["ambient_temperature"]
+                
+                # Update diagonal term
+                A[global_idx, global_idx] -= htc / dz_plastic_m
+                b[global_idx] = -htc * T_inf / dz_plastic_m
+
+            elif heat_source["type"] == "CONST_Qflux":
+                q = heat_source["power"]
+                Lx_tmp = heat_source["dimensions"]["Lx"]*1e-3
+                Ly_tmp = heat_source["dimensions"]["Ly"]*1e-3
+                qFlux = q / (Lx_tmp * Ly_tmp)
+                b[global_idx] = -qFlux / dz_plastic_m
+
+    # Update matrix for mapped elements
+    for mapping_id, mapping_data in params.mappings_by_id.items():
+        source_region = mapping_data["source"]["region_id"]
+        target_region = mapping_data["target"]["region_id"]
+        
+        # Get the mapping indices
+        source_key = f"{source_region}_source_{mapping_id}"
+        target_key = f"{target_region}_target_{mapping_id}"
+        
+        if mapping_id == "KNEE_ACTUATOR_CONNECTION":
+            # Leave space for custom knee actuator connection handling
+            k_kneeACT = mapping_data["thermal_conductivity"]
+            L_kneeACT = mapping_data["L"]*1e-3
+            for source_idx, target_idx in zip(mapping.region_mappings[source_key],
+                                                             mapping.region_mappings[target_key]):
+                A[source_idx, source_idx] -= k_kneeACT / (L_kneeACT * dz_metal_m)
+                A[source_idx, target_idx] = k_kneeACT / (L_kneeACT * dz_metal_m)
+                A[target_idx, source_idx] = k_kneeACT / (L_kneeACT * dz_metal_m)
+                A[target_idx, target_idx] -= k_kneeACT / (L_kneeACT * dz_metal_m)
+            
+        else:
+            # Handle standard mappings
+            for source_idx, target_idx in zip(mapping.region_mappings[source_key],
+                                                             mapping.region_mappings[target_key]):
+                
+                # Adjust target_idx if it's in plastic layer
+                if target_region == "plastic_layer":
+                    target_idx += total_metal
+                    k_target = k_plastic
+                    Nx_target = Nx_plastic
+                    Ny_target = Ny_plastic
+                else:
+                    k_target = k_metal
+                    Nx_target = Nx_metal
+                    Ny_target = Ny_metal
+                    
+                # Adjust source_idx if it's in plastic layer  
+                if source_region == "plastic_layer":
+                    source_idx += total_metal
+                    k_source = k_plastic
+                    Nx_source = Nx_plastic
+                    Ny_source = Ny_plastic
+                else:
+                    k_source = k_metal
+                    Nx_source = Nx_metal
+                    Ny_source = Ny_metal
+                
+                # Set coupling terms
+                A[source_idx, target_idx] -= k_target / (dz_plastic_m * dz_metal_m)
+                A[source_idx, target_idx-Nx_target*Ny_target] = k_target / (dz_plastic_m * dz_metal_m)
+                A[target_idx, source_idx] -= k_source / (dz_plastic_m * dz_metal_m)
+                A[target_idx, source_idx-Nx_source*Ny_source] = k_source / (dz_plastic_m * dz_metal_m)
+            
+    return A, b

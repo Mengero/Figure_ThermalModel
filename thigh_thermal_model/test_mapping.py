@@ -2,11 +2,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from thermal_utils import read_geo_file
 from thermal_parameters import get_parameters, ThermalParameters
-from thermal_analysis import create_layer_coordinates, LayerMapping, create_combined_matrix
+from thermal_analysis import create_layer_coordinates, LayerMapping, create_combined_matrix, update_matrix_with_geometries, update_matrix_with_boundary_conditions, preconditioner
 from boundary_conditions import ElementBoundary, BoundaryCondition
 from typing import List, Tuple
 import json5
 import scipy.sparse
+from scipy.sparse import diags
+from scipy.sparse.linalg import gmres, LinearOperator
+from scipy.linalg import norm  # Import the norm function from scipy.linalg
 
 def analyze_layer(boundary, coords, layer_name):
     """Analyze and print heat source information for a layer."""
@@ -431,60 +434,121 @@ def main():
     # Adjust layout
     plt.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust layout to prevent title overlap
     
-    # Show the plots
+    # Show the plots6
     plt.show()
     
     # Initialize matrices using functions from thermal_analysis.py
     print("\nInitializing matrices...")
     
     # Create combined matrix for all layers
-    A = create_combined_matrix(params)
-    
+    A = create_combined_matrix(metal_coords, plastic_coords, params)
+        
     # Initialize vectors for each layer
-    b_metal = np.zeros(metal_coords.Nx * metal_coords.Ny * metal_coords.Nz)
-    b_plastic = np.zeros(plastic_coords.Nx * plastic_coords.Ny * plastic_coords.Nz)
-    b = np.concatenate([b_metal, b_plastic])
+    total_elements = metal_coords.Nx * metal_coords.Ny * metal_coords.Nz + plastic_coords.Nx * plastic_coords.Ny * plastic_coords.Nz
+    b = np.zeros(total_elements)
     
-    # Update matrices and vectors with boundary conditions
-    update_matrix_with_boundary_conditions(A[:b_metal.size, :b_metal.size], b_metal, metal_coords, metal_boundary)
-    update_matrix_with_boundary_conditions(A[b_metal.size:, b_metal.size:], b_plastic, plastic_coords, plastic_boundary)
-    b = np.concatenate([b_metal, b_plastic])
+    print("\nUpdating matrix with geometry data...")
+    A_updated_GEO = update_matrix_with_geometries(A, metal_coords, plastic_coords, params)
     
-    # Print matrix statistics
-    print("\nMatrix Statistics:")
-    print(f"Metal layer - Matrix shape: {A[:b_metal.size, :b_metal.size].shape}")
-    print(f"Metal layer - Non-zero elements: {A[:b_metal.size, :b_metal.size].nnz}")
-    print(f"Plastic layer - Matrix shape: {A[b_metal.size:, b_metal.size:].shape}")
-    print(f"Plastic layer - Non-zero elements: {A[b_metal.size:, b_metal.size:].nnz}")
-    print(f"Combined system - Matrix shape: {A.shape}")
-    print(f"Combined system - Non-zero elements: {A.nnz}")
+    print("\nUpdating matrix with boundary conditions...")
+    A_updated_BC, b_updated_BC = update_matrix_with_boundary_conditions(A_updated_GEO, b, metal_coords, plastic_coords, params, metal_boundary, plastic_boundary, mapping)
     
-    # Save matrices for inspection
-    print("\nSaving matrices for inspection...")
-    np.save("metal_matrix_A.npy", A[:b_metal.size, :b_metal.size].toarray())
-    np.save("metal_vector_b.npy", b_metal)
-    np.save("plastic_matrix_A.npy", A[b_metal.size:, b_metal.size:].toarray())
-    np.save("plastic_vector_b.npy", b_plastic)
-    np.save("combined_matrix_A.npy", A.toarray())
-    np.save("combined_vector_b.npy", b)
-    print("Matrices saved to disk.")
-
-def update_matrix_with_boundary_conditions(A, b, coords, boundary):
-    """Update matrix A and vector b with boundary conditions"""
-    Nx, Ny, Nz = coords.Nx, coords.Ny, coords.Nz
-    dx, dy, dz = coords.dx, coords.dy, coords.dz
+    # Convert to sparse matrix for solver
+    A_final = scipy.sparse.csr_matrix(A_updated_BC)
     
-    # Get boundary conditions
-    boundary_conditions = boundary.boundary_conditions
+    print("\nSolving system...")
+    # Initial guess - all zeros
+    u0 = np.ones_like(b_updated_BC)*30
     
-    # Update matrix and vector based on boundary conditions
-    for i in range(Nx):
-        for j in range(Ny):
-            for k in range(Nz):
-                idx = i + j*Nx + k*Nx*Ny
-                bc = boundary_conditions.get(idx, BoundaryCondition.INNER)
-                
-                
-
+    # Set relative tolerance
+    rel_tol = 1e-6
+    
+    # Callback function to monitor convergence
+    def callback(pr_norm):
+        print(f"Current residual norm: {pr_norm}", end="\r")
+    
+    # Create preconditioner
+    M = preconditioner(A_updated_BC)
+    
+    # Solve system using GMRES
+    u, exitCode = gmres(A_updated_BC, b_updated_BC, M=M, x0=u0, atol=rel_tol, callback=callback, callback_type='pr_norm')
+    # Calculate and print residual norm
+    residual = A_final @ u - b_updated_BC
+    residual_norm = np.linalg.norm(residual)
+    print(f"\nFinal residual norm: {residual_norm:.2e}")
+    if exitCode == 0:
+        print("\nSolution converged successfully!")
+    else:
+        print(f"\nWarning: Solution did not converge, exit code: {exitCode}")
+        
+    # Print temperature results for heat source regions
+    print("\nHeat Source Region Temperatures:")
+    print("-" * 50)
+    
+    # Process metal layer heat sources
+    metal_total = metal_coords.Nx * metal_coords.Ny * metal_coords.Nz
+    for source_id, elements in metal_boundary.heat_source_elements.items():
+        if not elements:
+            continue
+            
+        temps = u[list(elements)]
+        print(f"\nMetal Layer - Heat Source '{source_id}':")
+        print(f"Average Temperature: {np.mean(temps):.2f} C")
+        print(f"Min Temperature: {np.min(temps):.2f} C")
+        print(f"Max Temperature: {np.max(temps):.2f} C")
+    
+    # Process plastic layer heat sources
+    for source_id, elements in plastic_boundary.heat_source_elements.items():
+        if not elements:
+            continue
+            
+        # Adjust indices for plastic layer elements
+        plastic_elements = [idx + metal_total for idx in elements]
+        temps = u[plastic_elements]
+        print(f"\nPlastic Layer - Heat Source '{source_id}':")
+        print(f"Average Temperature: {np.mean(temps):.2f} C")
+        print(f"Min Temperature: {np.min(temps):.2f} C")
+        print(f"Max Temperature: {np.max(temps):.2f} C")
+                            
+    # Plot temperature distributions on top and bottom surfaces
+    print("\nGenerating temperature distribution plots...")
+    
+    # Get dimensions
+    metal_nx, metal_ny = metal_coords.Nx, metal_coords.Ny
+    plastic_nx, plastic_ny = plastic_coords.Nx, plastic_coords.Ny
+    
+    # Create figure with four subplots
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(12, 10))
+    
+    # Plot metal layer bottom surface (k=0)
+    metal_bottom = u[:metal_nx*metal_ny].reshape(metal_ny, metal_nx)
+    im1 = ax1.imshow(metal_bottom, cmap='jet', interpolation='nearest', origin='lower')
+    ax1.set_title('Metal Layer Bottom Surface Temperature (°C)')
+    plt.colorbar(im1, ax=ax1)
+    
+    # Plot metal layer top surface (k=Nz-1)
+    metal_top_start = metal_nx*metal_ny*(metal_coords.Nz-1)
+    metal_top = u[metal_top_start:metal_top_start + metal_nx*metal_ny].reshape(metal_ny, metal_nx)
+    im2 = ax2.imshow(metal_top, cmap='jet', interpolation='nearest', origin='lower')
+    ax2.set_title('Metal Layer Top Surface Temperature (°C)')
+    plt.colorbar(im2, ax=ax2)
+    
+    # Plot plastic layer bottom surface (k=0)
+    plastic_bottom_start = metal_total
+    plastic_bottom = u[plastic_bottom_start:plastic_bottom_start + plastic_nx*plastic_ny].reshape(plastic_ny, plastic_nx)
+    im3 = ax3.imshow(plastic_bottom, cmap='jet', interpolation='nearest', origin='lower')
+    ax3.set_title('Plastic Layer Bottom Surface Temperature (°C)')
+    plt.colorbar(im3, ax=ax3)
+    
+    # Plot plastic layer top surface (k=Nz-1)
+    plastic_top_start = metal_total + plastic_nx*plastic_ny*(plastic_coords.Nz-1)
+    plastic_top = u[plastic_top_start:plastic_top_start + plastic_nx*plastic_ny].reshape(plastic_ny, plastic_nx)
+    im4 = ax4.imshow(plastic_top, cmap='jet', interpolation='nearest', origin='lower')
+    ax4.set_title('Plastic Layer Top Surface Temperature (°C)')
+    plt.colorbar(im4, ax=ax4)
+    
+    plt.tight_layout()
+    plt.show()
+    
 if __name__ == "__main__":
     main() 
