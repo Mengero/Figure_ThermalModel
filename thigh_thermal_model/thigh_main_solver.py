@@ -465,7 +465,7 @@ def main():
     
     # Callback function to monitor convergence
     def callback(pr_norm):
-        print(f"Current residual norm: {pr_norm}", end="\r")
+        print(f"Current residual norm: {pr_norm:.4e}", end="\r")
     
     # Create preconditioner
     M = preconditioner(A_updated_BC)
