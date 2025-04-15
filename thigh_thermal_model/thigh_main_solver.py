@@ -10,6 +10,7 @@ import scipy.sparse
 from scipy.sparse import diags
 from scipy.sparse.linalg import gmres, LinearOperator
 from scipy.linalg import norm  # Import the norm function from scipy.linalg
+import time
 
 def analyze_layer(boundary, coords, layer_name):
     """Analyze and print heat source information for a layer."""
@@ -471,7 +472,10 @@ def main():
     M = preconditioner(A_updated_BC)
     
     # Solve system using GMRES
+    start_time = time.time()
     u, exitCode = gmres(A_updated_BC, b_updated_BC, M=M, x0=u0, atol=rel_tol, callback=callback, callback_type='pr_norm')
+    solve_time = time.time() - start_time
+    print(f"\nSolve time: {solve_time:.2f} seconds")
     # Calculate and print residual norm
     residual = A_final @ u - b_updated_BC
     residual_norm = np.linalg.norm(residual)
