@@ -1,0 +1,49 @@
+Thermal Analysis Results
+==================================================
+
+Solve time: 426.45 seconds
+Final residual norm: 1.20e+03
+Solution converged successfully!
+
+Heat Source Region Temperatures:
+--------------------------------------------------
+
+Metal Layer - Heat Source 'metal_ambient_convection1':
+Average Temperature: 67.34 C
+Min Temperature: 60.58 C
+Max Temperature: 81.84 C
+
+Metal Layer - Heat Source 'metal_ambient_convection2':
+Average Temperature: 67.35 C
+Min Temperature: 60.58 C
+Max Temperature: 81.94 C
+
+Metal Layer - Heat Source 'hipx_mech':
+Average Temperature: 79.59 C
+Min Temperature: 74.49 C
+Max Temperature: 81.94 C
+
+Metal Layer - Heat Source 'hipz_elec':
+Average Temperature: 72.08 C
+Min Temperature: 68.48 C
+Max Temperature: 74.06 C
+
+Metal Layer - Heat Source 'hipz_mech':
+Average Temperature: 69.18 C
+Min Temperature: 66.66 C
+Max Temperature: 70.31 C
+
+Metal Layer - Heat Source 'knee_mech':
+Average Temperature: 71.77 C
+Min Temperature: 67.70 C
+Max Temperature: 73.86 C
+
+Plastic Layer - Heat Source 'plastic_ambient_convection1':
+Average Temperature: 41.34 C
+Min Temperature: 37.38 C
+Max Temperature: 76.91 C
+
+Plastic Layer - Heat Source 'plastic_ambient_convection2':
+Average Temperature: 41.45 C
+Min Temperature: 37.62 C
+Max Temperature: 75.10 C

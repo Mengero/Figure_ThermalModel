@@ -817,6 +817,7 @@ def update_matrix_with_boundary_conditions(A, b, metal_coords, plastic_coords, p
                 A[target_idx, target_idx] -= k_kneeACT / (L_kneeACT * dz_metal_m)
             
         else:
+            R_contact = params.mappings_by_id[mapping_id]["contact_resistance"]
             # Handle standard mappings
             for source_idx, target_idx in zip(mapping.region_mappings[source_key],
                                                              mapping.region_mappings[target_key]):
@@ -824,33 +825,23 @@ def update_matrix_with_boundary_conditions(A, b, metal_coords, plastic_coords, p
                 # Adjust target_idx if it's in plastic layer
                 if target_region == "plastic_layer":
                     target_idx += total_metal
-                    k_target = k_plastic
-                    Nx_target = Nx_plastic
-                    Ny_target = Ny_plastic
-                # else:
-                #     k_target = k_metal
-                #     Nx_target = Nx_metal
-                #     Ny_target = Ny_metal
+                    dz_target = dz_plastic_m
+                    dz_source = dz_metal_m
                     
-                # # Adjust source_idx if it's in plastic layer  
-                # if source_region == "plastic_layer":
-                #     source_idx += total_metal
-                #     k_source = k_plastic
-                #     Nx_source = Nx_plastic
-                #     Ny_source = Ny_plastic
-                # else:
-                #     k_source = k_metal
-                #     Nx_source = Nx_metal
-                #     Ny_source = Ny_metal
+                # Adjust source_idx if it's in plastic layer  
+                if source_region == "plastic_layer":
+                    source_idx += total_metal
+                    dz_target = dz_metal_m
+                    dz_source = dz_plastic_m
                 
-                # # Set coupling terms
-                # A[source_idx, target_idx] -= k_target / (dz_plastic_m * dz_metal_m)
-                # A[source_idx, target_idx-Nx_target*Ny_target] = k_target / (dz_plastic_m * dz_metal_m)
-                # A[target_idx, source_idx] -= k_source / (dz_plastic_m * dz_metal_m)
-                # A[target_idx, source_idx-Nx_source*Ny_source] = k_source / (dz_plastic_m * dz_metal_m)
+                # Set coupling terms
+                A[source_idx, source_idx] -= 1 / (R_contact * dz_source)
+                A[source_idx, target_idx] = 1 / (R_contact * dz_source)
+                A[target_idx, target_idx] -= 1 / (R_contact * dz_target)
+                A[target_idx, source_idx] = 1 / (R_contact * dz_target)
                 
-                A[target_idx, :] = 0
-                A[target_idx, target_idx] = 1
-                b[target_idx] = 60
+                # A[target_idx, :] = 0
+                # A[target_idx, target_idx] = 1
+                # b[target_idx] = 60
 
     return A, b

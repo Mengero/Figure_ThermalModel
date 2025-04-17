@@ -489,6 +489,9 @@ def main():
     print("\nHeat Source Region Temperatures:")
     print("-" * 50)
     
+    # Create a list to store all output lines
+    output_lines = []
+    
     # Process metal layer heat sources
     metal_total = metal_coords.Nx * metal_coords.Ny * metal_coords.Nz
     for source_id, elements in metal_boundary.heat_source_elements.items():
@@ -496,10 +499,12 @@ def main():
             continue
             
         temps = u[list(elements)]
-        print(f"\nMetal Layer - Heat Source '{source_id}':")
-        print(f"Average Temperature: {np.mean(temps):.2f} C")
-        print(f"Min Temperature: {np.min(temps):.2f} C")
-        print(f"Max Temperature: {np.max(temps):.2f} C")
+        output = f"\nMetal Layer - Heat Source '{source_id}':\n"
+        output += f"Average Temperature: {np.mean(temps):.2f} C\n"
+        output += f"Min Temperature: {np.min(temps):.2f} C\n"
+        output += f"Max Temperature: {np.max(temps):.2f} C"
+        print(output)
+        output_lines.append(output)
     
     # Process plastic layer heat sources
     for source_id, elements in plastic_boundary.heat_source_elements.items():
@@ -509,10 +514,29 @@ def main():
         # Adjust indices for plastic layer elements
         plastic_elements = [idx + metal_total for idx in elements]
         temps = u[plastic_elements]
-        print(f"\nPlastic Layer - Heat Source '{source_id}':")
-        print(f"Average Temperature: {np.mean(temps):.2f} C")
-        print(f"Min Temperature: {np.min(temps):.2f} C")
-        print(f"Max Temperature: {np.max(temps):.2f} C")
+        output = f"\nPlastic Layer - Heat Source '{source_id}':\n"
+        output += f"Average Temperature: {np.mean(temps):.2f} C\n"
+        output += f"Min Temperature: {np.min(temps):.2f} C\n"
+        output += f"Max Temperature: {np.max(temps):.2f} C"
+        print(output)
+        output_lines.append(output)
+    
+    # Save results to file
+    with open('thermal_results.txt', 'w') as f:
+        f.write("Thermal Analysis Results\n")
+        f.write("=" * 50 + "\n\n")
+        f.write(f"Solve time: {solve_time:.2f} seconds\n")
+        f.write(f"Final residual norm: {residual_norm:.2e}\n")
+        if exitCode == 0:
+            f.write("Solution converged successfully!\n")
+        else:
+            f.write(f"Warning: Solution did not converge, exit code: {exitCode}\n")
+        f.write("\nHeat Source Region Temperatures:\n")
+        f.write("-" * 50 + "\n")
+        for line in output_lines:
+            f.write(line + "\n")
+    
+    print("\nResults have been saved to 'thermal_results.txt'")
                             
     # Plot temperature distributions on top and bottom surfaces
     print("\nGenerating temperature distribution plots...")

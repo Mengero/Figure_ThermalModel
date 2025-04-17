@@ -38,7 +38,7 @@
           "id": "metal_ambient_convection1",
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
-          "ambient_temperature": 30.0,
+          "ambient_temperature": 45.0,
           "centroid": {
             "x": 225.0,
             "y": 185.0,
@@ -54,7 +54,7 @@
           "id": "metal_ambient_convection2",
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
-          "ambient_temperature": 30.0,
+          "ambient_temperature": 45.0,
           "centroid": {
             "x": 225.0,
             "y": 185.0,
@@ -168,7 +168,7 @@
         "id": "plastic_ambient_convection2",
         "type": "CONVECTIVE",
         "heat_transfer_coefficient": 7.5,
-        "ambient_temperature": 30.0,
+        "ambient_temperature": 45.0,
         "centroid": {
           "x": 230.0,
           "y": 280.0,
@@ -188,6 +188,7 @@
       "type": "CONDUCTIVE",
       "thermal_conductivity": 120,
       "L": 85, // distance between the two sides of the actuator, mm
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -218,6 +219,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE1",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -248,6 +250,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE2",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -278,6 +281,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE3",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -308,6 +312,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE4",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -338,6 +343,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE5",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -368,6 +374,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE6",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -398,6 +405,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE7",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -428,6 +436,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE8",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -458,6 +467,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE9",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -488,6 +498,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE10",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -518,6 +529,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE11",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -548,6 +560,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE12",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -578,6 +591,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE13",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -608,6 +622,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE14",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -638,6 +653,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE15",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -668,6 +684,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE16",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
@@ -698,6 +715,7 @@
     {
       "id": "METAL_PLASTIC_INTERFACE_LOWERBODY",
       "type": "INTERFACE",
+      "contact_resistance": 1e-4,
       "source": {
         "region_id": "metal_layer",
         "centroid": {
