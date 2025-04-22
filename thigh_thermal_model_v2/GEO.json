@@ -1,0 +1,180 @@
+{
+  // length units: mm
+  // temperature units: degrees C
+  // power units: W
+  // thermal conductivity units: W/mK
+  // density units: kg/m^3
+  // specific heat units: J/kgK
+  "environment": {
+    "ambient_temperature": 30.0, // ambient temperature, degrees C
+    "heat_transfer_coefficient": 7.5 // natural convective heat transfer coefficient, W/m^2K
+  },
+  "initial_conditions": {
+    "temperature": 30.0 // initial temperature, degrees C
+  },
+  "regions": [
+    {
+      "id": "metal_layer",
+      "layer_number": 1,
+      "name": "metal",
+      "shape": "rectangle",
+      "centroid": {
+        "x": 275.0,
+        "y": 185.0,
+        "z": 1.0
+      },
+      "dimensions": {
+        "Lx": 450,
+        "Ly": 370,
+        "Lz": 2.0
+      },
+      "material_properties": {
+        "thermal_conductivity": 100,
+        "density": 2710,
+        "specific_heat": 900
+      },
+      "heat_sources": [
+        {
+          "id": "metal_ambient_convection1",
+          "type": "CONVECTIVE",
+          "heat_transfer_coefficient": 7.5,
+          "ambient_temperature": 30.0,
+          "plastic_thickness": 2.0,
+          "plastic_thermal_conductivity": 0.23,
+          "air_gap_thickness": 20.0,
+          "air_thermal_conductivity": 0.025,
+          "centroid": {
+            "x": 225.0,
+            "y": 185.0,
+            "z": 2.0
+          },
+          "dimensions": {
+            "Lx": 450.0,
+            "Ly": 370.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "metal_ambient_convection2",
+          "type": "CONVECTIVE",
+          "heat_transfer_coefficient": 7.5,
+          "ambient_temperature": 30.0,
+          "plastic_thickness": 2.0,
+          "plastic_thermal_conductivity": 0.23,
+          "air_gap_thickness": 20.0,
+          "air_thermal_conductivity": 0.025,
+          "centroid": {
+            "x": 225.0,
+            "y": 185.0,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 450.0,
+            "Ly": 370.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipx_mech",
+          "type": "CONST_Qflux",
+          "power": 7.0,
+          "centroid": {
+            "x": 370.0,
+            "y": 185.0,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 3.0,
+            "Ly": 220.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipz_elec",
+          "type": "CONST_Qflux",
+          "power": 1.5,
+          "centroid": {
+            "x": 315.0,
+            "y": 185.0,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 3.0,
+            "Ly": 240.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "hipz_mech",
+          "type": "CONST_Qflux",
+          "power": 1.5,
+          "centroid": {
+            "x": 250.0,
+            "y": 185.0,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 1.5,
+            "Ly": 225.0,
+            "Lz": 0.0
+          }
+        },
+        {
+          "id": "knee_mech",
+          "type": "CONST_Qflux",
+          "power": 27.0,
+          "centroid": {
+            "x": 42.65,
+            "y": 263.55,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 70.0,
+            "Ly": 70.0,
+            "Lz": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "mappings": [
+    {
+      "id": "KNEE_ACTUATOR_CONNECTION",
+      "type": "CONDUCTIVE",
+      "thermal_conductivity": 120,
+      "L": 85, // distance between the two sides of the actuator, mm
+      "contact_resistance": 1e-4,
+      "source": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 42.65,
+            "y": 263.55,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 77.0,
+            "Ly": 77.0,
+            "Lz": 0.0
+          }
+      },
+      "target": {
+        "region_id": "metal_layer",
+        "centroid": {
+            "x": 42.65,
+            "y": 106.45,
+            "z": 0.0
+          },
+          "dimensions": {
+            "Lx": 77.1,
+            "Ly": 77.1,
+            "Lz": 0.0
+          }
+      }
+    }
+  ],
+  "mesh_settings": {
+    "Nx": 40,
+    "Ny": 40,
+    "Nz": 4
+  }
+}
