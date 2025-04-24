@@ -334,14 +334,13 @@ def update_matrix_with_boundary_conditions(A, b, metal_coords, params: ThermalPa
             if heat_source["type"] == "CONVECTIVE":
                 htc = heat_source["heat_transfer_coefficient"]
                 T_inf = heat_source["ambient_temperature"]
-                k_air = heat_source["air_thermal_conductivity"]
-                t_air = heat_source["air_gap_thickness"]
+                htc_air_gap = heat_source["internal_air_heat_transfer_coefficient"]
                 k_plastic = heat_source["plastic_thermal_conductivity"]
-                t_plastic = heat_source["plastic_thickness"]
+                t_plastic = heat_source["plastic_thickness"]*1e-3
                 
                 # Update diagonal term
-                A[idx, idx] -= (1/(1/htc + t_air/k_air + t_plastic/k_plastic)) / dz_metal_m
-                b[idx] = (1/(1/htc + t_air/k_air + t_plastic/k_plastic)) / dz_metal_m * T_inf
+                A[idx, idx] -= (1/(1/htc + t_plastic/k_plastic + 1/htc_air_gap)) / dz_metal_m
+                b[idx] = -(1/(1/htc + t_plastic/k_plastic + 1/htc_air_gap)) / dz_metal_m * T_inf
                 
             elif heat_source["type"] == "CONST_Qflux":
                 q = heat_source["power"]

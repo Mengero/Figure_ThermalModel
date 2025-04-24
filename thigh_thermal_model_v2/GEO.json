@@ -41,8 +41,7 @@
           "ambient_temperature": 30.0,
           "plastic_thickness": 2.0,
           "plastic_thermal_conductivity": 0.23,
-          "air_gap_thickness": 20.0,
-          "air_thermal_conductivity": 0.025,
+          "internal_air_heat_transfer_coefficient": 7.5,
           "centroid": {
             "x": 225.0,
             "y": 185.0,
@@ -61,8 +60,7 @@
           "ambient_temperature": 30.0,
           "plastic_thickness": 2.0,
           "plastic_thermal_conductivity": 0.23,
-          "air_gap_thickness": 20.0,
-          "air_thermal_conductivity": 0.025,
+          "internal_air_heat_transfer_coefficient": 7.5,
           "centroid": {
             "x": 225.0,
             "y": 185.0,
