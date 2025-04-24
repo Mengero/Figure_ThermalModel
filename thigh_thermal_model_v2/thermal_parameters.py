@@ -495,7 +495,7 @@ class ThermalParameters:
                             z_min - tolerance <= z <= z_max + tolerance):
                             
                             # For convective and const_qflux elements, they must be on the correct surface
-                            if source_type == "CONVECTIVE" or source_type == "CONST_Qflux":
+                            if source_type == "CONVECTIVE" or source_type == "CONST_Qflux" or source_type == "CONVECTIVE_AIRGAP":
                                 # Check if this is a surface element (top or bottom surface)
                                 if not (k == 0 or k == coords.Nz - 1):
                                     continue
@@ -516,7 +516,7 @@ class ThermalParameters:
                                 prev_type = prev_source.get('type', 'UNKNOWN')
                                 
                                 # Only warn if not reassigning from convective to constant Q flux
-                                if not (prev_type == "CONVECTIVE" and source_type == "CONST_Qflux"):
+                                if not ((prev_type == "CONVECTIVE" and source_type == "CONST_Qflux") or (prev_type == "CONVECTIVE_AIRGAP" and source_type == "CONST_Qflux")):
                                     print(f"WARNING: Element {global_idx} is assigned to multiple heat sources!")
                                     print(f"  Previously assigned to: {prev_sources}")
                                     print(f"  Now being assigned to: {source_id}")
@@ -528,28 +528,35 @@ class ThermalParameters:
         
         return heat_source_elements
     
-    def get_heat_source_by_type(self, region_id: str, source_type: str) -> List[Dict[str, Any]]:
+    def get_heat_source_by_type(self, source_type: str) -> Dict[str, Any]:
         """
-        Get heat sources of a specific type for a region.
+        Get heat source parameters for a specific type.
         
         Args:
-            region_id: ID of the region
-            source_type: Type of heat source (e.g., "CONVECTIVE", "CONST_Qflux")
+            source_type: Type of heat source (e.g., "CONVECTIVE", "CONST_Qflux", "CONVECTIVE_AIRGAP")
             
         Returns:
-            List of heat sources matching the type
+            Dictionary containing heat source parameters
         """
-        sources = []
-        region = self.get_region_by_id(region_id)
-        
-        if not region or "heat_sources" not in region:
-            return sources
-        
-        for source in region["heat_sources"]:
-            if source.get('type', '').upper() == source_type.upper():
-                sources.append(source)
-        
-        return sources
+        if source_type.upper() == "CONVECTIVE":
+            return {
+                "h": self.h_conv,
+                "T_inf": self.T_inf,
+                "elements": self.heat_source_elements["CONVECTIVE"]
+            }
+        elif source_type.upper() == "CONST_QFLUX":
+            return {
+                "q_flux": self.q_flux,
+                "elements": self.heat_source_elements["CONST_Qflux"]
+            }
+        elif source_type.upper() == "CONVECTIVE_AIRGAP":
+            return {
+                "h": self.h_conv_airgap,
+                "T_inf": self.T_inf_airgap,
+                "elements": self.heat_source_elements["CONVECTIVE_AIRGAP"]
+            }
+        else:
+            raise ValueError(f"Unknown heat source type: {source_type}")
     
     def get_all_heat_sources_by_type(self, source_type: str) -> List[Dict[str, Any]]:
         """
@@ -564,7 +571,7 @@ class ThermalParameters:
         all_sources = []
         
         for region_id in self.get_region_ids():
-            sources = self.get_heat_source_by_type(region_id, source_type)
+            sources = self.get_heat_source_by_type(source_type)
             for source in sources:
                 source_copy = source.copy()
                 source_copy["region_id"] = region_id

@@ -242,13 +242,14 @@ def update_matrix_with_geometries(A, metal_coords, params: ThermalParameters):
                         A[idx, idx - Nx_metal] = 1/dy_metal_m**2
                         
                     elif j in [0, Ny_metal-1] and k in [0, Nz_metal-1]:  # Edge parallel to x-axis
-                        A[idx, idx] -= 1/dx_metal_m**2
+                        A[idx, idx] -= 1/dx_metal_m**2 + 1/dy_metal_m**2
                         
                         if j == 0:
                             A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                            A[idx, idx + (Nx_metal-1)*Ny_metal] = 1/dy_metal_m**2
                         else:
                             A[idx, idx - Nx_metal] = 1/dy_metal_m**2
-                            
+                            A[idx, idx - (Nx_metal-1)*Ny_metal] = 1/dy_metal_m**2
                         if k == 0:
                             A[idx, idx + Nx_metal*Ny_metal] = 1/dz_metal_m**2
                         else:
@@ -275,7 +276,7 @@ def update_matrix_with_geometries(A, metal_coords, params: ThermalParameters):
                             A[idx, idx - 1] = 1/dx_metal_m**2
                             
                     elif j in [0, Ny_metal-1]:  # Surface parallel to x-z plane
-                        A[idx, idx] -= 1/dx_metal_m**2 + 1/dz_metal_m**2
+                        A[idx, idx] -= 1/dx_metal_m**2 + 1/dz_metal_m**2 + 1/dy_metal_m**2
                         
                         A[idx, idx + 1] = 1/dx_metal_m**2
                         A[idx, idx - 1] = 1/dx_metal_m**2
@@ -283,8 +284,10 @@ def update_matrix_with_geometries(A, metal_coords, params: ThermalParameters):
                         A[idx, idx - Nx_metal*Ny_metal] = 1/dz_metal_m**2
                         if j == 0:
                             A[idx, idx + Nx_metal] = 1/dy_metal_m**2
+                            A[idx, idx + (Nx_metal-1)*Ny_metal] = 1/dy_metal_m**2
                         else:
                             A[idx, idx - Nx_metal] = 1/dy_metal_m**2
+                            A[idx, idx - (Nx_metal-1)*Ny_metal] = 1/dy_metal_m**2
                             
                     elif k in [0, Nz_metal-1]:  # Surface parallel to x-y plane
                         A[idx, idx] -= 1/dx_metal_m**2 + 1/dy_metal_m**2
@@ -302,7 +305,7 @@ def update_matrix_with_geometries(A, metal_coords, params: ThermalParameters):
                 
     return A
 
-def update_matrix_with_boundary_conditions(A, b, metal_coords, params: ThermalParameters, metal_boundary, mapping):
+def update_matrix_with_boundary_conditions(A, b, metal_coords, params: ThermalParameters, metal_boundary, mapping):# 
     """Update matrix A based on boundary conditions for metal layer"""
     # Metal layer dimensions
     Nx_metal, Ny_metal, Nz_metal = metal_coords.Nx, metal_coords.Ny, metal_coords.Nz
@@ -331,7 +334,7 @@ def update_matrix_with_boundary_conditions(A, b, metal_coords, params: ThermalPa
             i = remainder % Nx_metal
             
             # thermal resistance of air layer and plastic layer added to here
-            if heat_source["type"] == "CONVECTIVE":
+            if heat_source["type"] == "CONVECTIVE_AIRGAP":
                 htc = heat_source["heat_transfer_coefficient"]
                 T_inf = heat_source["ambient_temperature"]
                 htc_air_gap = heat_source["internal_air_heat_transfer_coefficient"]
@@ -341,6 +344,14 @@ def update_matrix_with_boundary_conditions(A, b, metal_coords, params: ThermalPa
                 # Update diagonal term
                 A[idx, idx] -= (1/(1/htc + t_plastic/k_plastic + 1/htc_air_gap)) / dz_metal_m
                 b[idx] = -(1/(1/htc + t_plastic/k_plastic + 1/htc_air_gap)) / dz_metal_m * T_inf
+                
+            elif heat_source["type"] == "CONVECTIVE":
+                htc = heat_source["heat_transfer_coefficient"]
+                T_inf = heat_source["ambient_temperature"]
+                k_plastic = heat_source["plastic_thermal_conductivity"]
+                t_plastic = heat_source["plastic_thickness"]*1e-3
+                A[idx, idx] -= (1/(1/htc + t_plastic/k_plastic)) / dz_metal_m
+                b[idx] = -(1/(1/htc + t_plastic/k_plastic)) / dz_metal_m * T_inf
                 
             elif heat_source["type"] == "CONST_Qflux":
                 q = heat_source["power"]

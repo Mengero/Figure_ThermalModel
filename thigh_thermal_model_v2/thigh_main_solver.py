@@ -274,7 +274,7 @@ def get_mapped_elements(coords, mapping, mapping_type="metal_to_plastic_source")
     
     return list(mapped_elements)
 
-def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, ax=None):
+def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, ax=None, figsize=(12, 8)):
     """
     Plot the boundary conditions for a specific surface of a layer.
     
@@ -284,9 +284,10 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
         title: Plot title
         surface_level: Z-index of the surface to plot (0 for bottom, Nz-1 for top)
         ax: Matplotlib axis (optional)
+        figsize: Tuple of (width, height) in inches for the figure size
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 10))
+        fig, ax = plt.subplots(figsize=figsize)
     
     print(f"\nPlotting boundary conditions for {title} at z-level {surface_level}")
     print(f"Grid dimensions: Nx={coords.Nx}, Ny={coords.Ny}, Nz={coords.Nz}")
@@ -317,6 +318,7 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
         BoundaryCondition.MAPPED: 'red',
         BoundaryCondition.CONVECTIVE: 'green',
         BoundaryCondition.CONST_Qflux: 'orange',
+        BoundaryCondition.CONVECTIVE_AIRGAP: 'turquoise',
         "MAPPED_CONST_QFLUX": 'purple',  # Special color for combined MAPPED and CONST_Qflux
         "CONST_QFLUX_CONVECTIVE": 'pink'  # Special color for combined CONST_Qflux and CONVECTIVE
     }
@@ -338,6 +340,10 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
                         color = bc_colors["CONST_QFLUX_CONVECTIVE"]
                     elif BoundaryCondition.MAPPED in bc:
                         color = bc_colors[BoundaryCondition.MAPPED]  # MAPPED takes priority
+                    elif BoundaryCondition.CONVECTIVE_AIRGAP in bc:
+                        color = bc_colors[BoundaryCondition.CONVECTIVE_AIRGAP]
+                    elif BoundaryCondition.CONVECTIVE in bc:
+                        color = bc_colors[BoundaryCondition.CONVECTIVE]
                     else:
                         color = bc_colors[bc[0]]
                 else:
@@ -356,9 +362,9 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
                                    facecolor=color, alpha=0.3, edgecolor=color, linewidth=1)
                 ax.add_patch(rect)
     
-    ax.set_title(title, fontsize=12, pad=10)
-    ax.set_xlabel('x (mm)', fontsize=10)
-    ax.set_ylabel('y (mm)', fontsize=10)
+    ax.set_title(title, fontsize=14, pad=15)
+    ax.set_xlabel('x (mm)', fontsize=12)
+    ax.set_ylabel('y (mm)', fontsize=12)
     ax.set_aspect('equal')
     
     # Set equal limits for x and y
@@ -370,12 +376,15 @@ def plot_boundary_conditions(coords, boundary_conditions, title, surface_level, 
     ax.set_xlim(x_center - max_range/2, x_center + max_range/2)
     ax.set_ylim(y_center - max_range/2, y_center + max_range/2)
     
-    # Add legend
+    # Add legend with larger font size
     legend_elements = [
         plt.Rectangle((0, 0), 1, 1, facecolor=color, alpha=0.3, label=bc)
         for bc, color in bc_colors.items()
     ]
-    ax.legend(handles=legend_elements, loc='upper right')
+    ax.legend(handles=legend_elements, loc='upper right', fontsize=10)
+    
+    # Adjust layout to prevent title and legend overlap
+    plt.tight_layout()
     
     return ax
 
@@ -416,19 +425,19 @@ def main():
     analyze_layer(metal_boundary, metal_coords, "Metal")
                 
     # Create figure with subplots (2 rows, 1 column)
-    fig, axes = plt.subplots(2, 1, figsize=(10, 20))
+    fig, axes = plt.subplots(2, 1, figsize=(12, 16))
     
     # Plot boundary conditions for z=0 (bottom surface)
-    plot_boundary_conditions(metal_coords, metal_boundary_conditions, "Metal Layer Boundary Conditions (z=0)", 0, axes[0])
+    plot_boundary_conditions(metal_coords, metal_boundary_conditions, "Metal Layer Boundary Conditions (z=0)", 0, axes[0], figsize=(12, 8))
     
     # Plot boundary conditions for z=Nz-1 (top surface)
-    plot_boundary_conditions(metal_coords, metal_boundary_conditions, f"Metal Layer Boundary Conditions (z={metal_coords.Nz-1})", metal_coords.Nz - 1, axes[1])
+    plot_boundary_conditions(metal_coords, metal_boundary_conditions, f"Metal Layer Boundary Conditions (z={metal_coords.Nz-1})", metal_coords.Nz - 1, axes[1], figsize=(12, 8))
     
     # Set overall figure title
-    fig.suptitle("Boundary Condition Visualization (Bottom and Top Surfaces)", fontsize=16)
+    fig.suptitle("Boundary Condition Visualization (Bottom and Top Surfaces)", fontsize=16, y=0.95)
     
-    # Adjust layout
-    plt.tight_layout(rect=[0, 0, 1, 0.96]) # Adjust layout to prevent title overlap
+    # Adjust layout to prevent title overlap
+    plt.tight_layout(rect=[0, 0, 1, 0.95]) # Adjust layout to prevent title overlap
     
     # Show the plots
     plt.show()

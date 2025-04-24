@@ -10,6 +10,7 @@ class BoundaryCondition:
     MAPPED = "mapped"        # Surface element that is part of a mapping
     CONVECTIVE = "convective" # Surface element with convective heat transfer
     CONST_Qflux = "const_qflux" # Surface element with constant heat flux
+    CONVECTIVE_AIRGAP = "convective_airgap" # Surface element with convective heat transfer through an air gap
 
 class ElementBoundary:
     def __init__(self, coords: ElementCoordinates, mapping: LayerMapping, layer_id: str, params: ThermalParameters = None):
@@ -91,7 +92,7 @@ class ElementBoundary:
                             return True, source_id, source_type
                         break
         
-        # Then check for CONVECTIVE heat sources
+        # Then check for CONVECTIVE and CONVECTIVE_AIRGAP heat sources
         for source_id, element_indices in self.heat_source_elements.items():
             if global_idx in element_indices:
                 # Get the heat source type
@@ -99,7 +100,7 @@ class ElementBoundary:
                 for source in self.params.get_region_heat_sources(self.layer_id):
                     if source.get("id") == source_id:
                         source_type = source.get("type", "UNKNOWN")
-                        if source_type == "CONVECTIVE":
+                        if source_type in ["CONVECTIVE", "CONVECTIVE_AIRGAP"]:
                             return True, source_id, source_type
                         break
         
@@ -110,9 +111,10 @@ class ElementBoundary:
         Label boundary conditions for all elements in the layer.
         Elements can have multiple boundary conditions simultaneously.
         Priority rules:
-        - MAPPED takes priority over CONVECTIVE (can't be both)
+        - MAPPED takes priority over CONVECTIVE and CONVECTIVE_AIRGAP (can't be both)
         - MAPPED and CONST_Qflux can be combined
         - CONST_Qflux and CONVECTIVE can be combined
+        - CONST_Qflux and CONVECTIVE_AIRGAP can be combined
         
         Returns:
             Dictionary mapping global indices to lists of boundary condition types
@@ -145,6 +147,9 @@ class ElementBoundary:
                         elif source_type == "CONVECTIVE" and BoundaryCondition.MAPPED not in boundary_conditions:
                             # Only add CONVECTIVE if not already MAPPED
                             boundary_conditions.append(BoundaryCondition.CONVECTIVE)
+                        elif source_type == "CONVECTIVE_AIRGAP" and BoundaryCondition.MAPPED not in boundary_conditions:
+                            # Only add CONVECTIVE_AIRGAP if not already MAPPED
+                            boundary_conditions.append(BoundaryCondition.CONVECTIVE_AIRGAP)
                     
                     # If no special boundary conditions, mark as adiabatic
                     if not boundary_conditions:
@@ -213,7 +218,9 @@ class ElementBoundary:
         if source_type is None:
             # Return all heat source elements regardless of type
             return [idx for idx, bc in self.boundary_conditions.items() 
-                    if BoundaryCondition.CONVECTIVE in bc or BoundaryCondition.CONST_Qflux in bc]
+                    if BoundaryCondition.CONVECTIVE in bc or 
+                       BoundaryCondition.CONST_Qflux in bc or 
+                       BoundaryCondition.CONVECTIVE_AIRGAP in bc]
         elif source_type.upper() == "CONST_QFLUX":
             # Return only constant heat flux elements
             return [idx for idx, bc in self.boundary_conditions.items() 
@@ -222,6 +229,10 @@ class ElementBoundary:
             # Return only convective heat source elements
             return [idx for idx, bc in self.boundary_conditions.items() 
                     if BoundaryCondition.CONVECTIVE in bc]
+        elif source_type.upper() == "CONVECTIVE_AIRGAP":
+            # Return only convective airgap heat source elements
+            return [idx for idx, bc in self.boundary_conditions.items() 
+                    if BoundaryCondition.CONVECTIVE_AIRGAP in bc]
         else:
             # Unknown heat source type
             return []
