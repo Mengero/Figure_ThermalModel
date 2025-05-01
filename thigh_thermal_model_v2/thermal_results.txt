@@ -1,7 +1,7 @@
 Thermal Analysis Results
 ==================================================
 
-Solve time: 50.61 seconds
+Solve time: 47.78 seconds
 Final residual norm: 1.07e+03
 Solution converged successfully!
 

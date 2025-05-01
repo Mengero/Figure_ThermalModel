@@ -39,7 +39,7 @@
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
           "ambient_temperature": 30.0,
-          "plastic_thickness": 2.0,
+          "plastic_thickness": 1.0,
           "plastic_thermal_conductivity": 0.25,
           "internal_air_heat_transfer_coefficient": 7.5,
           "centroid": {
@@ -58,7 +58,7 @@
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
           "ambient_temperature": 30.0,
-          "plastic_thickness": 2.0,
+          "plastic_thickness": 1.0,
           "plastic_thermal_conductivity": 0.25,
           "internal_air_heat_transfer_coefficient": 7.5,
           "centroid": {
@@ -77,7 +77,7 @@
           "type": "CONVECTIVE",
           "heat_transfer_coefficient": 7.5,
           "ambient_temperature": 30.0,
-          "plastic_thickness": 2.0,
+          "plastic_thickness": 1.0,
           "plastic_thermal_conductivity": 0.25,
           "centroid": {
             "x": 94.0,

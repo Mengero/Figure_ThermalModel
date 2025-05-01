@@ -148,14 +148,15 @@ def main():
     # Example geometry for the dimensionless solution
     N       = 150        # of terms for the series
     Bi_max  = 1e6
-    V_heatsink_measured = 117141.4314e-9    # [m^3]
-    A_heatsink_measured = 0.054046711500000004     # [m^2]
-    A_handstouch_measured = 2156.874e-6     # [m^2]
-    L_handstouch_measured = 230.2327e-3     # [m]
-    t_sink = 2e-3        # [m]
-    W_sink = 27.5e-3       # [m]
+    L_fin   = 1000/1e3          # length of the fin (standing rod) [m], 700 for Ruiqi's Design; 
+    V_heatsink_measured = 117141.4314/1e9       # [m^3], 176002.0472 for Ruiqi's Design; 117141.4314 for Ryan's ID design
+    A_heatsink_measured = 72647.1609/1e6     # [m^2] 90122.6521 for Ruiqi's Design; 72647.1609 for Ryan's ID design
+    t_sink = V_heatsink_measured/A_heatsink_measured        # [m]
+    print(f" - Sink Representative Thickness, t_sink   = {t_sink*1e3:.4f} mm")
+    W_sink = 29.6957/1e3       # [m] 25.5 for Ruiqi's Design; 29.6957 for Ryan's ID design 
     # L_sink = V_heatsink_measured/t_sink/W_sink
     L_sink = A_heatsink_measured/W_sink
+    L_handstouch_measured = L_sink/2     # [m]
     L_chip = 10e-3       # [m]
     W_chip = 8e-3        # [m]
     L_chip = L_chip*W_chip/W_sink
@@ -172,24 +173,24 @@ def main():
     sink_area      = L_sink*W_sink     # [m^2] cross-sectional area for conduction
 
     # For the rod-fin side
-    P_fin = 201.1684e-3  # [m]
+    P_fin = 210.8094e-3  # [m]
     r_fin   = P_fin/(2*np.pi)
     P_fin   = np.pi*r_fin*2   # perimeter of cross section [m]
     A_c_fin = np.pi*r_fin**2  # cross-sectional area of fin [m^2]
-    L_fin   = 1          # length of the fin [m]
+    
 
     # Flow conditions
     k_air   = 0.026      # W/m-K (approx for air)
     Pr      = 0.71       # approx for air
 
     # Heat loads / temperature
-    Q_total = 6.5       # [W] total heat
-    T_inf   = 35       # [C] ambient
+    Q_total = 5       # [W] total heat
+    T_inf   = 30       # [C] ambient
     # We'll find T_b (base temperature) from the "remaining" conduction path
 
     g      = 9.8         # m/s^2
     beta   = 0.0025      # 1/K
-    T_inf  = 23.0        # °C (ambient temperature)
+    T_inf  = 30        # °C (ambient temperature)
     T_s    = T_inf + 5   # °C (surface temperature)
     alpha  = 38.3e-6     # m^2/s (thermal diffusivity)
     nu     = 26.4e-6     # m^2/s (kinematic viscosity)
@@ -214,6 +215,7 @@ def main():
         # (E) CALCULATE HTC OF AIR from correlation
         # -------------------------------------------------
         h_air = calc_h_air(k_air, L, Ra_L, Pr)
+        # h_air = 7.5
         Bi_sink = h_air*L_sink/k_fin
         # print("Air HTC, h_air =", h_air, "[W/m^2-K]")
 
