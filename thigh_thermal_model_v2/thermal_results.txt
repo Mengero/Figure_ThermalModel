@@ -1,44 +1,44 @@
 Thermal Analysis Results
 ==================================================
 
-Solve time: 47.78 seconds
-Final residual norm: 1.07e+03
+Solve time: 0.05 seconds
+Final residual norm: 3.39e-04
 Solution converged successfully!
 
 Heat Source Region Temperatures:
 --------------------------------------------------
 
 Metal Layer - Heat Source 'metal_ambient_convection1':
-Average Temperature: 60.07 C
-Min Temperature: 52.51 C
-Max Temperature: 72.43 C
+Average Temperature: 59.18 C
+Min Temperature: 51.66 C
+Max Temperature: 71.47 C
 
 Metal Layer - Heat Source 'metal_ambient_convection2':
-Average Temperature: 59.30 C
-Min Temperature: 52.51 C
-Max Temperature: 72.14 C
+Average Temperature: 58.42 C
+Min Temperature: 51.66 C
+Max Temperature: 71.22 C
 
 Metal Layer - Heat Source 'metal_ambient_convection3':
-Average Temperature: 60.83 C
-Min Temperature: 52.53 C
-Max Temperature: 72.46 C
+Average Temperature: 59.92 C
+Min Temperature: 51.68 C
+Max Temperature: 71.50 C
 
 Metal Layer - Heat Source 'hipx_mech':
-Average Temperature: 69.66 C
-Min Temperature: 64.32 C
-Max Temperature: 72.14 C
+Average Temperature: 68.75 C
+Min Temperature: 63.43 C
+Max Temperature: 71.22 C
 
 Metal Layer - Heat Source 'hipz_elec':
-Average Temperature: 62.75 C
-Min Temperature: 58.79 C
-Max Temperature: 64.96 C
+Average Temperature: 61.85 C
+Min Temperature: 57.92 C
+Max Temperature: 64.05 C
 
 Metal Layer - Heat Source 'hipz_mech':
-Average Temperature: 60.70 C
-Min Temperature: 57.75 C
-Max Temperature: 62.17 C
+Average Temperature: 59.81 C
+Min Temperature: 56.88 C
+Max Temperature: 61.27 C
 
 Metal Layer - Heat Source 'knee_mech':
-Average Temperature: 69.80 C
-Min Temperature: 64.90 C
-Max Temperature: 72.46 C
+Average Temperature: 68.86 C
+Min Temperature: 63.98 C
+Max Temperature: 71.50 C

@@ -1,6 +1,19 @@
 import numpy as np
 import numpy.linalg as la
 
+# Geometry Parameters, modify it for version updating
+# To modify the geometry:
+# - L_fin: Adjust the length of the vertical standing rod (in mm, divide by 1e3 for meters)
+#          Default: 1000mm for standard design, 700mm for Ruiqi's design
+# - V_heatsink_measured: Total volume of heatsink (in mm^3, divide by 1e9 for m^3)
+#          Default: 117141.4314mm^3 for Ryan's design, 176002.0472mm^3 for Ruiqi's design
+# - A_heatsink_measured: Total surface area of heatsink (in mm^2, divide by 1e6 for m^2)
+#          Default: 72647.1609mm^2 for Ryan's design, 90122.6521mm^2 for Ruiqi's design
+# - W_sink: Width of heatsink (in mm, divide by 1e3 for meters)
+#          Default: 29.6957mm for Ryan's design, 25.5mm for Ruiqi's design
+# Note: t_sink is automatically calculated as V_heatsink_measured/A_heatsink_measured
+
+
 # -- Step 1: Spreading Resistance (R_sp) --
 # (This uses your existing calc_p, calc_C, and calc_R_sp approach.)
 
@@ -148,12 +161,12 @@ def main():
     # Example geometry for the dimensionless solution
     N       = 150        # of terms for the series
     Bi_max  = 1e6
-    L_fin   = 1000/1e3          # length of the fin (standing rod) [m], 700 for Ruiqi's Design; 
+    L_fin   = 1000/1e3          # length of the fin (standing rod) [m], 700 for Ruiqi's Design; 1000 for Ryan's ID design
     V_heatsink_measured = 117141.4314/1e9       # [m^3], 176002.0472 for Ruiqi's Design; 117141.4314 for Ryan's ID design
     A_heatsink_measured = 72647.1609/1e6     # [m^2] 90122.6521 for Ruiqi's Design; 72647.1609 for Ryan's ID design
+    W_sink = 29.6957/1e3       # [m] 25.5 for Ruiqi's Design; 29.6957 for Ryan's ID design 
     t_sink = V_heatsink_measured/A_heatsink_measured        # [m]
     print(f" - Sink Representative Thickness, t_sink   = {t_sink*1e3:.4f} mm")
-    W_sink = 29.6957/1e3       # [m] 25.5 for Ruiqi's Design; 29.6957 for Ryan's ID design 
     # L_sink = V_heatsink_measured/t_sink/W_sink
     L_sink = A_heatsink_measured/W_sink
     L_handstouch_measured = L_sink/2     # [m]

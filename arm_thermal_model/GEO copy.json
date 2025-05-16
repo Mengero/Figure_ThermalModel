@@ -1,0 +1,513 @@
+{
+  // length units: mm
+  // temperature units: degrees C
+  // power units: W
+  // thermal conductivity units: W/mK
+  // density units: kg/m^3
+  // specific heat units: J/kgK
+  "environment": {
+    "ambient_temperature": 30.0, // ambient temperature, degrees C
+    "heat_transfer_coefficient": 3.75, // natural convective heat transfer coefficient, W/m^2K
+    "plastic_conductivity": 0.25, // plastic conductivity, W/mK
+    "metal_conductivity": 120.0 // metal conductivity, W/mK
+  },
+  "regions": [
+    {
+      "id": "shoulder",
+      "centroid": { "x": 0, "y": 195.91, "z": 1.166 },
+      "width": 75,
+      "height": 391.82,
+      "thickness": 2.332,
+      "boundary_conditions": [
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": {"x": 0, "y": 195.91, "z": 0},
+          "width": 75,
+          "height": 391.82,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": {"x": 0, "y": 195.91, "z": 2.332},
+          "width": 75,
+          "height": 391.82,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        },
+        {
+          "type": "CONST_Q", 
+          "comments":"J1_GEARBOX_1",
+          "centroid": {"x": 0, "y": 3.122645, "z": 0},
+          "width": 75,
+          "height": 6.24529,
+          "thickness": 0,
+          "q": 3.35
+        },
+        {
+          "type": "CONST_Q",
+          "comments":"J1_GEARBOX_2", 
+          "centroid": {"x": 0, "y": 388.697355, "z": 0},
+          "width": 75,
+          "height": 6.24529,
+          "thickness": 0,
+          "q": 3.35
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"J2_HOUSING",
+          "centroid": {"x": 0, "y": 195.91, "z": 0},
+          "width": 75,
+          "height": 108.6236,
+          "thickness": 0,
+          "actuator_id": "J2",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "x",
+          "centroid": {"x": -37.5, "y": 70.7991, "z": 1.166 },
+          "width": 0,
+          "height": 141.5982,
+          "thickness": 2.332
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "x",
+          "centroid": {"x": 37.5, "y": 70.7991, "z": 1.166 }, 
+          "width": 0,
+          "height": 141.5982,
+          "thickness": 2.332
+        }
+      ]
+    },
+
+
+    {
+      "id": "humerus_upper",
+      "centroid": { "x": 0, "y": 62.35085, "z": 1.1 },
+      "width": 284.3327,
+      "height": 124.7017,
+      "thickness": 2.20,
+      "boundary_conditions": [
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"J2GB",
+          "centroid": {"x": 71.083175, "y": 84.5, "z": 0},
+          "width": 51.1353,
+          "height": 51.1353,
+          "thickness": 0,
+          "actuator_id": "J2",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"J2MT",
+          "centroid": {"x": -71.083175, "y": 84.5, "z": 0},
+          "width": 45.20,
+          "height": 45.20,
+          "thickness": 0,
+          "actuator_id": "J2",
+          "connecting_location": "motor"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"HTGB",
+          "centroid": {"x": 0, "y": 10.3961, "z": 0},
+          "width": 284.3327,
+          "height": 1.5,
+          "thickness": 0,
+          "actuator_id": "HT",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "y",
+          "centroid": {"x": -142.16635, "y": 20, "z": 1.1 },
+          "width": 0,
+          "height": 40,
+          "thickness": 2.20
+        },
+        {
+          "type": "ADIABATIC",
+          "source_1": {
+            "centroid": {"x": 0, "y": 82.35085, "z": 1.1 },
+            "width": 0,
+            "height": 84.71,
+            "thickness": 2.20
+          }
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": {"x": 0, "y": 62.35085, "z": 0},
+          "width": 284.3327,
+          "height": 124.7017,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": {"x": 0, "y": 62.35085, "z": 2.20},
+          "width": 284.3327,
+          "height": 124.7017,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        }
+      ]
+    },
+
+
+    {
+      "id": "humerus_lower",
+      "centroid": { "x": 0, "y": 102.8061, "z": 1.25 },
+      "width": 283.9293,
+      "height": 205.6122,
+      "thickness": 2.50,
+      "boundary_conditions": [
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"HTHS",
+          "centroid": {"x": 0, "y": 183.3072, "z": 0},
+          "width": 283.9293,
+          "height": 45.49,
+          "thickness": 0,
+          "actuator_id": "HT",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"EBMT",
+          "centroid": {"x": 70.98, "y": 41.1122, "z": 0},
+          "width": 45.2,
+          "height": 45.2,
+          "thickness": 0,
+          "actuator_id": "EB",
+          "connecting_location": "motor"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"EBGB",
+          "centroid": {"x": -70.98, "y": 41.1122, "z": 0},
+          "width": 52.91,
+          "height": 52.91,
+          "thickness": 0,
+          "actuator_id": "EB",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "y",
+          "centroid": {"x": -141.96465, "y": 139.3622, "z": 1.25 },
+          "width": 0,
+          "height": 132.5,
+          "thickness": 2.50
+        },
+        {
+          "type": "ADIABATIC",
+          "source_1": {
+            "centroid": {"x": 0, "y": 36.5561, "z": 1.25 },
+            "width": 0,
+            "height": 73.1122,
+            "thickness": 2.50
+          }
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 102.8061, "z": 0 },
+          "width": 283.9293,
+          "height": 205.6122,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 102.8061, "z": 2.50 },
+          "width": 283.9293,
+          "height": 205.6122,
+          "thickness": 0,
+          "plastic_thickness": 3.0
+        }
+      ]
+    },
+
+
+
+    {
+      "id": "forearm_upper",
+      "centroid": { "x": 0, "y": 171.45, "z": 1.5 },
+      "width": 195.27,
+      "height": 342.9,
+      "thickness": 3.00,
+      "boundary_conditions": [
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"EBHS",
+          "centroid": {"x": 0, "y": 171.45, "z": 0},
+          "width": 195.27,
+          "height": 253.35,
+          "thickness": 0,
+          "actuator_id": "EB",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WRGB",
+          "centroid": {"x": 0, "y": 1.035, "z": 0},
+          "width": 195.27,
+          "height": 2.07,
+          "thickness": 0,
+          "actuator_id": "WR",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WRGB",
+          "centroid": {"x": 0, "y": 341.865, "z": 0},
+          "width": 195.27,
+          "height": 2.07,
+          "thickness": 0,
+          "actuator_id": "WR",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "x",
+            "centroid": {"x": -97.635, "y": 44.775, "z": 1.50 },
+            "width": 0,
+            "height": 89.55,
+            "thickness": 3.0
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "x",
+          "centroid": {"x": 97.635, "y": 44.775, "z": 1.50 },
+          "width": 0,
+          "height": 89.55,
+          "thickness": 3.0
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 171.45, "z": 0 },
+          "width": 195.27,
+          "height": 342.9,
+          "thickness": 0,
+          "plastic_thickness": 2.248
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 171.45, "z": 3.0 },
+          "width": 195.27,
+          "height": 342.9,
+          "thickness": 0,
+          "plastic_thickness": 2.248
+        }
+      ]
+    },
+
+
+
+
+    {
+      "id": "forearm_lower",
+      "centroid": { "x": 0, "y": 69.82, "z": 1.03 },
+      "width": 246.4307,
+      "height": 139.64,
+      "thickness": 2.06,
+      "boundary_conditions": [
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WRHS_1",
+          "centroid": {"x": 0, "y": 128.083, "z": 0},
+          "width": 13.77,
+          "height": 23.114,
+          "thickness": 0,
+          "actuator_id": "WR",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WRHS_2",
+          "centroid": {"x": -119.7723, "y": 128.083, "z": 0},
+          "width": 6.89,
+          "height": 23.114,
+          "thickness": 0,
+          "actuator_id": "WR",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WRHS_3",
+          "centroid": {"x": 119.7723, "y": 128.083, "z": 0},
+          "width": 6.89,
+          "height": 23.114,
+          "thickness": 0,
+          "actuator_id": "WR",
+          "connecting_location": "housing"
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WPGB",
+          "centroid": {"x": 61.607675, "y": 26.9721, "z": 0},
+          "width": 41.83,
+          "height": 41.83,
+          "thickness": 0,
+          "actuator_id": "WP",
+          "connecting_location": "gearbox"
+        },
+        {
+          "type": "MAPPED",
+          "symmetry_axis": "y",
+          "centroid": {"x": -123.21535, "y": 139.3622, "z": 1.03 },
+          "width": 0,
+          "height": 132.5,
+          "thickness": 2.06
+        },
+        {
+          "type": "ADIABATIC",
+          "source_1": {
+            "centroid": {"x": 0, "y": 37.5, "z": 1.03 },
+            "width": 0,
+            "height": 75,
+            "thickness": 2.06
+          }
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 69.82, "z": 0 },
+          "width": 246.4307,
+          "height": 139.64,
+          "thickness": 0,
+          "plastic_thickness": 1.25
+        },
+        {
+          "type": "PLASTIC_COVERED",
+          "centroid": { "x": 0, "y": 69.82, "z": 2.06 },
+          "width": 246.4307,
+          "height": 139.64,
+          "thickness": 0,
+          "plastic_thickness": 1.25
+        }
+      ]
+    },
+
+
+
+
+    {
+      "id": "wrist",
+      "centroid": { "x": 0, "y": 147.659, "z": 1.225 },
+      "width": 41.653,
+      "height": 295.318,
+      "thickness": 2.45,
+      "units": "mm",
+      "boundary_conditions": [
+        {
+          "type": "CONST_Q", 
+          "comments":"WRIST_YAW_GEARBOX",
+          "centroid": {"x": 0, "y": 20.8265, "z": 0},
+          "width": 41.653,
+          "height": 41.653,
+          "thickness": 0,
+          "q": 1.7
+        },
+        {
+          "type": "ACTUATOR_CONNECTED",
+          "comments":"WPHS",
+          "centroid": {"x": 0, "y": 210.408, "z": 0},
+          "width": 41.653,
+          "height": 169.82,
+          "thickness": 0,
+          "actuator_id": "WP",
+          "connecting_location": "housing"
+        }
+      ]
+    }
+  ],
+  "actuators": [
+    {
+      "id": "J2",
+      "type": "PITCHYAW",
+      "heat_losses": {
+        "gearbox": 2.3,
+        "motor": 0.9,
+        "FETs": 0.0
+      },
+      "thermal_resistance": {
+        "R1": 4.0,
+        "R2": 3.8,
+        "R3": 0.7,
+        "R4": 4.59,
+        "R5": 0.3
+      }
+    },
+    {
+      "id": "HT",
+      "type": "ROLL",
+      "heat_losses": {
+        "gearbox": 3.0,
+        "motor": 1.2,
+        "FETs": 0.0
+      },
+      "thermal_resistance": {
+        "R1": 4.0,
+        "R2": 3.8,
+        "R3": 0.7,
+        "R4": 4.59,
+        "R5": 0.3
+      }
+    },
+    {
+      "id": "EB",
+      "type": "PITCHYAW",
+      "heat_losses": {
+        "gearbox": 3.2,
+        "motor": 1.9,
+        "FETs": 0.0
+      },
+      "thermal_resistance": {
+        "R1": 4.0,
+        "R2": 3.8,
+        "R3": 0.7,
+        "R4": 4.59,
+        "R5": 0.3
+      }
+    },
+    {
+      "id": "WR",
+      "type": "ROLL",
+      "heat_losses": {
+        "gearbox": 0.9,
+        "motor": 0.5,
+        "FETs": 0.0
+      },
+      "thermal_resistance": {
+        "R1": 4.0,
+        "R2": 3.8,
+        "R3": 0.7,
+        "R4": 4.59,
+        "R5": 0.3
+      }
+    },
+    {
+      "id": "WP",
+      "type": "ROLL",
+      "heat_losses": {
+        "gearbox": 1.1,
+        "motor": 0.5,
+        "FETs": 0.0
+      },
+      "thermal_resistance": {
+        "R1": 4.0,
+        "R2": 3.8,
+        "R3": 0.7,
+        "R4": 4.59,
+        "R5": 0.3
+      }
+    }
+  ],
+  "mesh_settings": {
+    "dx": 5,
+    "dy": 5,
+    "dz": 0.5
+  }
+}

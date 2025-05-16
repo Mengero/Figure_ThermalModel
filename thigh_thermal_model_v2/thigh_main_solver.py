@@ -8,7 +8,7 @@ from typing import List, Tuple
 import json5
 import scipy.sparse
 from scipy.sparse import diags
-from scipy.sparse.linalg import gmres, LinearOperator
+from scipy.sparse.linalg import gmres, LinearOperator, spsolve
 from scipy.linalg import norm  # Import the norm function from scipy.linalg
 import time
 
@@ -465,33 +465,66 @@ def main():
     A_final = scipy.sparse.csr_matrix(A_updated_BC)
     
     print("\nSolving system...")
-    # Initial guess - all zeros
-    u0 = np.ones_like(b_updated_BC)*30
+    # Define solver tolerance
+    solver_tolerance = 1e-10  # Strict tolerance for solution quality
     
-    # Set relative tolerance
-    rel_tol = 1e-6
-    
-    # Callback function to monitor convergence
-    def callback(pr_norm):
-        print(f"Current residual norm: {pr_norm:.4e}", end="\r")
-    
-    # Create preconditioner
-    M = preconditioner(A_updated_BC)
-    
-    # Solve system using GMRES
+    # Solve system using spsolve
     start_time = time.time()
-    u, exitCode = gmres(A_updated_BC, b_updated_BC, M=M, x0=u0, atol=rel_tol, callback=callback, callback_type='pr_norm')
-    solve_time = time.time() - start_time
-    print(f"\nSolve time: {solve_time:.2f} seconds")
-    # Calculate and print residual norm
-    residual = A_final @ u - b_updated_BC
-    residual_norm = np.linalg.norm(residual)
-    print(f"\nFinal residual norm: {residual_norm:.2e}")
-    if exitCode == 0:
-        print("\nSolution converged successfully!")
-    else:
-        print(f"\nWarning: Solution did not converge, exit code: {exitCode}")
+    try:
+        print("Attempting direct solve with spsolve...")
+        u = spsolve(A_final, b_updated_BC)
+        solve_time = time.time() - start_time
+        print(f"\nSolve time: {solve_time:.2f} seconds")
         
+        # Calculate and print residual norm
+        residual = A_final @ u - b_updated_BC
+        residual_norm = np.linalg.norm(residual)
+        relative_residual = residual_norm / (np.linalg.norm(b_updated_BC) + 1e-10)  # Avoid division by zero
+        print(f"\nAbsolute residual norm: {residual_norm:.2e}")
+        print(f"Relative residual norm: {relative_residual:.2e}")
+        
+        # Check if solution meets our standard
+        if relative_residual < solver_tolerance:
+            print("\nDirect solution completed successfully and meets accuracy requirements!")
+            exitCode = 0
+        else:
+            print(f"\nDirect solution completed but does not meet accuracy requirement of {solver_tolerance:.2e}")
+            print("Falling back to iterative GMRES solver...")
+            raise ValueError("Solution accuracy insufficient")
+            
+    except Exception as e:
+        print(f"\nDirect solve failed or insufficient accuracy: {e}")
+        print("Using iterative GMRES solver...")
+        
+        # Initial guess for iterative solver
+        u0 = np.ones_like(b_updated_BC)*30
+        
+        # Callback function to monitor convergence
+        def callback(pr_norm):
+            print(f"Current residual norm: {pr_norm:.4e}", end="\r")
+        
+        # Create preconditioner
+        M = preconditioner(A_updated_BC)
+        
+        # Solve system using GMRES as fallback
+        start_time = time.time()
+        u, exitCode = gmres(A_updated_BC, b_updated_BC, M=M, x0=u0, atol=solver_tolerance, 
+                          tol=solver_tolerance, callback=callback, callback_type='pr_norm')
+        solve_time = time.time() - start_time
+        print(f"\nSolve time: {solve_time:.2f} seconds")
+        
+        # Calculate and print residual norm
+        residual = A_final @ u - b_updated_BC
+        residual_norm = np.linalg.norm(residual)
+        relative_residual = residual_norm / (np.linalg.norm(b_updated_BC) + 1e-10)
+        print(f"\nAbsolute residual norm: {residual_norm:.2e}")
+        print(f"Relative residual norm: {relative_residual:.2e}")
+        
+        if exitCode == 0:
+            print("\nIterative solution converged successfully!")
+        else:
+            print(f"\nWarning: Iterative solution did not converge, exit code: {exitCode}")
+
     # Print temperature results for heat source regions
     print("\nHeat Source Region Temperatures:")
     print("-" * 50)
