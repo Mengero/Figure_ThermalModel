@@ -39,7 +39,7 @@
           "width": 75,
           "height": 6.24529,
           "thickness": 0,
-          "q": 3.35
+          "q": 1.6
         },
         {
           "type": "CONST_Q",
@@ -48,7 +48,7 @@
           "width": 75,
           "height": 6.24529,
           "thickness": 0,
-          "q": 3.35
+          "q": 1.6
         },
         {
           "type": "ACTUATOR_CONNECTED",
@@ -386,7 +386,7 @@
           "width": 41.653,
           "height": 41.653,
           "thickness": 0,
-          "q": 1.7
+          "q": 0.8
         },
         {
           "type": "ACTUATOR_CONNECTED",
@@ -406,8 +406,8 @@
       "id": "J2",
       "type": "PITCHYAW",
       "heat_losses": {
-        "gearbox": 2.3,
-        "motor": 0.9,
+        "gearbox": 0.5,
+        "motor": 0.5,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -422,8 +422,8 @@
       "id": "HT",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 3.0,
-        "motor": 1.2,
+        "gearbox": 0.7,
+        "motor": 0.4,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -439,8 +439,8 @@
       "id": "EB",
       "type": "PITCHYAW",
       "heat_losses": {
-        "gearbox": 3.2,
-        "motor": 1.9,
+        "gearbox": 1.2,
+        "motor": 0.6,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -456,7 +456,7 @@
       "id": "WR",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 0.9,
+        "gearbox": 0.7,
         "motor": 0.5,
         "FETs": 0.0
       },
@@ -473,7 +473,7 @@
       "id": "WP",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 1.1,
+        "gearbox": 0.3,
         "motor": 0.5,
         "FETs": 0.0
       },
