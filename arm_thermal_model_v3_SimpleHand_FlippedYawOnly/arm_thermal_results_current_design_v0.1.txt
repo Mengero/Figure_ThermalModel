@@ -1,0 +1,88 @@
+Arm Thermal Analysis Results
+==================================================
+
+Solve time: 3.57 seconds
+Final residual norm: 8.68e-03
+Solution converged successfully!
+
+Region Temperatures:
+--------------------------------------------------
+
+Region: shoulder
+Average Temperature: 78.19°C
+Min Temperature: 71.28°C
+Max Temperature: 89.24°C
+Average CONST_Q Temperature: 89.01°C
+Min CONST_Q Temperature: 88.77°C
+Max CONST_Q Temperature: 89.24°C
+
+Region: humerus_upper
+Average Temperature: 61.62°C
+Min Temperature: 58.01°C
+Max Temperature: 67.00°C
+
+Region: humerus_lower
+Average Temperature: 59.04°C
+Min Temperature: 57.39°C
+Max Temperature: 62.86°C
+
+Region: forearm_upper
+Average Temperature: 70.32°C
+Min Temperature: 63.34°C
+Max Temperature: 84.31°C
+
+Region: forearm_lower
+Average Temperature: 76.12°C
+Min Temperature: 69.10°C
+Max Temperature: 99.90°C
+
+Region: wrist
+Average Temperature: 78.73°C
+Min Temperature: 76.50°C
+Max Temperature: 81.59°C
+
+Region: hand
+Average Temperature: 67.02°C
+Min Temperature: 59.58°C
+Max Temperature: 78.58°C
+
+Actuator Temperatures:
+--------------------------------------------------
+
+Actuator: J2 (PITCHYAW)
+Gearbox Temperature (T2): 67.53°C
+Motor Temperature (T4): 78.28°C
+Average Housing Structure Temperature: 71.97°C
+Average Gearbox Structure Temperature: 63.50°C
+Average Motor Structure Temperature: 65.85°C
+
+Actuator: HT (ROLL)
+Gearbox Temperature (T2): 59.07°C
+Motor Temperature (T4): 65.26°C
+Average Housing Structure Temperature: 58.95°C
+Average Gearbox Structure Temperature: 59.18°C
+
+Actuator: EB (PITCHYAW)
+Gearbox Temperature (T2): 63.58°C
+Motor Temperature (T4): 73.22°C
+Average Housing Structure Temperature: 66.91°C
+Average Gearbox Structure Temperature: 60.55°C
+Average Motor Structure Temperature: 62.05°C
+
+Actuator: WR (ROLL)
+Gearbox Temperature (T2): 86.39°C
+Motor Temperature (T4): 95.77°C
+Average Housing Structure Temperature: 89.46°C
+Average Gearbox Structure Temperature: 83.60°C
+
+Actuator: WP (ROLL)
+Gearbox Temperature (T2): 78.13°C
+Motor Temperature (T4): 86.79°C
+Average Housing Structure Temperature: 80.48°C
+Average Gearbox Structure Temperature: 76.00°C
+
+Actuator: WY (ROLL)
+Gearbox Temperature (T2): 76.92°C
+Motor Temperature (T4): 83.54°C
+Average Housing Structure Temperature: 77.23°C
+Average Gearbox Structure Temperature: 76.64°C

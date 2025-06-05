@@ -1,0 +1,64 @@
+Arm Thermal Analysis Results
+==================================================
+
+Solve time: 3.66 seconds
+Final residual norm: 6.08e-03
+Solution converged successfully!
+
+Region Temperatures:
+--------------------------------------------------
+
+Region: shoulder
+Average Temperature: 61.15°C
+Min Temperature: 52.54°C
+Max Temperature: 73.45°C
+Average CONST_Q Temperature: 73.21°C
+Min CONST_Q Temperature: 72.97°C
+Max CONST_Q Temperature: 73.45°C
+
+Region: humerus_upper
+Average Temperature: 43.31°C
+Min Temperature: 37.60°C
+Max Temperature: 49.37°C
+
+Region: humerus_lower
+Average Temperature: 34.78°C
+Min Temperature: 34.16°C
+Max Temperature: 35.67°C
+
+Region: forearm_upper
+Average Temperature: 35.34°C
+Min Temperature: 34.32°C
+Max Temperature: 38.12°C
+
+Region: forearm_lower
+Average Temperature: 42.69°C
+Min Temperature: 33.03°C
+Max Temperature: 55.84°C
+
+Region: wrist
+Average Temperature: 60.79°C
+Min Temperature: 59.47°C
+Max Temperature: 63.70°C
+
+Region: hand
+Average Temperature: 57.61°C
+Min Temperature: 52.07°C
+Max Temperature: 66.24°C
+
+Actuator Temperatures:
+--------------------------------------------------
+
+
+
+Actuator: WP (ROLL_IV)
+Gearbox Temperature (T2): 59.75°C
+Motor Temperature (T4): 66.06°C
+Average Housing Structure Temperature: 59.75°C
+Average Motor Structure Temperature: 53.82°C
+
+Actuator: WY (ROLL_IV)
+Gearbox Temperature (T2): 65.23°C
+Motor Temperature (T4): 71.54°C
+Average Housing Structure Temperature: 65.23°C
+Average Motor Structure Temperature: 63.35°C

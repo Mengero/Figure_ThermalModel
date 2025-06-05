@@ -6,8 +6,8 @@
   // density units: kg/m^3
   // specific heat units: J/kgK
   "environment": {
-    "ambient_temperature": 30.0, // ambient temperature, degrees C
-    "heat_transfer_coefficient": 7.5, // natural convective heat transfer coefficient, W/m^2K
+    "ambient_temperature": 40.0, // ambient temperature, degrees C
+    "heat_transfer_coefficient":15, // natural convective heat transfer coefficient, W/m^2K
     "plastic_conductivity": 0.25 // plastic conductivity, W/mK
   },
   "regions": [
@@ -39,7 +39,7 @@
           "width": 75,
           "height": 6.24529,
           "thickness": 0,
-          "q": 3.35
+          "q": 0
         },
         {
           "type": "CONST_Q",
@@ -48,7 +48,7 @@
           "width": 75,
           "height": 6.24529,
           "thickness": 0,
-          "q": 3.35
+          "q": 0
         },
         {
           "type": "ACTUATOR_CONNECTED",
@@ -344,6 +344,15 @@
           "connecting_location": "gearbox"
         },
         {
+          "type": "CONST_Q",
+          "comments":"Electornics", 
+          "centroid": {"x": -61.607675, "y": 26.9721, "z": 0},
+          "width": 41.83,
+          "height": 41.83,
+          "thickness": 0,
+          "q": 0
+        },
+        {
           "type": "ADIABATIC",
           "source_1": {
             "centroid": {"x": 0, "y": 69.82, "z": 1.03 },
@@ -380,7 +389,7 @@
       },
       "boundary_conditions": [
         {
-          "type": "ACTUATOR_CONNECTED", 
+          "type": "GEARBOX_HAND", 
           "comments":"WYGB",
           "centroid": {"x": 0, "y": 20.8265, "z": 0},
           "width": 41.653,
@@ -397,33 +406,6 @@
           "height": 163.7636852092673,
           "thickness": 0,
           "actuator_id": "WP",
-          "connecting_location": "housing"
-        }
-      ]
-    },
-
-
-    {
-      "id": "hand",
-      "centroid": { "x": 0, "y": 94.079, "z": 1.35615 },
-      "width": 105,
-      "height": 188.158,
-      "thickness": 2.7123,
-      "thermal_conductivity": 120.0,
-      "mesh_settings": {
-        "dx": 3,
-        "dy": 5,
-        "dz": 0.5
-      },
-      "boundary_conditions": [
-        {
-          "type": "ACTUATOR_CONNECTED", 
-          "comments":"WYMT",
-          "centroid": {"x": 0, "y": 17.945, "z": 0},
-          "width": 105,
-          "height": 35.89,
-          "thickness": 0,
-          "actuator_id": "WY",
           "connecting_location": "housing"
         }
       ]
@@ -485,13 +467,13 @@
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,
-        "motor": 0,
+        "motor": 1.33,
         "FETs": 0.0
       },
       "thermal_resistance": {
         "R1": 2.0,
-        "R2": 6.3,
-        "R3": 2.2,
+        "R2": 0.5,
+        "R3": 0.5,
         "R4": 0.7,
         "R5": 0.3,
         "R6": 4.59
@@ -499,23 +481,6 @@
     },
     {
       "id": "WP",
-      "type": "ROLL",
-      "heat_losses": {
-        "gearbox": 0,
-        "motor": 4,
-        "FETs": 0.0
-      },
-      "thermal_resistance": {
-        "R1": 2.0,
-        "R2": 0.5,
-        "R3": 0.5,
-        "R4": 1.5789,
-        "R5": 0.3,
-        "R6": 4.59
-      }
-    },
-    {
-      "id": "WY",
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,

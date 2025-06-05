@@ -33,27 +33,27 @@ def read_geometry(file_path: str = "GEO.json") -> Tuple[dict, ThermalParameters,
     actuators = geo_data["actuators"]
     return geo_data, params, regions, actuators
 
-def initialize_global_matrix(total_elements: int, region_info: Dict, actuator_info: Dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray]:
+def initialize_global_matrix(total_elements: int, region_info: Dict, actuator_info: Dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, dict]:
     """
-    Initialize the global system matrix and vector.
+    Initialize the global system matrix and vector, including special unknowns for GEARBOX_HAND.
     """
     print("\nInitializing global matrix and vector...")
     total_actuator_unknowns = 0
     for info in actuator_info.values():
         total_actuator_unknowns += 2
-    total_size = total_elements + total_actuator_unknowns
+    # Add 2 for GEARBOX_HAND unknowns
+    total_special_unknowns = 2
+    total_size = total_elements + total_actuator_unknowns + total_special_unknowns
     A = scipy.sparse.lil_matrix((total_size, total_size))
     b = np.zeros(total_size)
     for region_id, info in region_info.items():
         print(f"\nBuilding matrix block for region: {region_id}")
         coords = info['coords']
         thermal_conductivity = info['region_data']['thermal_conductivity']
-        
         # Region dimensions
         Nx, Ny, Nz = coords.Nx, coords.Ny, coords.Nz
         dx, dy, dz = coords.dx, coords.dy, coords.dz
         dx_m, dy_m, dz_m = dx * 1e-3, dy * 1e-3, dz * 1e-3
-        
         start_idx = info['start_idx']
         num_elements = info['num_elements']
         region_matrix = create_layer_matrix(coords.Nx, coords.Ny, coords.Nz,
@@ -73,7 +73,12 @@ def initialize_global_matrix(total_elements: int, region_info: Dict, actuator_in
         A[current_actuator_idx:end_idx, current_actuator_idx:end_idx] = actuator_block
         print(f"Added {info['type']} actuator block from index {current_actuator_idx} to {end_idx} (size: {num_unknowns}x{num_unknowns})")
         current_actuator_idx = end_idx
-    return A, b
+    # Add special unknowns for GEARBOX_HAND
+    special_unknowns = {}
+    special_unknowns['T_WY_HS'] = total_elements + total_actuator_unknowns
+    special_unknowns['T_BH'] = total_elements + total_actuator_unknowns + 1
+    print(f"Added special unknowns: T_WY_HS at {special_unknowns['T_WY_HS']}, T_BH at {special_unknowns['T_BH']}")
+    return A, b, special_unknowns
 
 def visualize_regions(regions: List[dict], region_info: Dict, params: ThermalParameters) -> None:
     """
@@ -114,9 +119,9 @@ def prepare_system():
         regions, actuators, params
     )
     visualize_regions(regions, region_info, params)
-    A, b = initialize_global_matrix(total_elements, region_info, actuator_info)
+    A, b, special_unknowns = initialize_global_matrix(total_elements, region_info, actuator_info)
     A = update_matrix_with_geometries(A, region_info, actuator_info)
-    A, b, actuator_elements = update_matrix_with_boundary_conditions(A, b, region_info, actuator_info)
+    A, b, actuator_elements = update_matrix_with_boundary_conditions(A, b, region_info, actuator_info, special_unknowns)
     return dict(
         geo_data=geo_data,
         params=params,
@@ -128,7 +133,8 @@ def prepare_system():
         actuator_start_idx=actuator_start_idx,
         A=A,
         b=b,
-        actuator_elements=actuator_elements
+        actuator_elements=actuator_elements,
+        special_unknowns=special_unknowns
     )
 
 def solve_system(system_data):
@@ -211,23 +217,82 @@ def postprocess_results(solution_data):
     region_info = solution_data['region_info']
     actuator_info = solution_data['actuator_info']
     actuator_elements = solution_data['actuator_elements']
-    # Print temperatures for each region and actuator
-    print("\nTemperature Results:")
+    special_unknowns = solution_data.get('special_unknowns', {})
+    
+    # Print temperatures and heat transfer rates for each region
+    print("\nTemperature and Heat Transfer Results:")
     print("-" * 50)
+    
+    # Calculate heat transfer rates for each region
     for region_id, info in region_info.items():
         start_idx = info['start_idx']
         num_elements = info['num_elements']
         region_temps = u[start_idx:start_idx + num_elements]
+        coords = info['coords']
+        thermal_conductivity = info['region_data']['thermal_conductivity']
+        dx_m, dy_m, dz_m = coords.dx * 1e-3, coords.dy * 1e-3, coords.dz * 1e-3
+        
         print(f"\nRegion: {region_id}")
         print(f"Average Temperature: {np.mean(region_temps):.2f}°C")
         print(f"Min Temperature: {np.min(region_temps):.2f}°C")
         print(f"Max Temperature: {np.max(region_temps):.2f}°C")
+        
+        # Calculate heat transfer rates for different boundary conditions
+        total_heat_transfer = 0.0
+        
+        # Process PLASTIC_COVERED boundary conditions
+        if "PLASTIC_COVERED" in info['boundary_indices']:
+            plastic_heat_transfer = 0.0
+            for element in info['boundary_indices']["PLASTIC_COVERED"]:
+                global_idx = element['global_idx']
+                bc_data = element['bc_data']
+                plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3
+                plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
+                htc = bc_data.get('heat_transfer_coefficient', 7)
+                T_inf = bc_data.get('ambient_temperature', 21)
+                
+                # Calculate heat transfer through plastic and convection
+                h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
+                element_temp = u[global_idx]
+                element_area = dx_m * dy_m
+                q_element = h_eff * element_area * (element_temp - T_inf)
+                plastic_heat_transfer += q_element
+            
+            print(f"Plastic Covered Surface Heat Transfer: {plastic_heat_transfer:.2f} W")
+            total_heat_transfer += plastic_heat_transfer
+        
+        # Process CONST_Q boundary conditions
         if "CONST_Q" in info['boundary_indices']:
             const_q_elements = info['boundary_indices']["CONST_Q"]
             const_q_temps = [u[elem['global_idx']] for elem in const_q_elements]
-            print(f"Average CONST_Q Temperature: {np.mean(const_q_temps):.2f}°C")
-            print(f"Min CONST_Q Temperature: {np.min(const_q_temps):.2f}°C")
-            print(f"Max CONST_Q Temperature: {np.max(const_q_temps):.2f}°C")
+            const_q_heat = sum(elem['bc_data'].get('heat_flux', 0.0) * dx_m * dy_m 
+                             for elem in const_q_elements)
+            print(f"Constant Heat Flux Surface Heat Transfer: {const_q_heat:.2f} W")
+            total_heat_transfer += const_q_heat
+        
+        # Process ACTUATOR_CONNECTED boundary conditions
+        if "ACTUATOR_CONNECTED" in info['boundary_indices']:
+            actuator_heat_transfer = 0.0
+            for element in info['boundary_indices']["ACTUATOR_CONNECTED"]:
+                global_idx = element['global_idx']
+                bc_data = element['bc_data']
+                actuator_id = bc_data.get('actuator_id')
+                if actuator_id in actuator_info:
+                    actuator_temp = u[actuator_info[actuator_id]['start_idx']]
+                    element_temp = u[global_idx]
+                    # Get the appropriate thermal resistance based on connecting location
+                    connecting_location = bc_data.get('connecting_location', 'housing')
+                    thermal_resistance = actuator_info[actuator_id]['thermal_resistance'].get(connecting_location, 1.0)
+                    element_area = dx_m * dy_m
+                    q_element = (element_temp - actuator_temp) * element_area / thermal_resistance
+                    actuator_heat_transfer += q_element
+            
+            print(f"Actuator Connected Surface Heat Transfer: {actuator_heat_transfer:.2f} W")
+            total_heat_transfer += actuator_heat_transfer
+        
+        print(f"Total Heat Transfer Rate: {total_heat_transfer:.2f} W")
+    
+    # Process actuator temperatures and heat transfer
     for actuator_id, info in actuator_info.items():
         start_idx = info['start_idx']
         num_unknowns = info['num_unknowns']
@@ -235,19 +300,48 @@ def postprocess_results(solution_data):
         housing_elements = actuator_elements[actuator_id]['housing_elements']
         gearbox_elements = actuator_elements[actuator_id]['gearbox_elements']
         motor_elements = actuator_elements[actuator_id]['motor_elements']
+        
         avg_housing_temp = np.mean([u[idx] for idx in housing_elements]) if housing_elements else None
         avg_gearbox_temp = np.mean([u[idx] for idx in gearbox_elements]) if gearbox_elements else None
         avg_motor_temp = np.mean([u[idx] for idx in motor_elements]) if motor_elements else None
+        
         print(f"\nActuator: {actuator_id} ({info['type']})")
         print(f"Gearbox Temperature (T2): {actuator_temps[0]:.2f}°C")
         print(f"Motor Temperature (T4): {actuator_temps[1]:.2f}°C")
+        
         if avg_housing_temp is not None:
             print(f"Average Housing Structure Temperature: {avg_housing_temp:.2f}°C")
         if avg_gearbox_temp is not None:
             print(f"Average Gearbox Side Structure Temperature: {avg_gearbox_temp:.2f}°C")
         if avg_motor_temp is not None:
             print(f"Average Motor Side Structure Temperature: {avg_motor_temp:.2f}°C")
-    # Save results to file (same as before)
+        
+        # Calculate actuator heat losses
+        heat_losses = info['heat_losses']
+        print(f"Actuator Heat Losses: {sum(heat_losses.values()):.2f} W")
+    
+    # Print special unknowns (back hand and WY housing temperatures)
+    if special_unknowns:
+        T_WY_HS_idx = special_unknowns.get('T_WY_HS', None)
+        T_BH_idx = special_unknowns.get('T_BH', None)
+        if T_WY_HS_idx is not None:
+            print(f"\nWrist Yaw (WY) Housing Temperature (T_WY_HS): {u[T_WY_HS_idx]:.2f}°C")
+        if T_BH_idx is not None:
+            print(f"Back Hand Temperature (T_BH): {u[T_BH_idx]:.2f}°C")
+    
+    # Print temperature distribution for the special boundary condition region (GEARBOX_HAND)
+    special_bc_temps = []
+    for region_id, info in region_info.items():
+        if "GEARBOX_HAND" in info['boundary_indices']:
+            gbh_elements = info['boundary_indices']["GEARBOX_HAND"]
+            special_bc_temps.extend([u[elem['global_idx']] for elem in gbh_elements])
+    if special_bc_temps:
+        print(f"\nSpecial Boundary Condition (GEARBOX_HAND) Region:")
+        print(f"  Average Temperature: {np.mean(special_bc_temps):.2f}°C")
+        print(f"  Min Temperature: {np.min(special_bc_temps):.2f}°C")
+        print(f"  Max Temperature: {np.max(special_bc_temps):.2f}°C")
+    
+    # Save results to file
     with open('arm_thermal_results.txt', 'w') as f:
         f.write("Arm Thermal Analysis Results\n")
         f.write("=" * 50 + "\n\n")
@@ -257,7 +351,9 @@ def postprocess_results(solution_data):
             f.write("Solution converged successfully!\n")
         else:
             f.write(f"Warning: Solution did not converge, exit code: {exitCode}\n")
-        f.write("\nRegion Temperatures:\n")
+        
+        # Write region results
+        f.write("\nRegion Results:\n")
         f.write("-" * 50 + "\n")
         for region_id, info in region_info.items():
             start_idx = info['start_idx']
@@ -267,35 +363,68 @@ def postprocess_results(solution_data):
             f.write(f"Average Temperature: {np.mean(region_temps):.2f}°C\n")
             f.write(f"Min Temperature: {np.min(region_temps):.2f}°C\n")
             f.write(f"Max Temperature: {np.max(region_temps):.2f}°C\n")
+            
+            # Write heat transfer rates
+            total_heat_transfer = 0.0
+            if "PLASTIC_COVERED" in info['boundary_indices']:
+                plastic_heat_transfer = 0.0
+                for element in info['boundary_indices']["PLASTIC_COVERED"]:
+                    global_idx = element['global_idx']
+                    bc_data = element['bc_data']
+                    plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3
+                    plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
+                    htc = bc_data.get('heat_transfer_coefficient', 7)
+                    T_inf = bc_data.get('ambient_temperature', 21)
+                    h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
+                    element_temp = u[global_idx]
+                    element_area = info['coords'].dx * info['coords'].dy * 1e-6
+                    q_element = h_eff * element_area * (element_temp - T_inf)
+                    plastic_heat_transfer += q_element
+                f.write(f"Plastic Covered Surface Heat Transfer: {plastic_heat_transfer:.2f} W\n")
+                total_heat_transfer += plastic_heat_transfer
+            
             if "CONST_Q" in info['boundary_indices']:
-                const_q_elements = info['boundary_indices']["CONST_Q"]
-                const_q_temps = [u[elem['global_idx']] for elem in const_q_elements]
-                f.write(f"Average CONST_Q Temperature: {np.mean(const_q_temps):.2f}°C\n")
-                f.write(f"Min CONST_Q Temperature: {np.min(const_q_temps):.2f}°C\n")
-                f.write(f"Max CONST_Q Temperature: {np.max(const_q_temps):.2f}°C\n")
-        f.write("\nActuator Temperatures:\n")
+                const_q_heat = sum(elem['bc_data'].get('heat_flux', 0.0) * 
+                                 info['coords'].dx * info['coords'].dy * 1e-6 
+                                 for elem in info['boundary_indices']["CONST_Q"])
+                f.write(f"Constant Heat Flux Surface Heat Transfer: {const_q_heat:.2f} W\n")
+                total_heat_transfer += const_q_heat
+            
+            if "ACTUATOR_CONNECTED" in info['boundary_indices']:
+                actuator_heat_transfer = 0.0
+                for element in info['boundary_indices']["ACTUATOR_CONNECTED"]:
+                    global_idx = element['global_idx']
+                    bc_data = element['bc_data']
+                    actuator_id = bc_data.get('actuator_id')
+                    if actuator_id in actuator_info:
+                        actuator_temp = u[actuator_info[actuator_id]['start_idx']]
+                        element_temp = u[global_idx]
+                        # Get the appropriate thermal resistance based on connecting location
+                        connecting_location = bc_data.get('connecting_location', 'housing')
+                        thermal_resistance = actuator_info[actuator_id]['thermal_resistance'].get(connecting_location, 1.0)
+                        element_area = info['coords'].dx * info['coords'].dy * 1e-6
+                        q_element = (element_temp - actuator_temp) * element_area / thermal_resistance
+                        actuator_heat_transfer += q_element
+                f.write(f"Actuator Connected Surface Heat Transfer: {actuator_heat_transfer:.2f} W\n")
+                total_heat_transfer += actuator_heat_transfer
+            
+            f.write(f"Total Heat Transfer Rate: {total_heat_transfer:.2f} W\n")
+        
+        # Write actuator results
+        f.write("\nActuator Results:\n")
         f.write("-" * 50 + "\n")
         for actuator_id, info in actuator_info.items():
             start_idx = info['start_idx']
             num_unknowns = info['num_unknowns']
             actuator_temps = u[start_idx:start_idx + num_unknowns]
-            housing_elements = actuator_elements[actuator_id]['housing_elements']
-            gearbox_elements = actuator_elements[actuator_id]['gearbox_elements']
-            motor_elements = actuator_elements[actuator_id]['motor_elements']
-            avg_housing_temp = np.mean([u[idx] for idx in housing_elements]) if housing_elements else None
-            avg_gearbox_temp = np.mean([u[idx] for idx in gearbox_elements]) if gearbox_elements else None
-            avg_motor_temp = np.mean([u[idx] for idx in motor_elements]) if motor_elements else None
             f.write(f"\nActuator: {actuator_id} ({info['type']})\n")
             f.write(f"Gearbox Temperature (T2): {actuator_temps[0]:.2f}°C\n")
             f.write(f"Motor Temperature (T4): {actuator_temps[1]:.2f}°C\n")
-            if avg_housing_temp is not None:
-                f.write(f"Average Housing Structure Temperature: {avg_housing_temp:.2f}°C\n")
-            if avg_gearbox_temp is not None:
-                f.write(f"Average Gearbox Structure Temperature: {avg_gearbox_temp:.2f}°C\n")
-            if avg_motor_temp is not None:
-                f.write(f"Average Motor Structure Temperature: {avg_motor_temp:.2f}°C\n")
+            f.write(f"Actuator Heat Losses: {sum(info['heat_losses'].values()):.2f} W\n")
+    
     print("\nResults have been saved to 'arm_thermal_results.txt'")
-    # Plot temperature distributions for each region (same as before)
+    
+    # Plot temperature distributions
     num_regions = len(region_info)
     num_cols = min(3, num_regions)
     num_rows = (num_regions + num_cols - 1) // num_cols
@@ -501,17 +630,16 @@ def update_matrix_with_geometries(A, region_info: Dict, actuator_info: Dict) -> 
     
     return A 
 
-def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.ndarray, region_info: Dict, actuator_info: Dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, Dict]:
+def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.ndarray, region_info: Dict, actuator_info: Dict, special_unknowns: dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, Dict]:
     """
     Update matrix A and vector b based on boundary conditions using pre-calculated indices.
     Different actuator types (PITCHYAW, ROLL) are handled differently.
-    
     Args:
         A: Global system matrix
         b: Global system vector
         region_info: Dictionary with region information
         actuator_info: Dictionary with actuator information
-        
+        special_unknowns: Dictionary with indices for special unknowns (T_WY_HS, T_BH)
     Returns:
         Tuple containing:
         - Updated global system matrix
@@ -519,9 +647,9 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
         - Dictionary containing actuator elements mapping
     """
     print("\nUpdating matrix with boundary conditions...")
-    
-    # Initialize dictionaries to store elements for each actuator
     actuator_elements = {}
+    
+    R_contact = 2 # contact resistance between gearbox and the structure (C/W)
     
     # First pass: Collect all boundary elements for each actuator
     for actuator_id, act_info in actuator_info.items():
@@ -682,8 +810,8 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     # Get boundary condition parameters
                     plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3  # Convert to meters
                     plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)  # W/mK
-                    htc = bc_data.get('heat_transfer_coefficient', 7.5)  # W/m²K
-                    T_inf = bc_data.get('ambient_temperature', 30.0)  # °C
+                    htc = bc_data.get('heat_transfer_coefficient', 7)  # W/m²K
+                    T_inf = bc_data.get('ambient_temperature', 21)  # °C
                     
                     # Calculate effective heat transfer coefficient
                     h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
@@ -707,6 +835,55 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     
                     # Update vector with heat flux
                     b[global_idx] -= q / dz_m
+                    
+            elif bc_type == "GEARBOX_HAND":
+                R1_tmp = 1.0+R_contact  # C/W
+                R2_tmp = 1.9  # C/W
+                
+                # R3_tmp = 2.898 # NC
+                # R3_tmp = 2.898*0.65  # C/W forearm fan
+                # R3_tmp = 2.898*0.7 # C/W, backhand fan
+                # R3_tmp = 2.898 + 1.5 # C/W, glove on
+                R3_tmp = 2.898 + 1.5 - (0.35)*2.898 # C/W, glove on, forearm fan
+                
+                # R4_tmp = 12  # C/W, backhand fan
+                R4_tmp = 7.7 + 1.5  # C/W, glove on
+                
+                Q1 = 9       # W
+                Q2 = 16.11+8
+                region_data = info['region_data']
+                T_amb = region_data.get('ambient_temperature', 21)
+                N_element = len(elements)
+                T_WY_HS_idx = special_unknowns['T_WY_HS']
+                T_BH_idx = special_unknowns['T_BH']
+                # 1. For each element in the boundary, couple to T_WY_HS
+                for element in elements:
+                    global_idx = element['global_idx']
+                    elements_with_bc.add(global_idx)
+                    A[global_idx, global_idx] -= 1.0 / R1_tmp / N_element / dx_m / dy_m / dz_m  
+                    A[global_idx, T_WY_HS_idx] += 1.0 / R1_tmp / N_element / dx_m / dy_m / dz_m
+                # 2. Equation for T_WY_HS: sum over boundary elements (T_element - T_HS)/R1_tmp + (T_BH - T_HS)/R2_tmp + (T_amb - T_HS)/R4_tmp + Q = 0
+                #    T_HS is T_WY_HS_idx, T_BH is T_BH_idx
+                #    sum over all boundary elements: (T_element - T_WY_HS)/R1_tmp
+                #    (T_BH - T_WY_HS)/R2_tmp
+                #    (T_amb - T_HS)/R4_tmp
+                #    + Q = 0
+                #    Place this equation at row T_WY_HS_idx
+                for element in elements:
+                    global_idx = element['global_idx']
+                    A[T_WY_HS_idx, global_idx] += 1.0 / R1_tmp / N_element
+                    A[T_WY_HS_idx, T_WY_HS_idx] -= 1.0 / R1_tmp / N_element
+                A[T_WY_HS_idx, T_BH_idx] += 1.0 / R2_tmp
+                A[T_WY_HS_idx, T_WY_HS_idx] -= 1.0 / R2_tmp
+                A[T_WY_HS_idx, T_WY_HS_idx] -= 1.0 / R4_tmp
+                b[T_WY_HS_idx] -= Q1 + T_amb / R4_tmp
+                # 3. Equation for T_BH: (T_WY_HS - T_BH)/R2_tmp + (T_amb - T_BH)/R3_tmp + Q2 = 0
+                #    Place this equation at row T_BH_idx
+                
+                A[T_BH_idx, T_WY_HS_idx] += 1.0 / R2_tmp
+                A[T_BH_idx, T_BH_idx] -= 1.0 / R2_tmp
+                A[T_BH_idx, T_BH_idx] -= 1.0 / R3_tmp
+                b[T_BH_idx] -= T_amb / R3_tmp + Q2
             
             elif bc_type == "ACTUATOR_CONNECTED":
                 for element in elements:
@@ -746,19 +923,19 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                         if connecting_location == "housing":
                             # Loop through elements in boundary region to create coupling between all elements
                             for element_idx in housing_elements:
-                                A[global_idx, element_idx] -= (1/R2+1/R3+1/R4)/area/len(housing_elements)/dz_m
+                                A[global_idx, element_idx] -= (1/(R2+R_contact)+1/R3+1/R4)/area/len(housing_elements)/dz_m
                             for element_idx in gearbox_elements:
-                                A[global_idx, element_idx] += 1/R2/area/len(gearbox_elements)/dz_m
+                                A[global_idx, element_idx] += 1/(R2+R_contact)/area/len(gearbox_elements)/dz_m
                             A[global_idx, T4_idx] += 1/R4/area/dz_m
                             A[global_idx, T2_idx] += 1/R3/area/dz_m
                             b[global_idx] -= q_fets/area/dz_m
                             
                         elif connecting_location == "gearbox":
                             for element_idx in gearbox_elements:
-                                A[global_idx, element_idx] -= (1/R1+1/R2)/area/len(gearbox_elements)/dz_m
+                                A[global_idx, element_idx] -= (1/(R1+R_contact)+1/(R2+R_contact))/area/len(gearbox_elements)/dz_m
                             for element_idx in housing_elements:
-                                A[global_idx, element_idx] += 1/R2/area/len(housing_elements)/dz_m
-                            A[global_idx, T2_idx] += 1/R1/area/dz_m
+                                A[global_idx, element_idx] += 1/(R2+R_contact)/area/len(housing_elements)/dz_m
+                            A[global_idx, T2_idx] += 1/(R1+R_contact)/area/dz_m
                             
                     elif actuator_type == "ROLL_IV":
                         if connecting_location == "housing":
@@ -805,8 +982,11 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
             
         # Get convection parameters from region data
         region_data = info['region_data']
-        htc = region_data.get('heat_transfer_coefficient', 7.5)  # W/m²K (default if not specified)
-        T_inf = region_data.get('ambient_temperature', 30.0)  # °C
+        htc = region_data.get('heat_transfer_coefficient', 7)  # W/m²K (default if not specified)
+        T_inf = region_data.get('ambient_temperature', 21)  # °C
+                
+        if region_data.get('id') == 'wrist' or region_data.get('id') == 'forearm_lower':
+            htc = 50
                 
         # Process all surface, edge, and corner elements that don't have other BCs
         for element_type in ['surface', 'edge', 'corner']:

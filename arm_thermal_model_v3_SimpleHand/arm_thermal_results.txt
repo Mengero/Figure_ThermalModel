@@ -1,0 +1,86 @@
+Arm Thermal Analysis Results
+==================================================
+
+Solve time: 3.20 seconds
+Final residual norm: 3.08e-03
+Solution converged successfully!
+
+Region Results:
+--------------------------------------------------
+
+Region: shoulder
+Average Temperature: 23.04°C
+Min Temperature: 22.89°C
+Max Temperature: 23.23°C
+Plastic Covered Surface Heat Transfer: 0.80 W
+Constant Heat Flux Surface Heat Transfer: 0.00 W
+Actuator Connected Surface Heat Transfer: -0.00 W
+Total Heat Transfer Rate: 0.80 W
+
+Region: humerus_upper
+Average Temperature: 23.80°C
+Min Temperature: 23.10°C
+Max Temperature: 24.70°C
+Plastic Covered Surface Heat Transfer: 1.37 W
+Actuator Connected Surface Heat Transfer: 0.00 W
+Total Heat Transfer Rate: 1.37 W
+
+Region: humerus_lower
+Average Temperature: 26.85°C
+Min Temperature: 24.81°C
+Max Temperature: 29.80°C
+Plastic Covered Surface Heat Transfer: 4.73 W
+Actuator Connected Surface Heat Transfer: -0.01 W
+Total Heat Transfer Rate: 4.72 W
+
+Region: forearm_upper
+Average Temperature: 31.00°C
+Min Temperature: 28.58°C
+Max Temperature: 35.72°C
+Plastic Covered Surface Heat Transfer: 9.62 W
+Actuator Connected Surface Heat Transfer: 0.00 W
+Total Heat Transfer Rate: 9.62 W
+
+Region: forearm_lower
+Average Temperature: 34.81°C
+Min Temperature: 32.26°C
+Max Temperature: 39.48°C
+Plastic Covered Surface Heat Transfer: 6.87 W
+Constant Heat Flux Surface Heat Transfer: 0.00 W
+Actuator Connected Surface Heat Transfer: -0.01 W
+Total Heat Transfer Rate: 6.86 W
+
+Region: wrist
+Average Temperature: 41.17°C
+Min Temperature: 39.12°C
+Max Temperature: 48.22°C
+Actuator Connected Surface Heat Transfer: 0.00 W
+Total Heat Transfer Rate: 0.00 W
+
+Actuator Results:
+--------------------------------------------------
+
+Actuator: J2 (PITCHYAW)
+Gearbox Temperature (T2): 23.21°C
+Motor Temperature (T4): 23.20°C
+Actuator Heat Losses: 0.00 W
+
+Actuator: HT (ROLL)
+Gearbox Temperature (T2): 25.08°C
+Motor Temperature (T4): 25.19°C
+Actuator Heat Losses: 0.00 W
+
+Actuator: EB (PITCHYAW)
+Gearbox Temperature (T2): 29.73°C
+Motor Temperature (T4): 29.83°C
+Actuator Heat Losses: 0.00 W
+
+Actuator: WR (ROLL)
+Gearbox Temperature (T2): 36.46°C
+Motor Temperature (T4): 38.81°C
+Actuator Heat Losses: 1.33 W
+
+Actuator: WP (ROLL)
+Gearbox Temperature (T2): 39.02°C
+Motor Temperature (T4): 45.75°C
+Actuator Heat Losses: 4.00 W

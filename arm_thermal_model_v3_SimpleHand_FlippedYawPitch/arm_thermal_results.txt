@@ -1,0 +1,77 @@
+Arm Thermal Analysis Results
+==================================================
+
+Solve time: 3.53 seconds
+Final residual norm: 6.12e-03
+Solution converged successfully!
+
+Region Temperatures:
+--------------------------------------------------
+
+Region: shoulder
+Average Temperature: 40.27°C
+Min Temperature: 40.24°C
+Max Temperature: 40.32°C
+Average CONST_Q Temperature: 40.24°C
+Min CONST_Q Temperature: 40.24°C
+Max CONST_Q Temperature: 40.24°C
+
+Region: humerus_upper
+Average Temperature: 40.47°C
+Min Temperature: 40.29°C
+Max Temperature: 40.72°C
+
+Region: humerus_lower
+Average Temperature: 41.28°C
+Min Temperature: 40.64°C
+Max Temperature: 42.31°C
+
+Region: forearm_upper
+Average Temperature: 42.90°C
+Min Temperature: 41.78°C
+Max Temperature: 45.41°C
+
+Region: forearm_lower
+Average Temperature: 50.28°C
+Min Temperature: 39.68°C
+Max Temperature: 62.99°C
+
+Region: wrist
+Average Temperature: 66.79°C
+Min Temperature: 60.29°C
+Max Temperature: 72.43°C
+
+Actuator Temperatures:
+--------------------------------------------------
+
+Actuator: J2 (PITCHYAW)
+Gearbox Temperature (T2): 40.32°C
+Motor Temperature (T4): 40.31°C
+Average Housing Structure Temperature: 40.31°C
+Average Gearbox Structure Temperature: 40.33°C
+Average Motor Structure Temperature: 40.37°C
+
+Actuator: HT (ROLL)
+Gearbox Temperature (T2): 40.74°C
+Motor Temperature (T4): 40.75°C
+Average Housing Structure Temperature: 40.75°C
+Average Gearbox Structure Temperature: 40.71°C
+
+Actuator: EB (PITCHYAW)
+Gearbox Temperature (T2): 42.30°C
+Motor Temperature (T4): 42.34°C
+Average Housing Structure Temperature: 42.34°C
+Average Gearbox Structure Temperature: 42.13°C
+Average Motor Structure Temperature: 41.78°C
+
+Actuator: WR (ROLL)
+Gearbox Temperature (T2): 45.20°C
+Motor Temperature (T4): 45.23°C
+Average Housing Structure Temperature: 45.23°C
+Average Gearbox Structure Temperature: 45.08°C
+
+Actuator: WP (ROLL)
+Gearbox Temperature (T2): 60.28°C
+Motor Temperature (T4): 69.05°C
+Average Housing Structure Temperature: 60.21°C
+Average Gearbox Structure Temperature: 60.59°C

@@ -298,7 +298,7 @@
       "thickness": 2.06,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 5,
+        "dx": 6,
         "dy": 6,
         "dz": 0.5
       },
@@ -380,14 +380,13 @@
       },
       "boundary_conditions": [
         {
-          "type": "ACTUATOR_CONNECTED", 
-          "comments":"WYGB",
+          "type": "CONST_Q", 
+          "comments":"WRIST_YAW_GEARBOX",
           "centroid": {"x": 0, "y": 20.8265, "z": 0},
           "width": 41.653,
           "height": 41.653,
           "thickness": 0,
-          "actuator_id": "WY",
-          "connecting_location": "gearbox"
+          "q": 1.7
         },
         {
           "type": "ACTUATOR_CONNECTED",
@@ -400,33 +399,6 @@
           "connecting_location": "housing"
         }
       ]
-    },
-
-
-    {
-      "id": "hand",
-      "centroid": { "x": 0, "y": 94.079, "z": 1.35615 },
-      "width": 105,
-      "height": 188.158,
-      "thickness": 2.7123,
-      "thermal_conductivity": 120.0,
-      "mesh_settings": {
-        "dx": 3,
-        "dy": 5,
-        "dz": 0.5
-      },
-      "boundary_conditions": [
-        {
-          "type": "ACTUATOR_CONNECTED", 
-          "comments":"WYMT",
-          "centroid": {"x": 0, "y": 17.945, "z": 0},
-          "width": 105,
-          "height": 35.89,
-          "thickness": 0,
-          "actuator_id": "WY",
-          "connecting_location": "housing"
-        }
-      ]
     }
   ],
   "actuators": [
@@ -434,8 +406,8 @@
       "id": "J2",
       "type": "PITCHYAW",
       "heat_losses": {
-        "gearbox": 0,
-        "motor": 0,
+        "gearbox": 2.3,
+        "motor": 0.9,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -450,8 +422,8 @@
       "id": "HT",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 0,
-        "motor": 0,
+        "gearbox": 3.0,
+        "motor": 1.2,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -467,8 +439,8 @@
       "id": "EB",
       "type": "PITCHYAW",
       "heat_losses": {
-        "gearbox": 0,
-        "motor": 0,
+        "gearbox": 3.2,
+        "motor": 1.9,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -484,8 +456,8 @@
       "id": "WR",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 0,
-        "motor": 0,
+        "gearbox": 0.9,
+        "motor": 0.5,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -501,32 +473,15 @@
       "id": "WP",
       "type": "ROLL",
       "heat_losses": {
-        "gearbox": 0,
-        "motor": 4,
+        "gearbox": 1.1,
+        "motor": 0.5,
         "FETs": 0.0
       },
       "thermal_resistance": {
         "R1": 2.0,
-        "R2": 0.5,
-        "R3": 0.5,
-        "R4": 1.5789,
-        "R5": 0.3,
-        "R6": 4.59
-      }
-    },
-    {
-      "id": "WY",
-      "type": "ROLL",
-      "heat_losses": {
-        "gearbox": 0,
-        "motor": 4,
-        "FETs": 0.0
-      },
-      "thermal_resistance": {
-        "R1": 2.0,
-        "R2": 0.5,
-        "R3": 0.5,
-        "R4": 1.5789,
+        "R2": 6.3,
+        "R3": 2.2,
+        "R4": 0.7,
         "R5": 0.3,
         "R6": 4.59
       }
