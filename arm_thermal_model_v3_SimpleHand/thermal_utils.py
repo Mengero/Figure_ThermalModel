@@ -5,7 +5,8 @@ Utility functions for thermal model processing.
 import json
 import re
 import os
-from typing import Dict, Any
+from typing import Dict, Any, List
+import numpy as np
 
 def read_geo_file(file_path: str) -> Dict[str, Any]:
     """
@@ -594,6 +595,96 @@ def print_model_summary(geo_data, mesh_params, region_elements, element_mappings
     print(f"\nTotal Elements: {total_elements}")
     print(f"Total Mappings: {len(element_mappings)}")
     print("===============================\n")
+
+class ThermalInterface:
+    """
+    Class to handle thermal coupling between 2D mesh and 1D thermal resistance models.
+    This provides a standardized interface for connecting different thermal models.
+    """
+    def __init__(self, interface_id: str, mesh_region: str, resistance_model: str):
+        self.interface_id = interface_id
+        self.mesh_region = mesh_region
+        self.resistance_model = resistance_model
+        self.coupling_elements = []
+        self.thermal_resistance = {}
+        self.heat_flux = 0.0
+        
+    def add_coupling_element(self, element_idx: int, area: float, position: dict):
+        """Add a mesh element that couples to the thermal resistance model."""
+        self.coupling_elements.append({
+            'element_idx': element_idx,
+            'area': area,
+            'position': position
+        })
+        
+    def set_thermal_resistance(self, resistance_network: dict):
+        """Set the thermal resistance network for this interface."""
+        self.thermal_resistance = resistance_network
+        
+    def calculate_heat_flux(self, mesh_temperatures: np.ndarray, resistance_temperatures: dict) -> float:
+        """Calculate the heat flux through the interface."""
+        total_heat_flux = 0.0
+        for element in self.coupling_elements:
+            mesh_temp = mesh_temperatures[element['element_idx']]
+            # Calculate heat flux based on temperature difference and thermal resistance
+            # This is a simplified example - actual implementation would use the full resistance network
+            resistance_temp = resistance_temperatures.get('interface', mesh_temp)
+            delta_T = mesh_temp - resistance_temp
+            R_total = sum(self.thermal_resistance.values())
+            q = delta_T / R_total * element['area']
+            total_heat_flux += q
+        self.heat_flux = total_heat_flux
+        return total_heat_flux
+        
+    def validate_energy_conservation(self, mesh_heat_flux: float, resistance_heat_flux: float, tolerance: float = 1e-6) -> bool:
+        """Validate that energy is conserved at the interface."""
+        return abs(mesh_heat_flux + resistance_heat_flux) < tolerance
+
+def create_thermal_interface(geo_data: dict, mesh_params: dict, region_elements: dict) -> List[ThermalInterface]:
+    """
+    Create thermal interfaces between 2D mesh and 1D thermal resistance models.
+    
+    Args:
+        geo_data: Geometry data from the GEO.json file
+        mesh_params: Mesh parameters for all regions
+        region_elements: Dictionary mapping region IDs to lists of elements
+        
+    Returns:
+        List of ThermalInterface objects
+    """
+    interfaces = []
+    
+    # Process each region for potential interfaces
+    for region in geo_data.get("regions", []):
+        region_id = region["id"]
+        
+        # Look for boundary conditions that indicate thermal interfaces
+        for bc in region.get("boundary_conditions", []):
+            if bc["type"] == "ACTUATOR_CONNECTED":
+                # Create new interface
+                interface = ThermalInterface(
+                    interface_id=f"{region_id}_{bc.get('id', 'interface')}",
+                    mesh_region=region_id,
+                    resistance_model=bc.get("actuator_id", "unknown")
+                )
+                
+                # Add coupling elements
+                elements = region_elements[region_id]
+                for element in elements:
+                    if element.get("is_boundary", False):
+                        interface.add_coupling_element(
+                            element_idx=element["global_idx"],
+                            area=element.get("area", 0.0),
+                            position=element.get("position", {})
+                        )
+                
+                # Set thermal resistance network
+                if "thermal_resistance" in bc:
+                    interface.set_thermal_resistance(bc["thermal_resistance"])
+                
+                interfaces.append(interface)
+    
+    return interfaces
 
 if __name__ == "__main__":
     # Example usage

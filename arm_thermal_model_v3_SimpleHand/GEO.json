@@ -467,7 +467,7 @@
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,
-        "motor": 1.33,
+        "motor": 1.84,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -484,7 +484,7 @@
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,
-        "motor": 4,
+        "motor": 6.5,
         "FETs": 0.0
       },
       "thermal_resistance": {

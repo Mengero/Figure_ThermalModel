@@ -838,19 +838,29 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     
             elif bc_type == "GEARBOX_HAND":
                 R1_tmp = 1.0+R_contact  # C/W
+                
+                # original design
                 R2_tmp = 1.9  # C/W
                 
                 # R3_tmp = 2.898 # NC
                 # R3_tmp = 2.898*0.65  # C/W forearm fan
+                
                 # R3_tmp = 2.898*0.7 # C/W, backhand fan
                 # R3_tmp = 2.898 + 1.5 # C/W, glove on
-                R3_tmp = 2.898 + 1.5 - (0.35)*2.898 # C/W, glove on, forearm fan
+                
                 
                 # R4_tmp = 12  # C/W, backhand fan
-                R4_tmp = 7.7 + 1.5  # C/W, glove on
                 
-                Q1 = 9       # W
-                Q2 = 16.11+8
+                # glove on, 50% wrist fan, pos back hand fan
+                # R3_tmp = 2.898 + 1.5 - (0.35)*2.898
+                # R4_tmp = 7.7 + 1.5 - (0.35)*2.898
+                
+                # glove on, 50% wrist fan, pos back hand fan, elbow installed
+                R3_tmp = 2.898 + 1.5 - (0.55)*2.898
+                R4_tmp = 7.7 + 1.5
+                
+                Q1 = 5.5       # W
+                Q2 = 24.56
                 region_data = info['region_data']
                 T_amb = region_data.get('ambient_temperature', 21)
                 N_element = len(elements)
@@ -986,7 +996,8 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
         T_inf = region_data.get('ambient_temperature', 21)  # °C
                 
         if region_data.get('id') == 'wrist' or region_data.get('id') == 'forearm_lower':
-            htc = 50
+            # htc = 50
+            htc = 40 # with elbow installed
                 
         # Process all surface, edge, and corner elements that don't have other BCs
         for element_type in ['surface', 'edge', 'corner']:

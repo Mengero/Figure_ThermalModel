@@ -1,77 +1,80 @@
 Arm Thermal Analysis Results
 ==================================================
 
-Solve time: 3.51 seconds
-Final residual norm: 3.31e-03
+Solve time: 3.83 seconds
+Final residual norm: 9.26e-03
 Solution converged successfully!
 
 Region Temperatures:
 --------------------------------------------------
 
 Region: shoulder
-Average Temperature: 22.99°C
-Min Temperature: 22.85°C
-Max Temperature: 23.17°C
-Average CONST_Q Temperature: 22.85°C
-Min CONST_Q Temperature: 22.85°C
-Max CONST_Q Temperature: 22.85°C
+Average Temperature: 24.36°C
+Min Temperature: 24.12°C
+Max Temperature: 24.67°C
+Average CONST_Q Temperature: 24.12°C
+Min CONST_Q Temperature: 24.12°C
+Max CONST_Q Temperature: 24.13°C
 
 Region: humerus_upper
-Average Temperature: 23.73°C
-Min Temperature: 23.05°C
-Max Temperature: 24.61°C
+Average Temperature: 25.61°C
+Min Temperature: 24.46°C
+Max Temperature: 27.10°C
 
 Region: humerus_lower
-Average Temperature: 26.71°C
-Min Temperature: 24.72°C
-Max Temperature: 29.59°C
+Average Temperature: 30.64°C
+Min Temperature: 27.28°C
+Max Temperature: 35.51°C
 
 Region: forearm_upper
-Average Temperature: 30.77°C
-Min Temperature: 28.40°C
-Max Temperature: 35.37°C
+Average Temperature: 37.50°C
+Min Temperature: 33.51°C
+Max Temperature: 45.96°C
 
 Region: forearm_lower
-Average Temperature: 34.15°C
-Min Temperature: 31.85°C
-Max Temperature: 39.02°C
+Average Temperature: 47.00°C
+Min Temperature: 44.36°C
+Max Temperature: 52.87°C
+Average CONST_Q Temperature: 51.76°C
+Min CONST_Q Temperature: 49.58°C
+Max CONST_Q Temperature: 52.87°C
 
 Region: wrist
-Average Temperature: 38.24°C
-Min Temperature: 36.10°C
-Max Temperature: 40.58°C
+Average Temperature: 48.58°C
+Min Temperature: 47.44°C
+Max Temperature: 50.45°C
 
 Actuator Temperatures:
 --------------------------------------------------
 
 Actuator: J2 (PITCHYAW)
-Gearbox Temperature (T2): 23.16°C
-Motor Temperature (T4): 23.14°C
-Average Housing Structure Temperature: 23.14°C
-Average Gearbox Structure Temperature: 23.23°C
-Average Motor Structure Temperature: 23.38°C
+Gearbox Temperature (T2): 24.65°C
+Motor Temperature (T4): 24.62°C
+Average Housing Structure Temperature: 24.62°C
+Average Gearbox Structure Temperature: 24.76°C
+Average Motor Structure Temperature: 25.02°C
 
 Actuator: HT (ROLL)
-Gearbox Temperature (T2): 24.98°C
-Motor Temperature (T4): 25.09°C
-Average Housing Structure Temperature: 25.09°C
-Average Gearbox Structure Temperature: 24.55°C
+Gearbox Temperature (T2): 27.72°C
+Motor Temperature (T4): 27.90°C
+Average Housing Structure Temperature: 27.90°C
+Average Gearbox Structure Temperature: 27.00°C
 
 Actuator: EB (PITCHYAW)
-Gearbox Temperature (T2): 29.52°C
-Motor Temperature (T4): 29.62°C
-Average Housing Structure Temperature: 29.62°C
-Average Gearbox Structure Temperature: 29.11°C
-Average Motor Structure Temperature: 28.21°C
+Gearbox Temperature (T2): 35.39°C
+Motor Temperature (T4): 35.56°C
+Average Housing Structure Temperature: 35.56°C
+Average Gearbox Structure Temperature: 34.70°C
+Average Motor Structure Temperature: 33.17°C
 
 Actuator: WR (ROLL)
-Gearbox Temperature (T2): 36.10°C
-Motor Temperature (T4): 38.44°C
-Average Housing Structure Temperature: 36.34°C
-Average Gearbox Structure Temperature: 35.15°C
+Gearbox Temperature (T2): 46.46°C
+Motor Temperature (T4): 49.75°C
+Average Housing Structure Temperature: 46.85°C
+Average Gearbox Structure Temperature: 44.92°C
 
 Actuator: WP (ROLL)
-Gearbox Temperature (T2): 37.46°C
-Motor Temperature (T4): 44.12°C
-Average Housing Structure Temperature: 37.80°C
-Average Gearbox Structure Temperature: 36.08°C
+Gearbox Temperature (T2): 49.21°C
+Motor Temperature (T4): 59.92°C
+Average Housing Structure Temperature: 49.66°C
+Average Gearbox Structure Temperature: 47.43°C

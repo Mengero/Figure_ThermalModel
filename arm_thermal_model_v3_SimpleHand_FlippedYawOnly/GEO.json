@@ -344,6 +344,15 @@
           "connecting_location": "gearbox"
         },
         {
+          "type": "CONST_Q",
+          "comments":"Electornics", 
+          "centroid": {"x": -61.607675, "y": 26.9721, "z": 0},
+          "width": 41.83,
+          "height": 41.83,
+          "thickness": 0,
+          "q": 2.5
+        },
+        {
           "type": "ADIABATIC",
           "source_1": {
             "centroid": {"x": 0, "y": 69.82, "z": 1.03 },
@@ -372,7 +381,7 @@
       "width": 46.6435,
       "height": 385.8318,
       "thickness": 8.79,
-      "thermal_conductivity": 120.0,
+      "thermal_conductivity": 360.0,
       "mesh_settings": {
         "dx": 3,
         "dy": 5,
@@ -458,7 +467,7 @@
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,
-        "motor": 1.33,
+        "motor": 1.84,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -475,7 +484,7 @@
       "type": "ROLL",
       "heat_losses": {
         "gearbox": 0,
-        "motor": 4,
+        "motor": 6.5,
         "FETs": 0.0
       },
       "thermal_resistance": {

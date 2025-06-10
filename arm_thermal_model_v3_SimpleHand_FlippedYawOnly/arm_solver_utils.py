@@ -750,11 +750,22 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     
             elif bc_type == "HOUSING_HAND":
                 R1_tmp = 1.0+R_contact  # C/W
+                
                 R2_tmp = 1.9  # C/W
+                
+                # heatpiped design
+                R2_tmp = 1.9/3
+                
+                # Only flipped Yaw
                 R3_tmp = 2.898*0.65  # C/W
                 R4_tmp = 7.7+5  # C/W
-                Q1 = 9       # W
-                Q2 = 16.11
+                
+                # Flipped with glove on, elbow installed, both fan blowing, hand fan pos
+                R3_tmp = 2.898 + 1.5 - 2.898*0.55  # C/W
+                R4_tmp = 7.7 + 5 + 1.5  # C/W
+                
+                Q1 = 5.5       # W
+                Q2 = 24.56-2.5
                 region_data = info['region_data']
                 T_amb = region_data.get('ambient_temperature', 21)
                 htc = region_data.get('heat_transfer_coefficient', 7)  # W/m²K (default if not specified)
@@ -876,7 +887,7 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
         T_inf = region_data.get('ambient_temperature', 21)  # °C
         
         if region_data.get('id') == 'wrist' or region_data.get('id') == 'forearm_lower':
-            htc = 50
+            htc = 40
                 
         # Process all surface, edge, and corner elements that don't have other BCs
         for element_type in ['surface', 'edge', 'corner']:
