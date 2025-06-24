@@ -121,7 +121,7 @@ def prepare_system():
     visualize_regions(regions, region_info, params)
     A, b, special_unknowns = initialize_global_matrix(total_elements, region_info, actuator_info)
     A = update_matrix_with_geometries(A, region_info, actuator_info)
-    A, b, actuator_elements = update_matrix_with_boundary_conditions(A, b, region_info, actuator_info, special_unknowns)
+    A, b, actuator_elements = update_matrix_with_boundary_conditions(A, b, region_info, actuator_info, special_unknowns, geo_data)
     return dict(
         geo_data=geo_data,
         params=params,
@@ -218,6 +218,22 @@ def postprocess_results(solution_data):
     actuator_info = solution_data['actuator_info']
     actuator_elements = solution_data['actuator_elements']
     special_unknowns = solution_data.get('special_unknowns', {})
+    geo_data = solution_data.get('geo_data', {})
+    
+    # Get global environment parameters
+    env_data = geo_data.get('environment', {})
+    T_inf_global = env_data.get('ambient_temperature')
+    htc_global = env_data.get('heat_transfer_coefficient')
+    plastic_conductivity_global = env_data.get('plastic_conductivity')
+    plastic_thickness_global = env_data.get('plastic_thickness')
+    if T_inf_global is None:
+        raise ValueError("Ambient temperature must be specified in the environment data")
+    elif htc_global is None:
+        raise ValueError("Heat transfer coefficient must be specified in the environment data")
+    elif plastic_conductivity_global is None:
+        raise ValueError("Plastic conductivity must be specified in the environment data")
+    elif plastic_thickness_global is None:
+        raise ValueError("Plastic thickness must be specified in the environment data")
     
     # Print temperatures and heat transfer rates for each region
     print("\nTemperature and Heat Transfer Results:")
@@ -248,8 +264,8 @@ def postprocess_results(solution_data):
                 bc_data = element['bc_data']
                 plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3
                 plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
-                htc = bc_data.get('heat_transfer_coefficient', 7)
-                T_inf = bc_data.get('ambient_temperature', 21)
+                htc = bc_data.get('heat_transfer_coefficient', htc_global)
+                T_inf = bc_data.get('ambient_temperature', T_inf_global)
                 
                 # Calculate heat transfer through plastic and convection
                 h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
@@ -371,10 +387,10 @@ def postprocess_results(solution_data):
                 for element in info['boundary_indices']["PLASTIC_COVERED"]:
                     global_idx = element['global_idx']
                     bc_data = element['bc_data']
-                    plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3
-                    plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
-                    htc = bc_data.get('heat_transfer_coefficient', 7)
-                    T_inf = bc_data.get('ambient_temperature', 21)
+                    plastic_thickness = bc_data.get('plastic_thickness', plastic_thickness_global) * 1e-3
+                    plastic_conductivity = bc_data.get('plastic_conductivity', plastic_conductivity_global)
+                    htc = bc_data.get('heat_transfer_coefficient', htc_global)
+                    T_inf = bc_data.get('ambient_temperature', T_inf_global)
                     h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
                     element_temp = u[global_idx]
                     element_area = info['coords'].dx * info['coords'].dy * 1e-6
@@ -630,7 +646,7 @@ def update_matrix_with_geometries(A, region_info: Dict, actuator_info: Dict) -> 
     
     return A 
 
-def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.ndarray, region_info: Dict, actuator_info: Dict, special_unknowns: dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, Dict]:
+def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.ndarray, region_info: Dict, actuator_info: Dict, special_unknowns: dict, geo_data: dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, Dict]:
     """
     Update matrix A and vector b based on boundary conditions using pre-calculated indices.
     Different actuator types (PITCHYAW, ROLL) are handled differently.
@@ -650,6 +666,10 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
     actuator_elements = {}
     
     R_contact = 2 # contact resistance between gearbox and the structure (C/W)
+    
+    env_data = geo_data['environment']
+    T_inf_global = env_data['ambient_temperature']
+    htc_global = env_data['heat_transfer_coefficient']
     
     # First pass: Collect all boundary elements for each actuator
     for actuator_id, act_info in actuator_info.items():
@@ -810,8 +830,8 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     # Get boundary condition parameters
                     plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3  # Convert to meters
                     plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)  # W/mK
-                    htc = bc_data.get('heat_transfer_coefficient', 7)  # W/m²K
-                    T_inf = bc_data.get('ambient_temperature', 21)  # °C
+                    htc = bc_data.get('heat_transfer_coefficient', htc_global)  # W/m²K
+                    T_inf = bc_data.get('ambient_temperature', T_inf_global)  # °C
                     
                     # Calculate effective heat transfer coefficient
                     h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
@@ -843,6 +863,7 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                 R2_tmp = 1.9  # C/W
                 
                 # R3_tmp = 2.898 # NC
+                
                 # R3_tmp = 2.898*0.65  # C/W forearm fan
                 
                 # R3_tmp = 2.898*0.7 # C/W, backhand fan
@@ -851,18 +872,23 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                 
                 # R4_tmp = 12  # C/W, backhand fan
                 
-                # glove on, 50% wrist fan, pos back hand fan
+                # glove on,w 50% wrist fan, pos back hand fan
                 # R3_tmp = 2.898 + 1.5 - (0.35)*2.898
                 # R4_tmp = 7.7 + 1.5 - (0.35)*2.898
                 
                 # glove on, 50% wrist fan, pos back hand fan, elbow installed
-                R3_tmp = 2.898 + 1.5 - (0.55)*2.898
+                # R3_tmp = 2.898 + 1.5 - (0.55)*2.898
+                # R4_tmp = 7.7 + 1.5
+                
+                # glove on, 50% wrist fan, no hand fan, elbow installed
+                R3_tmp = 2.898 + 1.5 - (0.35)*2.898
+                # R3_tmp = 2.898 + 1.5# NC with glove on
                 R4_tmp = 7.7 + 1.5
                 
-                Q1 = 5.5       # W
-                Q2 = 24.56
+                Q1 = 4       # W
+                Q2 = 9.86 + 2
                 region_data = info['region_data']
-                T_amb = region_data.get('ambient_temperature', 21)
+                T_amb = region_data.get('ambient_temperature',T_inf_global)
                 N_element = len(elements)
                 T_WY_HS_idx = special_unknowns['T_WY_HS']
                 T_BH_idx = special_unknowns['T_BH']
@@ -992,8 +1018,8 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
             
         # Get convection parameters from region data
         region_data = info['region_data']
-        htc = region_data.get('heat_transfer_coefficient', 7)  # W/m²K (default if not specified)
-        T_inf = region_data.get('ambient_temperature', 21)  # °C
+        htc = region_data.get('heat_transfer_coefficient', htc_global)  # W/m²K (default if not specified)
+        T_inf = region_data.get('ambient_temperature',T_inf_global)  # °C
                 
         if region_data.get('id') == 'wrist' or region_data.get('id') == 'forearm_lower':
             # htc = 50
