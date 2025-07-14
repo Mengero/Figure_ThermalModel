@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Thermal Model Editor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-2">
+                    <i class="bi bi-thermometer-half text-primary"></i> Thermal Model Dashboard
+                </h1>
+                <p class="lead">
+                    Currently editing: <span class="badge bg-primary">{{ current_file }}</span>
+                </p>
+            </div>
+            <div class="btn-group">
+                <a href="{{ url_for('download') }}" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Download Modified File
+                </a>
+                <a href="{{ url_for('backup') }}" class="btn btn-secondary">
+                    <i class="bi bi-shield-check"></i> Create Backup
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Environment Card -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear text-primary"></i> Environment Settings
+                </h5>
+                <p class="card-text">Configure ambient temperature and thermal properties.</p>
+                <ul class="list-unstyled">
+                    <li><strong>Ambient Temperature:</strong> {{ data.environment.ambient_temperature }}°C</li>
+                    <li><strong>Heat Transfer Coefficient:</strong> {{ data.environment.heat_transfer_coefficient }} W/m²K</li>
+                    <li><strong>Plastic Conductivity:</strong> {{ data.environment.plastic_conductivity }} W/mK</li>
+                </ul>
+                <a href="{{ url_for('environment') }}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit Environment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regions Card -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-grid text-success"></i> Regions
+                </h5>
+                <p class="card-text">Manage thermal regions and their properties.</p>
+                <p><strong>Total Regions:</strong> {{ data.regions|length }}</p>
+                <div class="mb-3">
+                    {% for region in data.regions %}
+                        <span class="badge bg-secondary me-1">{{ region.id }}</span>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('regions') }}" class="btn btn-success">
+                    <i class="bi bi-grid"></i> View Regions
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actuators Card -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-cpu text-warning"></i> Actuators
+                </h5>
+                <p class="card-text">Configure actuators and their thermal properties.</p>
+                <p><strong>Total Actuators:</strong> {{ data.actuators|length }}</p>
+                <div class="mb-3">
+                    {% for actuator in data.actuators %}
+                        <span class="badge bg-warning text-dark me-1">{{ actuator.id }}</span>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('actuators') }}" class="btn btn-warning">
+                    <i class="bi bi-cpu"></i> View Actuators
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Model Summary
+                </h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Units</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-ruler"></i> Length: mm</li>
+                            <li><i class="bi bi-thermometer"></i> Temperature: °C</li>
+                            <li><i class="bi bi-lightning"></i> Power: W</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Thermal Properties</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="bi bi-arrows-move"></i> Thermal Conductivity: W/mK</li>
+                            <li><i class="bi bi-box"></i> Density: kg/m³</li>
+                            <li><i class="bi bi-fire"></i> Specific Heat: J/kgK</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{{ url_for('backup') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-download"></i> Create Backup
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-list-task"></i> Quick Actions
+                </h5>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('environment') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-gear"></i><br>Environment
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('regions') }}" class="btn btn-outline-success">
+                                <i class="bi bi-grid"></i><br>Regions
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('actuators') }}" class="btn btn-outline-warning">
+                                <i class="bi bi-cpu"></i><br>Actuators
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('backup') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-download"></i><br>Backup
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

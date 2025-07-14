@@ -1,0 +1,596 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ region.id }} - Thermal Model Editor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-pencil text-warning"></i> Edit Region: {{ region.id }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('region_detail', region_id=region.id) }}">{{ region.id }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Edit Region Properties
+                </h5>
+                <form method="POST">
+                    <div class="form-section">
+                        <h4>Geometry</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="width" class="form-label">Width</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="width" name="width" 
+                                               value="{{ region.width }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="height" class="form-label">Height</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="height" name="height" 
+                                               value="{{ region.height }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="thickness" class="form-label">Thickness</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="thickness" name="thickness" 
+                                               value="{{ region.thickness }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Centroid Position</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="centroid_x" class="form-label">X Coordinate</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="centroid_x" name="centroid_x" 
+                                               value="{{ region.centroid.x }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="centroid_y" class="form-label">Y Coordinate</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="centroid_y" name="centroid_y" 
+                                               value="{{ region.centroid.y }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="centroid_z" class="form-label">Z Coordinate</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="centroid_z" name="centroid_z" 
+                                               value="{{ region.centroid.z }}" step="0.01" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Thermal Properties</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="thermal_conductivity" class="form-label">Thermal Conductivity</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="thermal_conductivity" 
+                                               name="thermal_conductivity" value="{{ region.thermal_conductivity }}" 
+                                               step="0.1" required>
+                                        <span class="input-group-text">W/mK</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Mesh Settings</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dx" class="form-label">dx</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dx" name="mesh_dx" 
+                                               value="{{ region.mesh_settings.dx }}" step="0.1" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dy" class="form-label">dy</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dy" name="mesh_dy" 
+                                               value="{{ region.mesh_settings.dy }}" step="0.1" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dz" class="form-label">dz</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dz" name="mesh_dz" 
+                                               value="{{ region.mesh_settings.dz }}" step="0.1" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Boundary Conditions</h4>
+                        <div id="boundary-conditions-container">
+                            {% for bc in region.boundary_conditions %}
+                            <div class="boundary-condition-item border p-3 mb-3">
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Type</label>
+                                        <select class="form-control bc-type-select" name="bc_{{ loop.index0 }}_type" required>
+                                            <option value="ACTUATOR_CONNECTED" {{ 'selected' if bc.type == 'ACTUATOR_CONNECTED' else '' }}>ACTUATOR_CONNECTED</option>
+                                            <option value="CONST_Q" {{ 'selected' if bc.type == 'CONST_Q' else '' }}>CONST_Q</option>
+                                            <option value="MAPPED" {{ 'selected' if bc.type == 'MAPPED' else '' }}>MAPPED</option>
+                                            <option value="ADIABATIC" {{ 'selected' if bc.type == 'ADIABATIC' else '' }}>ADIABATIC</option>
+                                            <option value="PLASTIC_COVERED" {{ 'selected' if bc.type == 'PLASTIC_COVERED' else '' }}>PLASTIC_COVERED</option>
+                                            <option value="GEARBOX_HAND" {{ 'selected' if bc.type == 'GEARBOX_HAND' else '' }}>GEARBOX_HAND</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Comments (optional)</label>
+                                        <input type="text" class="form-control" name="bc_{{ loop.index0 }}_comments" value="{{ bc.comments or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid X</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_centroid_x" value="{{ bc.centroid.x if bc.centroid else 0 }}" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid Y</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_centroid_y" value="{{ bc.centroid.y if bc.centroid else 0 }}" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid Z</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" step="0.01">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Width</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Height</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="0.01">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Thickness</label>
+                                        <input type="number" class="form-control" name="bc_{{ loop.index0 }}_thickness" value="{{ bc.thickness if bc.thickness is defined else 0 }}" step="0.01">
+                                    </div>
+                                </div>
+                                
+                                <!-- Type-specific fields -->
+                                <div class="type-specific-fields">
+                                    {% if bc.type == 'ACTUATOR_CONNECTED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Actuator ID</label>
+                                            <input type="text" class="form-control" name="bc_{{ loop.index0 }}_actuator_id" value="{{ bc.actuator_id or '' }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Connecting Location</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_connecting_location">
+                                                <option value="housing" {{ 'selected' if bc.connecting_location == 'housing' else '' }}>Housing</option>
+                                                <option value="gearbox" {{ 'selected' if bc.connecting_location == 'gearbox' else '' }}>Gearbox</option>
+                                                <option value="motor" {{ 'selected' if bc.connecting_location == 'motor' else '' }}>Motor</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'CONST_Q' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Heat Flux (q)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_q" value="{{ bc.q if bc.q is defined else 0 }}" step="0.1">
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'MAPPED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Symmetry Axis</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_symmetry_axis">
+                                                <option value="x" {{ 'selected' if bc.symmetry_axis == 'x' else '' }}>X</option>
+                                                <option value="y" {{ 'selected' if bc.symmetry_axis == 'y' else '' }}>Y</option>
+                                                <option value="z" {{ 'selected' if bc.symmetry_axis == 'z' else '' }}>Z</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'PLASTIC_COVERED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Plastic Thickness</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_thickness" value="{{ bc.plastic_thickness if bc.plastic_thickness is defined else 0 }}" step="0.01">
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'ADIABATIC' and bc.source_1 %}
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h6>Source 1</h6>
+                                            <div class="row mb-2">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Centroid X</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_centroid_x" value="{{ bc.source_1.centroid.x if bc.source_1.centroid else 0 }}" step="0.01">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Centroid Y</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_centroid_y" value="{{ bc.source_1.centroid.y if bc.source_1.centroid else 0 }}" step="0.01">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Centroid Z</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_centroid_z" value="{{ bc.source_1.centroid.z if bc.source_1.centroid else 0 }}" step="0.01">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Width</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_width" value="{{ bc.source_1.width if bc.source_1.width is defined else 0 }}" step="0.01">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Height</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_height" value="{{ bc.source_1.height if bc.source_1.height is defined else 0 }}" step="0.01">
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label class="form-label">Source 1 Thickness</label>
+                                                    <input type="number" class="form-control" name="bc_{{ loop.index0 }}_source1_thickness" value="{{ bc.source_1.thickness if bc.source_1.thickness is defined else 0 }}" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-sm btn-danger remove-bc-btn">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <input type="hidden" name="bc_count" id="bc-count" value="{{ region.boundary_conditions|length }}">
+                        
+                        <div class="text-end mb-3">
+                            <button type="button" class="btn btn-success" id="add-bc-btn">
+                                <i class="bi bi-plus-circle"></i> Add Boundary Condition
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('region_detail', region_id=region.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Current Values
+                </h5>
+                <div class="form-section">
+                    <h6>Geometry</h6>
+                    <ul class="list-unstyled">
+                        <li>Width: {{ region.width }} mm</li>
+                        <li>Height: {{ region.height }} mm</li>
+                        <li>Thickness: {{ region.thickness }} mm</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Centroid</h6>
+                    <ul class="list-unstyled">
+                        <li>X: {{ region.centroid.x }} mm</li>
+                        <li>Y: {{ region.centroid.y }} mm</li>
+                        <li>Z: {{ region.centroid.z }} mm</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Thermal</h6>
+                    <ul class="list-unstyled">
+                        <li>Conductivity: {{ region.thermal_conductivity }} W/mK</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Mesh</h6>
+                    <ul class="list-unstyled">
+                        <li>dx: {{ region.mesh_settings.dx }} mm</li>
+                        <li>dy: {{ region.mesh_settings.dy }} mm</li>
+                        <li>dz: {{ region.mesh_settings.dz }} mm</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Boundary Conditions
+                </h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        You can now edit boundary conditions directly in the form. 
+                        Use the "Add Boundary Condition" button to create new ones,
+                        and the "Remove" button to delete existing ones.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('boundary-conditions-container');
+    const addBtn = document.getElementById('add-bc-btn');
+    const countInput = document.getElementById('bc-count');
+    
+    // Function to create a new boundary condition form
+    function createBoundaryConditionForm(index) {
+        const div = document.createElement('div');
+        div.className = 'boundary-condition-item border p-3 mb-3';
+        div.innerHTML = `
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select class="form-control bc-type-select" name="bc_${index}_type" required>
+                        <option value="">Select type...</option>
+                        <option value="ACTUATOR_CONNECTED">ACTUATOR_CONNECTED</option>
+                        <option value="CONST_Q">CONST_Q</option>
+                        <option value="MAPPED">MAPPED</option>
+                        <option value="ADIABATIC">ADIABATIC</option>
+                        <option value="PLASTIC_COVERED">PLASTIC_COVERED</option>
+                        <option value="GEARBOX_HAND">GEARBOX_HAND</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Comments (optional)</label>
+                    <input type="text" class="form-control" name="bc_${index}_comments" value="">
+                </div>
+            </div>
+            
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <label class="form-label">Centroid X</label>
+                    <input type="number" class="form-control" name="bc_${index}_centroid_x" value="0" step="0.01">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Centroid Y</label>
+                    <input type="number" class="form-control" name="bc_${index}_centroid_y" value="0" step="0.01">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Centroid Z</label>
+                    <input type="number" class="form-control" name="bc_${index}_centroid_z" value="0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="row mb-2">
+                <div class="col-md-4">
+                    <label class="form-label">Width</label>
+                    <input type="number" class="form-control" name="bc_${index}_width" value="0" step="0.01">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Height</label>
+                    <input type="number" class="form-control" name="bc_${index}_height" value="0" step="0.01">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Thickness</label>
+                    <input type="number" class="form-control" name="bc_${index}_thickness" value="0" step="0.01">
+                </div>
+            </div>
+            
+            <div class="type-specific-fields"></div>
+            
+            <div class="text-end">
+                <button type="button" class="btn btn-sm btn-danger remove-bc-btn">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+        `;
+        return div;
+    }
+    
+    // Function to update type-specific fields
+    function updateTypeSpecificFields(item, type, index) {
+        const container = item.querySelector('.type-specific-fields');
+        container.innerHTML = '';
+        
+        if (type === 'ACTUATOR_CONNECTED') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Actuator ID</label>
+                        <input type="text" class="form-control" name="bc_${index}_actuator_id" value="">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Connecting Location</label>
+                        <select class="form-control" name="bc_${index}_connecting_location">
+                            <option value="housing">Housing</option>
+                            <option value="gearbox">Gearbox</option>
+                            <option value="motor">Motor</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'CONST_Q') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Heat Flux (q)</label>
+                        <input type="number" class="form-control" name="bc_${index}_q" value="0" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'MAPPED') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Symmetry Axis</label>
+                        <select class="form-control" name="bc_${index}_symmetry_axis">
+                            <option value="x">X</option>
+                            <option value="y">Y</option>
+                            <option value="z">Z</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'PLASTIC_COVERED') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Plastic Thickness</label>
+                        <input type="number" class="form-control" name="bc_${index}_plastic_thickness" value="0" step="0.01">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'ADIABATIC') {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Source 1</h6>
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid X</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_x" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid Y</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_y" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid Z</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_z" value="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Width</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_width" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Height</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_height" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Thickness</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_thickness" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Add event listener for adding boundary conditions
+    addBtn.addEventListener('click', function() {
+        const currentCount = parseInt(countInput.value);
+        const newItem = createBoundaryConditionForm(currentCount);
+        container.appendChild(newItem);
+        countInput.value = currentCount + 1;
+        
+        // Add event listeners to the new item
+        const typeSelect = newItem.querySelector('.bc-type-select');
+        const removeBtn = newItem.querySelector('.remove-bc-btn');
+        
+        typeSelect.addEventListener('change', function() {
+            updateTypeSpecificFields(newItem, this.value, currentCount);
+        });
+        
+        removeBtn.addEventListener('click', function() {
+            newItem.remove();
+            updateIndices();
+        });
+    });
+    
+    // Function to update indices after removal
+    function updateIndices() {
+        const items = container.querySelectorAll('.boundary-condition-item');
+        items.forEach((item, index) => {
+            // Update all input and select names
+            const inputs = item.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                const name = input.name;
+                if (name) {
+                    input.name = name.replace(/bc_\d+_/, `bc_${index}_`);
+                }
+            });
+        });
+        countInput.value = items.length;
+    }
+    
+    // Add event listeners to existing items
+    container.querySelectorAll('.boundary-condition-item').forEach((item, index) => {
+        const typeSelect = item.querySelector('.bc-type-select');
+        const removeBtn = item.querySelector('.remove-bc-btn');
+        
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                updateTypeSpecificFields(item, this.value, index);
+            });
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                item.remove();
+                updateIndices();
+            });
+        }
+    });
+});
+</script>
+{% endblock %} 

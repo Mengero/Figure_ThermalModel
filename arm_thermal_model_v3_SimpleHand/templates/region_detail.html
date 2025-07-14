@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}{{ region.id }} - Region Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-box text-success"></i> {{ region.id }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ region.id }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle"></i> Region Properties
+                </h5>
+                
+                <div class="form-section">
+                    <h4>Geometry</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Dimensions:</strong>
+                            <ul class="list-unstyled">
+                                <li>Width: {{ region.width }} mm</li>
+                                <li>Height: {{ region.height }} mm</li>
+                                <li>Thickness: {{ region.thickness }} mm</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Centroid:</strong>
+                            <ul class="list-unstyled">
+                                <li>X: {{ region.centroid.x }} mm</li>
+                                <li>Y: {{ region.centroid.y }} mm</li>
+                                <li>Z: {{ region.centroid.z }} mm</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Thermal Properties</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Thermal Conductivity:</strong>
+                            <span class="badge bg-info">{{ region.thermal_conductivity }} W/mK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Mesh Settings</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>dx:</strong> {{ region.mesh_settings.dx }} mm
+                        </div>
+                        <div class="col-md-4">
+                            <strong>dy:</strong> {{ region.mesh_settings.dy }} mm
+                        </div>
+                        <div class="col-md-4">
+                            <strong>dz:</strong> {{ region.mesh_settings.dz }} mm
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{{ url_for('edit_region', region_id=region.id) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Edit Region
+                    </a>
+                    <a href="{{ url_for('regions') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Regions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-diagram-3"></i> Boundary Conditions
+                </h5>
+                <div class="accordion" id="boundaryAccordion">
+                    {% for bc in region.boundary_conditions %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse{{ loop.index }}" aria-expanded="false" 
+                                    aria-controls="collapse{{ loop.index }}">
+                                <strong>{{ bc.type }}</strong>
+                                {% if bc.comments %}
+                                <small class="text-muted ms-2">({{ bc.comments }})</small>
+                                {% endif %}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" 
+                             aria-labelledby="heading{{ loop.index }}" data-bs-parent="#boundaryAccordion">
+                            <div class="accordion-body">
+                                <div class="json-display">{{ bc | tojson(indent=2) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-code-slash"></i> Raw JSON Data
+                </h5>
+                <div class="json-display">{{ region | tojson(indent=2) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ actuator.id }} - Thermal Model Editor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-pencil text-warning"></i> Edit Actuator: {{ actuator.id }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('actuators') }}">Actuators</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('actuator_detail', actuator_id=actuator.id) }}">{{ actuator.id }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Edit Actuator Properties
+                </h5>
+                <form method="POST">
+                    <div class="form-section">
+                        <h4>Basic Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="actuator_id" class="form-label">Actuator ID</label>
+                                    <input type="text" class="form-control" id="actuator_id" 
+                                           value="{{ actuator.id }}" readonly>
+                                    <div class="form-text">Actuator ID cannot be changed</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="actuator_type" class="form-label">Type</label>
+                                    <input type="text" class="form-control" id="actuator_type" 
+                                           value="{{ actuator.type }}" readonly>
+                                    <div class="form-text">Type cannot be changed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Heat Losses</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_gearbox" class="form-label">
+                                        <i class="bi bi-gear text-danger"></i> Gearbox Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_gearbox" 
+                                               name="heat_gearbox" value="{{ actuator.heat_losses.gearbox }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_motor" class="form-label">
+                                        <i class="bi bi-lightning text-warning"></i> Motor Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_motor" 
+                                               name="heat_motor" value="{{ actuator.heat_losses.motor }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_fets" class="form-label">
+                                        <i class="bi bi-cpu text-success"></i> FETs Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_fets" 
+                                               name="heat_fets" value="{{ actuator.heat_losses.FETs }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Thermal Resistance</h4>
+                        <div class="row">
+                            {% for key, value in actuator.thermal_resistance.items() %}
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="resistance_{{ key.lower() }}" class="form-label">
+                                        <i class="bi bi-thermometer"></i> {{ key }}
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" 
+                                               id="resistance_{{ key.lower() }}" 
+                                               name="resistance_{{ key.lower() }}" 
+                                               value="{{ value }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">K/W</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('actuator_detail', actuator_id=actuator.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Current Values
+                </h5>
+                <div class="form-section">
+                    <h6>Heat Losses</h6>
+                    <ul class="list-unstyled">
+                        <li>Gearbox: {{ actuator.heat_losses.gearbox }} W</li>
+                        <li>Motor: {{ actuator.heat_losses.motor }} W</li>
+                        <li>FETs: {{ actuator.heat_losses.FETs }} W</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Total:</strong> {{ actuator.heat_losses.gearbox + actuator.heat_losses.motor + actuator.heat_losses.FETs }} W
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h6>Thermal Resistance</h6>
+                    <ul class="list-unstyled">
+                        {% for key, value in actuator.thermal_resistance.items() %}
+                        <li>{{ key }}: {{ value }} K/W</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-lightbulb text-primary"></i> Tips
+                </h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <strong>Heat Losses:</strong> Measured in Watts (W). Higher values indicate more heat generation.<br><br>
+                        <strong>Thermal Resistance:</strong> Measured in Kelvin per Watt (K/W). Higher values indicate better thermal isolation.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
