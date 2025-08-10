@@ -10,6 +10,14 @@
             <i class="bi bi-speedometer2 text-primary"></i> Thermal Model Dashboard
         </h1>
         <div class="d-flex gap-2">
+            <form method="POST" action="{{ url_for('run_simulation') }}" style="display: inline;">
+                <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-play-circle"></i> Run Simulation
+                </button>
+            </form>
+            <a href="{{ url_for('simulation_status') }}" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-activity"></i> Simulation Status
+            </a>
             <a href="{{ url_for('backup') }}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-shield-check"></i> Backup
             </a>

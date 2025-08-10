@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, jsonify, redirect, url_for, f
 import json
 import os
 import re
+import subprocess
+import sys
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import shutil
@@ -10,6 +12,8 @@ import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for web
 import matplotlib.pyplot as plt
 import numpy as np
+import threading
+import time
 
 # Performance optimizations for matplotlib
 plt.rcParams['path.simplify'] = True
@@ -40,6 +44,18 @@ ALLOWED_EXTENSIONS = {'json'}
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Global simulation status tracking
+simulation_status = {
+    'running': False,
+    'completed': False,
+    'error': None,
+    'start_time': None,
+    'end_time': None,
+    'output': '',
+    'results_file': None,
+    'plot_file': None
+}
 
 def allowed_file(filename):
     """Check if file has allowed extension"""
@@ -2236,6 +2252,159 @@ def bulk_delete_connections_from_network(network_id):
         flash('Error saving changes', 'error')
     
     return redirect(url_for('node_network_detail', network_id=network_id))
+
+def run_simulation_background():
+    """Run the thermal simulation in a background thread"""
+    global simulation_status
+    
+    try:
+        simulation_status['running'] = True
+        simulation_status['completed'] = False
+        simulation_status['error'] = None
+        simulation_status['start_time'] = datetime.now()
+        simulation_status['output'] = ''
+        
+        # Change to the directory containing the solver
+        original_dir = os.getcwd()
+        solver_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'header_files')
+        os.chdir(solver_dir)
+        
+        # Run the solver
+        process = subprocess.Popen(
+            [sys.executable, 'arm_main_solver.py'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            cwd=solver_dir
+        )
+        
+        # Capture output in real-time
+        output_lines = []
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                output_lines.append(output.strip())
+                simulation_status['output'] = '\n'.join(output_lines)
+        
+        # Wait for process to complete
+        return_code = process.poll()
+        
+        # Change back to original directory
+        os.chdir(original_dir)
+        
+        if return_code == 0:
+            simulation_status['completed'] = True
+            simulation_status['error'] = None
+            
+            # Check for output files
+            results_file = os.path.join(solver_dir, 'arm_thermal_results.txt')
+            plot_file = os.path.join(solver_dir, 'temperature_distribution.png')
+            
+            if os.path.exists(results_file):
+                simulation_status['results_file'] = results_file
+            if os.path.exists(plot_file):
+                simulation_status['plot_file'] = plot_file
+        else:
+            simulation_status['error'] = f"Simulation failed with return code {return_code}"
+            
+    except Exception as e:
+        simulation_status['error'] = str(e)
+    
+    finally:
+        simulation_status['running'] = False
+        simulation_status['end_time'] = datetime.now()
+
+@app.route('/run_simulation', methods=['POST'])
+def run_simulation():
+    """Start the thermal simulation"""
+    if 'current_json_file' not in session:
+        flash('Please select a JSON file first', 'error')
+        return redirect(url_for('index'))
+    
+    global simulation_status
+    
+    if simulation_status['running']:
+        flash('Simulation is already running', 'warning')
+        return redirect(url_for('simulation_status'))
+    
+    # Copy current JSON file to the solver directory
+    try:
+        current_file = get_current_json_file()
+        solver_dir = os.path.join(os.path.dirname(__file__), 'header_files')
+        target_file = os.path.join(solver_dir, 'GEO.json')
+        
+        shutil.copy2(current_file, target_file)
+        
+        # Start simulation in background thread
+        thread = threading.Thread(target=run_simulation_background)
+        thread.daemon = True
+        thread.start()
+        
+        flash('Simulation started successfully', 'success')
+        return redirect(url_for('simulation_status'))
+        
+    except Exception as e:
+        flash(f'Error starting simulation: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/simulation_status')
+def simulation_status_page():
+    """Show simulation status and results"""
+    if 'current_json_file' not in session:
+        flash('Please select a JSON file first', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('simulation_status.html', 
+                         status=simulation_status,
+                         current_file=os.path.basename(get_current_json_file()))
+
+@app.route('/simulation_status_api')
+def simulation_status_api():
+    """API endpoint for simulation status (for AJAX polling)"""
+    global simulation_status
+    
+    # Calculate duration if simulation is running or completed
+    duration = None
+    if simulation_status['start_time']:
+        end_time = simulation_status['end_time'] or datetime.now()
+        duration = (end_time - simulation_status['start_time']).total_seconds()
+    
+    return jsonify({
+        'running': simulation_status['running'],
+        'completed': simulation_status['completed'],
+        'error': simulation_status['error'],
+        'duration': duration,
+        'has_results': bool(simulation_status['results_file']),
+        'has_plot': bool(simulation_status['plot_file']),
+        'output_lines': len(simulation_status['output'].split('\n')) if simulation_status['output'] else 0
+    })
+
+@app.route('/simulation_output')
+def simulation_output():
+    """Get simulation output for real-time display"""
+    return jsonify({'output': simulation_status['output']})
+
+@app.route('/download_simulation_results')
+def download_simulation_results():
+    """Download the simulation results file"""
+    if simulation_status['results_file'] and os.path.exists(simulation_status['results_file']):
+        return send_file(simulation_status['results_file'], 
+                        as_attachment=True, 
+                        download_name='arm_thermal_results.txt')
+    else:
+        flash('No results file available', 'error')
+        return redirect(url_for('simulation_status'))
+
+@app.route('/view_simulation_plot')
+def view_simulation_plot():
+    """View the simulation temperature distribution plot"""
+    if simulation_status['plot_file'] and os.path.exists(simulation_status['plot_file']):
+        return send_file(simulation_status['plot_file'])
+    else:
+        flash('No plot file available', 'error')
+        return redirect(url_for('simulation_status'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
