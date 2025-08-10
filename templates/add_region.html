@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+{% block title %}Add New Region - Thermal Model Editor{% endblock %}
+
+{% block nav_structures %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Add New Region</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-plus-circle text-success"></i> Add New Region
+        </h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" onsubmit="return validateForm()">
+        <div class="row">
+            <!-- Basic Properties -->
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Basic Properties</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="region_id" class="form-label">Region ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="region_id" name="region_id" 
+                                   value="{{ form_data.region_id if form_data else '' }}" required
+                                   pattern="[a-zA-Z0-9_]+" title="Only letters, numbers, and underscores allowed">
+                            <div class="form-text">Must be unique and contain only letters, numbers, and underscores</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="region_type" class="form-label">Region Type <span class="text-danger">*</span></label>
+                            <select class="form-select" id="region_type" name="region_type" required onchange="updateThermalConductivityHelp()">
+                                <option value="standard" selected>Standard Region</option>
+                            </select>
+                            <div class="form-text">Region type for material properties</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="thermal_conductivity" class="form-label">Thermal Conductivity (W/mK) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="thermal_conductivity" name="thermal_conductivity" 
+                                   value="{{ form_data.thermal_conductivity if form_data else '120.0' }}" 
+                                   step="0.1" min="0.1" required>
+                            <div class="form-text" id="thermal-conductivity-help">Typical value for aluminum: 120.0 W/mK</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Geometry -->
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-rulers"></i> Geometry</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="width" class="form-label">Width (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="width" name="width" 
+                                       value="{{ form_data.width if form_data else '100' }}" 
+                                       step="0.01" min="0.01" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="height" class="form-label">Height (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="height" name="height" 
+                                       value="{{ form_data.height if form_data else '100' }}" 
+                                       step="0.01" min="0.01" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="thickness" class="form-label">Thickness (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="thickness" name="thickness" 
+                                       value="{{ form_data.thickness if form_data else '2' }}" 
+                                       step="0.01" min="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Centroid Position -->
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-crosshair"></i> Centroid Position <small class="text-muted">(Auto-calculated)</small></h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <strong>Automatic Centroid Calculation:</strong><br>
+                            The centroid position is automatically calculated based on the geometry:<br>
+                            • <strong>X Coordinate:</strong> Always 0.0 mm (centered)<br>
+                            • <strong>Y Coordinate:</strong> Height ÷ 2 = <span id="auto-centroid-y">50.0</span> mm<br>
+                            • <strong>Z Coordinate:</strong> Thickness ÷ 2 = <span id="auto-centroid-z">1.0</span> mm
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mesh Settings -->
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-grid-3x3"></i> Mesh Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="mesh_dx" class="form-label">dx (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="mesh_dx" name="mesh_dx" 
+                                       value="{{ form_data.mesh_dx if form_data else '5.0' }}" 
+                                       step="0.1" min="0.1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="mesh_dy" class="form-label">dy (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="mesh_dy" name="mesh_dy" 
+                                       value="{{ form_data.mesh_dy if form_data else '5.0' }}" 
+                                       step="0.1" min="0.1" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="mesh_dz" class="form-label">dz (mm) <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="mesh_dz" name="mesh_dz" 
+                                       value="{{ form_data.mesh_dz if form_data else '0.5' }}" 
+                                       step="0.1" min="0.1" required>
+                            </div>
+                        </div>
+                        <div class="form-text">Mesh element size for thermal analysis</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm mb-4 border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Guidelines</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Region Properties:</h6>
+                                <ul class="mb-0">
+                                    <li>Choose a unique, descriptive ID</li>
+                                    <li>Typical aluminum thermal conductivity: 120-240 W/mK</li>
+                                    <li>Thickness typically 1-5 mm for robot parts</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Mesh Settings:</h6>
+                                <ul class="mb-0">
+                                    <li>Smaller mesh = higher accuracy, slower computation</li>
+                                    <li>Typical dx/dy: 2-10 mm</li>
+                                    <li>Typical dz: 0.1-1.0 mm (through thickness)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('regions') }}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Regions
+                    </a>
+                    <div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Create Region
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+function validateForm() {
+    const requiredFields = ['region_id', 'thermal_conductivity', 'width', 'height', 'thickness', 'mesh_dx', 'mesh_dy', 'mesh_dz'];
+    
+    for (const field of requiredFields) {
+        const element = document.getElementById(field);
+        if (!element.value || (element.type === 'number' && parseFloat(element.value) <= 0)) {
+            alert(`Please enter a valid value for ${field.replace('_', ' ')}`);
+            element.focus();
+            return false;
+        }
+    }
+    
+    // Validate ID format
+    const regionId = document.getElementById('region_id').value;
+    if (!/^[a-zA-Z0-9_]+$/.test(regionId)) {
+        alert('Region ID must contain only letters, numbers, and underscores');
+        document.getElementById('region_id').focus();
+        return false;
+    }
+    
+    return true;
+}
+
+function updateThermalConductivityHelp() {
+    const helpText = document.getElementById('thermal-conductivity-help');
+    const thermalConductivityInput = document.getElementById('thermal_conductivity');
+    
+    helpText.innerHTML = 'Typical value for aluminum: 120.0 W/mK';
+    thermalConductivityInput.value = '120.0';
+    thermalConductivityInput.min = '0.1';
+}
+</script>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card-header.bg-info {
+    background-color: #0dcaf0 !important;
+}
+
+.form-text {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to update auto-calculated centroid values
+    function updateAutoCentroidValues() {
+        const heightInput = document.getElementById('height');
+        const thicknessInput = document.getElementById('thickness');
+        const centroidYSpan = document.getElementById('auto-centroid-y');
+        const centroidZSpan = document.getElementById('auto-centroid-z');
+        
+        if (heightInput && centroidYSpan) {
+            const height = parseFloat(heightInput.value) || 100.0;
+            centroidYSpan.textContent = (height / 2).toFixed(1);
+        }
+        
+        if (thicknessInput && centroidZSpan) {
+            const thickness = parseFloat(thicknessInput.value) || 2.0;
+            centroidZSpan.textContent = (thickness / 2).toFixed(1);
+        }
+    }
+    
+    // Initialize centroid values
+    updateAutoCentroidValues();
+    
+    // Add event listeners to geometry fields
+    const heightInput = document.getElementById('height');
+    const thicknessInput = document.getElementById('thickness');
+    
+    if (heightInput) {
+        heightInput.addEventListener('input', updateAutoCentroidValues);
+    }
+    if (thicknessInput) {
+        thicknessInput.addEventListener('input', updateAutoCentroidValues);
+    }
+});
+</script>
+{% endblock %} 

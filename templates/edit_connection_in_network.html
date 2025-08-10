@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ connection.id }} - {{ network.name or network.id }}{% endblock %}
+
+{% block nav_node_networks %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_networks') }}">Node Networks</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_network_detail', network_id=network.id) }}">{{ network.name or network.id }}</a></li>
+                        <li class="breadcrumb-item active">Edit {{ connection.id }}</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="bi bi-arrow-left-right text-success"></i> Edit Connection: {{ connection.id }}
+                </h1>
+                <p class="text-muted">Network: {{ network.name or network.id }}</p>
+            </div>
+
+            <form method="POST">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear text-success"></i> Connection Properties
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-section">
+                            <h4>Basic Information</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="connection_id" class="form-label">Connection ID</label>
+                                        <input type="text" class="form-control bg-secondary text-light" id="connection_id" 
+                                               value="{{ connection.id }}" readonly>
+                                        <div class="form-text">Connection ID cannot be changed</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="description" class="form-label">Description</label>
+                                        <input type="text" class="form-control" id="description" name="description" 
+                                               value="{{ connection.description or '' }}">
+                                        <div class="form-text">Optional description of the connection</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4>Node Connections</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="from_node" class="form-label">Node 1 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="from_node" name="from_node" required onchange="updateEditNodeOptions()">
+                                            <option value="air" {% if connection.from_node == 'air' %}selected{% endif %}>🌬️ Air (Environment)</option>
+                                            {% for node in network.nodes %}
+                                            <option value="{{ node.id }}" {% if node.id == connection.from_node %}selected{% endif %}>
+                                                {{ node.name or node.id }}
+                                            </option>
+                                            {% endfor %}
+                                            {% if node_connected_regions %}
+                                            <optgroup label="Region Boundaries">
+                                                {% for region in node_connected_regions %}
+                                                <option value="{{ region.id }}" {% if region.id == connection.from_node %}selected{% endif %}>🏗️ {{ region.name }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            {% endif %}
+                                        </select>
+                                        <div class="form-text">First node in the thermal connection</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="to_node" class="form-label">Node 2 <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="to_node" name="to_node" required onchange="updateEditNodeOptions()">
+                                            <option value="air" {% if connection.to_node == 'air' %}selected{% endif %}>🌬️ Air (Environment)</option>
+                                            {% for node in network.nodes %}
+                                            <option value="{{ node.id }}" {% if node.id == connection.to_node %}selected{% endif %}>
+                                                {{ node.name or node.id }}
+                                            </option>
+                                            {% endfor %}
+                                            {% if node_connected_regions %}
+                                            <optgroup label="Region Boundaries">
+                                                {% for region in node_connected_regions %}
+                                                <option value="{{ region.id }}" {% if region.id == connection.to_node %}selected{% endif %}>🏗️ {{ region.name }}</option>
+                                                {% endfor %}
+                                            </optgroup>
+                                            {% endif %}
+                                        </select>
+                                        <div class="form-text">Second node in the thermal connection</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h4>Thermal Properties</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="thermal_resistance" class="form-label">Thermal Resistance <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="thermal_resistance" name="thermal_resistance" 
+                                                   value="{{ connection.thermal_resistance }}" step="0.1" min="0" required>
+                                            <span class="input-group-text">K/W</span>
+                                        </div>
+                                        <div class="form-text">Thermal resistance between the nodes</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Heat Flow Direction</label>
+                                        <div class="p-3 border rounded bg-secondary">
+                                            <div class="d-flex align-items-center justify-content-center">
+                                                <span class="badge bg-info me-2" id="from-display">{{ connection.from_node }}</span>
+                                                <i class="bi bi-arrow-right text-warning mx-2"></i>
+                                                <span class="badge bg-info ms-2" id="to-display">{{ connection.to_node }}</span>
+                                            </div>
+                                            <small class="text-muted d-block text-center mt-2">Heat flows from source to destination</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> Thermal resistance determines how easily heat flows between nodes. Lower values mean better heat conduction.
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('node_network_detail', network_id=network.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-check"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Connection Visualization -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-2 text-primary"></i> Connection Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-info">From Node</h6>
+                            {% for node in network.nodes %}
+                                {% if node.id == connection.from_node %}
+                                <div class="card border-info">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title">{{ node.name or node.id }}</h6>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Position: ({{ node.position.x }}, {{ node.position.y }})<br>
+                                                Capacity: {{ node.thermal_capacity }} J/K<br>
+                                                Heat: {{ node.heat_source }} W
+                                            </small>
+                                        </p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info">To Node</h6>
+                            {% for node in network.nodes %}
+                                {% if node.id == connection.to_node %}
+                                <div class="card border-info">
+                                    <div class="card-body p-3">
+                                        <h6 class="card-title">{{ node.name or node.id }}</h6>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Position: ({{ node.position.x }}, {{ node.position.y }})<br>
+                                                Capacity: {{ node.thermal_capacity }} J/K<br>
+                                                Heat: {{ node.heat_source }} W
+                                            </small>
+                                        </p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Function to update node options in edit connection form
+function updateEditNodeOptions() {
+    const fromNode = document.getElementById('from_node');
+    const toNode = document.getElementById('to_node');
+    const fromValue = fromNode.value;
+    const toValue = toNode.value;
+    
+    // Reset both dropdowns to show all options
+    const allFromOptions = fromNode.querySelectorAll('option');
+    const allToOptions = toNode.querySelectorAll('option');
+    
+    allFromOptions.forEach(option => option.style.display = 'block');
+    allToOptions.forEach(option => option.style.display = 'block');
+    
+    // Hide selected node from the other dropdown
+    if (fromValue && fromValue !== '') {
+        const toOption = toNode.querySelector(`option[value="${fromValue}"]`);
+        if (toOption) toOption.style.display = 'none';
+    }
+    
+    if (toValue && toValue !== '') {
+        const fromOption = fromNode.querySelector(`option[value="${toValue}"]`);
+        if (fromOption) fromOption.style.display = 'none';
+    }
+    
+    // Update visual display
+    document.getElementById('from-display').textContent = fromValue;
+    document.getElementById('to-display').textContent = toValue;
+}
+
+// Update the visual display when dropdowns change
+document.getElementById('from_node').addEventListener('change', function() {
+    document.getElementById('from-display').textContent = this.value;
+});
+
+document.getElementById('to_node').addEventListener('change', function() {
+    document.getElementById('to-display').textContent = this.value;
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateEditNodeOptions();
+});
+</script>
+{% endblock %} 

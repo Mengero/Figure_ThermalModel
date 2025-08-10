@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ network.name or network.id }} - Thermal Model Editor{% endblock %}
+
+{% block nav_node_networks %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_networks') }}">Node Networks</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_network_detail', network_id=network.id) }}">{{ network.name or network.id }}</a></li>
+                        <li class="breadcrumb-item active">Edit</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="bi bi-diagram-3 text-warning"></i> Edit Node Network
+                </h1>
+            </div>
+
+            <form method="POST">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle text-info"></i> Network Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="network_id" class="form-label">
+                                Network ID
+                            </label>
+                            <input type="text" class="form-control bg-secondary text-light" id="network_id" 
+                                   value="{{ network.id }}" readonly>
+                            <div class="form-text">Network ID cannot be changed</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="network_name" class="form-label">
+                                Network Name
+                            </label>
+                            <input type="text" class="form-control" id="network_name" name="network_name"
+                                   value="{{ network.name or '' }}">
+                            <div class="form-text">Descriptive name for the network (optional)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ network.description or '' }}</textarea>
+                            <div class="form-text">Optional description of the network's purpose or characteristics</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> To modify nodes and connections, use the network detail view after saving these changes.
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('node_network_detail', network_id=network.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Network Status -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart text-primary"></i> Current Network Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body p-3">
+                                    <h3 class="text-info mb-1">{{ network.nodes|length }}</h3>
+                                    <small class="text-muted">Nodes</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body p-3">
+                                    <h3 class="text-success mb-1">{{ network.connections|length }}</h3>
+                                    <small class="text-muted">Connections</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-danger">
+                                <div class="card-body p-3">
+                                    {% set total_heat = [] %}
+                                    {% for node in network.nodes %}
+                                        {% if total_heat.append(node.heat_source or 0) %}{% endif %}
+                                    {% endfor %}
+                                    <h3 class="text-danger mb-1">{{ "%.2f"|format(total_heat|sum) }}</h3>
+                                    <small class="text-muted">Heat (W)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

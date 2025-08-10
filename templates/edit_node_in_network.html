@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ node.name or node.id }} - {{ network.name or network.id }}{% endblock %}
+
+{% block nav_node_networks %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_networks') }}">Node Networks</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_network_detail', network_id=network.id) }}">{{ network.name or network.id }}</a></li>
+                        <li class="breadcrumb-item active">Edit {{ node.name or node.id }}</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="bi bi-circle text-info"></i> Edit Node: {{ node.name or node.id }}
+                </h1>
+                <p class="text-muted">Network: {{ network.name or network.id }}</p>
+            </div>
+
+            <form method="POST">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-gear text-info"></i> Node Properties
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-section">
+                            <h4>Basic Information</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="node_id" class="form-label">Node ID</label>
+                                        <input type="text" class="form-control bg-secondary text-light" id="node_id" 
+                                               value="{{ node.id }}" readonly>
+                                        <div class="form-text">Node ID cannot be changed</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="node_name" class="form-label">Node Name</label>
+                                        <input type="text" class="form-control" id="node_name" name="node_name" 
+                                               value="{{ node.name or '' }}">
+                                        <div class="form-text">Descriptive name for the node</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div class="form-section">
+                            <h4>Thermal Properties</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="thermal_capacity" class="form-label">Thermal Capacity</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="thermal_capacity" name="thermal_capacity" 
+                                                   value="{{ node.thermal_capacity }}" step="0.1" min="0" required>
+                                            <span class="input-group-text">J/K</span>
+                                        </div>
+                                        <div class="form-text">Thermal mass of the node</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="heat_source" class="form-label">Heat Source</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="heat_source" name="heat_source" 
+                                                   value="{{ node.heat_source }}" step="0.1">
+                                            <span class="input-group-text">W</span>
+                                        </div>
+                                        <div class="form-text">Positive for heat generation, negative for heat sink</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> Changes to node properties will affect thermal calculations. Ensure values are realistic for your thermal model.
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('node_network_detail', network_id=network.id) }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-check"></i> Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Node Usage Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-left-right text-success"></i> Node Connections
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% set incoming_connections = [] %}
+                    {% set outgoing_connections = [] %}
+                    {% for conn in network.connections %}
+                        {% if conn.from_node == node.id %}
+                            {% if outgoing_connections.append(conn) %}{% endif %}
+                        {% endif %}
+                        {% if conn.to_node == node.id %}
+                            {% if incoming_connections.append(conn) %}{% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-success">Outgoing Connections ({{ outgoing_connections|length }})</h6>
+                            {% if outgoing_connections %}
+                            <ul class="list-group list-group-flush">
+                                {% for conn in outgoing_connections %}
+                                <li class="list-group-item">
+                                    <strong>{{ conn.id }}</strong> → <span class="badge bg-info">{{ conn.to_node }}</span>
+                                    <br><small class="text-muted">{{ conn.thermal_resistance }} K/W</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">No outgoing connections</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-info">Incoming Connections ({{ incoming_connections|length }})</h6>
+                            {% if incoming_connections %}
+                            <ul class="list-group list-group-flush">
+                                {% for conn in incoming_connections %}
+                                <li class="list-group-item">
+                                    <span class="badge bg-info">{{ conn.from_node }}</span> → <strong>{{ conn.id }}</strong>
+                                    <br><small class="text-muted">{{ conn.thermal_resistance }} K/W</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <p class="text-muted">No incoming connections</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    {% if incoming_connections or outgoing_connections %}
+                    <div class="mt-3">
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Warning:</strong> This node is connected to {{ (incoming_connections|length + outgoing_connections|length) }} thermal paths. 
+                            Deleting this node will require removing these connections first.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,621 @@
+{% extends "base.html" %}
+{% block title %}{{ network.name or network.id }} - Node Network Detail{% endblock %}
+
+{% block nav_node_networks %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('node_networks') }}">Node Networks</a></li>
+                    <li class="breadcrumb-item active">{{ network.name or network.id }}</li>
+                </ol>
+            </nav>
+            <h1 class="mb-0">
+                <i class="bi bi-diagram-3 text-warning"></i> {{ network.name or network.id }}
+            </h1>
+        </div>
+        <div class="btn-group">
+            {% if network.type == 'actuator' %}
+            <a href="{{ url_for('edit_actuator', actuator_id=network.source_actuator_id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Edit Actuator
+            </a>
+            {% else %}
+            <a href="{{ url_for('edit_node_network', network_id=network.id) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Edit Network
+            </a>
+            <button type="button" class="btn btn-warning dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-plus"></i> Add
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addNodeModal">
+                    <i class="bi bi-circle text-info"></i> Add Node
+                </a></li>
+                <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#addConnectionModal">
+                    <i class="bi bi-arrow-left-right text-success"></i> Add Connection
+                </a></li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actuator Network Banner -->
+    {% if network.type == 'actuator' %}
+    <div class="alert alert-info mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-cpu me-2"></i>
+            <div>
+                <strong>Actuator Network:</strong> This is an automatically generated thermal network representing the actuator <strong>{{ network.source_actuator_id }}</strong>.
+                The nodes and connections are derived from the actuator's heat losses and thermal resistance properties.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Network Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle text-info"></i> Network Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Network ID:</strong> <code>{{ network.id }}</code>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Name:</strong> {{ network.name or 'Not specified' }}
+                            </div>
+                            {% if network.description %}
+                            <div class="mb-2">
+                                <strong>Description:</strong> {{ network.description }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="card border-info">
+                                        <div class="card-body p-2">
+                                            <h4 class="text-info mb-1">{{ network.nodes|length }}</h4>
+                                            <small class="text-muted">Nodes</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card border-success">
+                                        <div class="card-body p-2">
+                                            <h4 class="text-success mb-1">{{ network.connections|length }}</h4>
+                                            <small class="text-muted">Connections</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="card border-danger">
+                                        <div class="card-body p-2">
+                                            {% set total_heat = [] %}
+                                            {% for node in network.nodes %}
+                                                {% if total_heat.append(node.heat_source or 0) %}{% endif %}
+                                            {% endfor %}
+                                            <h4 class="text-danger mb-1">{{ "%.2f"|format(total_heat|sum) }}</h4>
+                                            <small class="text-muted">Heat (W)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Nodes and Connections Tabs -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="nodes-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#nodes" type="button" role="tab">
+                                <i class="bi bi-circle text-info"></i> Nodes ({{ network.nodes|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="connections-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#connections" type="button" role="tab">
+                                <i class="bi bi-arrow-left-right text-success"></i> Connections ({{ network.connections|length }})
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content">
+                        <!-- Nodes Tab -->
+                        <div class="tab-pane fade show active" id="nodes" role="tabpanel">
+                            {% if network.nodes %}
+                            <div class="mb-3 px-3 pt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span id="nodes-selected-count" class="text-muted">0 nodes selected</span>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                id="bulk-delete-nodes-btn" disabled
+                                                onclick="bulkDeleteNodes()">
+                                            <i class="bi bi-trash"></i> Delete Selected
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="40">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       id="select-all-nodes" 
+                                                       onchange="toggleSelectAllNodes(this)">
+                                            </th>
+                                            <th>Node ID</th>
+                                            <th>Name</th>
+                                            <th>Thermal Capacity</th>
+                                            <th>Heat Source</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for node in network.nodes %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="form-check-input node-checkbox" 
+                                                       value="{{ node.id }}" 
+                                                       onchange="updateNodeSelection()">
+                                            </td>
+                                            <td><code>{{ node.id }}</code></td>
+                                            <td>{{ node.name or node.id }}</td>
+                                            <td>
+                                                <span class="badge bg-info">{{ node.thermal_capacity }} J/K</span>
+                                            </td>
+                                            <td>
+                                                {% if node.heat_source > 0 %}
+                                                <span class="badge bg-danger">{{ node.heat_source }} W</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">0 W</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('edit_node_in_network', network_id=network.id, node_id=node.id) }}" 
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('delete_node_from_network', network_id=network.id, node_id=node.id) }}" 
+                                                          style="display: inline;" 
+                                                          onsubmit="return confirm('Are you sure you want to delete node {{ node.id }}? This will also remove all associated connections.');">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-circle text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted">No Nodes</h5>
+                                <p class="text-muted">Add nodes to create your thermal network.</p>
+                                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addNodeModal">
+                                    <i class="bi bi-plus"></i> Add First Node
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Connections Tab -->
+                        <div class="tab-pane fade" id="connections" role="tabpanel">
+                            {% if network.connections %}
+                            <div class="mb-3 px-3 pt-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span id="connections-selected-count" class="text-muted">0 connections selected</span>
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                id="bulk-delete-connections-btn" disabled
+                                                onclick="bulkDeleteConnections()">
+                                            <i class="bi bi-trash"></i> Delete Selected
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="40">
+                                                <input type="checkbox" class="form-check-input" 
+                                                       id="select-all-connections" 
+                                                       onchange="toggleSelectAllConnections(this)">
+                                            </th>
+                                            <th>Connection ID</th>
+                                            <th>Node 1</th>
+                                            <th>Node 2</th>
+                                            <th>Thermal Resistance</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for connection in network.connections %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="form-check-input connection-checkbox" 
+                                                       value="{{ connection.id }}" 
+                                                       onchange="updateConnectionSelection()">
+                                            </td>
+                                            <td><code>{{ connection.id }}</code></td>
+                                            <td>
+                                                {% if connection.from_node == 'air' %}
+                                                <span class="badge bg-warning">🌬️ Air</span>
+                                                {% elif connection.from_node.startswith('region_') %}
+                                                <span class="badge bg-secondary">🏗️ {{ connection.from_node.replace('region_', '').replace('_bc_NODE_CONNECTED', '') }}</span>
+                                                {% else %}
+                                                <span class="badge bg-info">{{ connection.from_node }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if connection.to_node == 'air' %}
+                                                <span class="badge bg-warning">🌬️ Air</span>
+                                                {% elif connection.to_node.startswith('region_') %}
+                                                <span class="badge bg-secondary">🏗️ {{ connection.to_node.replace('region_', '').replace('_bc_NODE_CONNECTED', '') }}</span>
+                                                {% else %}
+                                                <span class="badge bg-info">{{ connection.to_node }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">{{ connection.thermal_resistance }} K/W</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ connection.description or 'No description' }}</small>
+                                            </td>
+                                            <td>
+                                                {% if connection.type == 'boundary_connection' %}
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('edit_region', region_id=connection.region_id) }}" 
+                                                       class="btn btn-outline-secondary btn-sm" title="Edit in Region Settings">
+                                                        <i class="bi bi-box-arrow-up-right"></i> Region
+                                                    </a>
+                                                </div>
+                                                {% else %}
+                                                <div class="btn-group btn-group-sm" role="group">
+                                                    <a href="{{ url_for('edit_connection_in_network', network_id=network.id, connection_id=connection.id) }}" 
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('delete_connection_from_network', network_id=network.id, connection_id=connection.id) }}" 
+                                                          style="display: inline;" 
+                                                          onsubmit="return confirm('Are you sure you want to delete connection {{ connection.id }}?');">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="bi bi-arrow-left-right text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted">No Connections</h5>
+                                <p class="text-muted">Connect nodes with thermal resistances to create thermal paths.</p>
+                                {% if network.nodes|length >= 2 %}
+                                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addConnectionModal">
+                                    <i class="bi bi-plus"></i> Add First Connection
+                                </button>
+                                {% else %}
+                                <p class="text-warning">Add at least 2 nodes before creating connections.</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Node Modal -->
+<div class="modal fade" id="addNodeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_node_to_network', network_id=network.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-circle text-info"></i> Add New Node
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="node_id" class="form-label">Node ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="node_id" name="node_id" required>
+                        <div class="form-text">Unique identifier for the node</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="node_name" class="form-label">Node Name</label>
+                        <input type="text" class="form-control" id="node_name" name="node_name">
+                        <div class="form-text">Descriptive name for the node</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="thermal_capacity" class="form-label">Thermal Capacity (J/K)</label>
+                        <input type="number" class="form-control" id="thermal_capacity" name="thermal_capacity" value="0" step="0.1" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="heat_source" class="form-label">Heat Source (W)</label>
+                        <input type="number" class="form-control" id="heat_source" name="heat_source" value="0" step="0.1">
+                        <div class="form-text">Positive for heat generation, negative for heat sink</div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Add Node</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Connection Modal -->
+<div class="modal fade" id="addConnectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('add_connection_to_network', network_id=network.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-left-right text-success"></i> Add New Connection
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="connection_id" class="form-label">Connection ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="connection_id" name="connection_id" required>
+                        <div class="form-text">Unique identifier for the connection</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="from_node" class="form-label">Node 1 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="from_node" name="from_node" required onchange="updateNodeOptions()">
+                                    <option value="">Select node...</option>
+                                    <option value="air">🌬️ Air (Environment)</option>
+                                    {% for node in network.nodes %}
+                                    <option value="{{ node.id }}">{{ node.name or node.id }}</option>
+                                    {% endfor %}
+                                    {% if node_connected_regions %}
+                                    <optgroup label="Region Boundaries">
+                                        {% for region in node_connected_regions %}
+                                        <option value="{{ region.id }}">🏗️ {{ region.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="to_node" class="form-label">Node 2 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="to_node" name="to_node" required onchange="updateNodeOptions()">
+                                    <option value="">Select node...</option>
+                                    <option value="air">🌬️ Air (Environment)</option>
+                                    {% for node in network.nodes %}
+                                    <option value="{{ node.id }}">{{ node.name or node.id }}</option>
+                                    {% endfor %}
+                                    {% if node_connected_regions %}
+                                    <optgroup label="Region Boundaries">
+                                        {% for region in node_connected_regions %}
+                                        <option value="{{ region.id }}">🏗️ {{ region.name }}</option>
+                                        {% endfor %}
+                                    </optgroup>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="thermal_resistance" class="form-label">Thermal Resistance (K/W) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="thermal_resistance" name="thermal_resistance" value="1.0" step="0.1" min="0" required>
+                        <div class="form-text">Thermal resistance between the nodes</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description">
+                        <div class="form-text">Optional description of the connection</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Add Connection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Node selection functions
+function toggleSelectAllNodes(selectAllCheckbox) {
+    const nodeCheckboxes = document.querySelectorAll('.node-checkbox');
+    nodeCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    updateNodeSelection();
+}
+
+function updateNodeSelection() {
+    const nodeCheckboxes = document.querySelectorAll('.node-checkbox');
+    const selectedNodes = document.querySelectorAll('.node-checkbox:checked');
+    const selectAllCheckbox = document.getElementById('select-all-nodes');
+    const countDisplay = document.getElementById('nodes-selected-count');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-nodes-btn');
+    
+    // Update select all checkbox state
+    if (selectedNodes.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (selectedNodes.length === nodeCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+    
+    // Update count display
+    countDisplay.textContent = `${selectedNodes.length} nodes selected`;
+    
+    // Update bulk delete button state
+    bulkDeleteBtn.disabled = selectedNodes.length === 0;
+}
+
+function bulkDeleteNodes() {
+    const selectedNodes = document.querySelectorAll('.node-checkbox:checked');
+    if (selectedNodes.length === 0) return;
+    
+    const nodeIds = Array.from(selectedNodes).map(cb => cb.value);
+    const nodeList = nodeIds.join(', ');
+    
+    if (confirm(`Are you sure you want to delete ${selectedNodes.length} nodes (${nodeList})? This will also remove all associated connections.`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("bulk_delete_nodes_from_network", network_id=network.id) }}';
+        
+        nodeIds.forEach(nodeId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'node_ids';
+            input.value = nodeId;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Connection selection functions
+function toggleSelectAllConnections(selectAllCheckbox) {
+    const connectionCheckboxes = document.querySelectorAll('.connection-checkbox');
+    connectionCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+    });
+    updateConnectionSelection();
+}
+
+function updateConnectionSelection() {
+    const connectionCheckboxes = document.querySelectorAll('.connection-checkbox');
+    const selectedConnections = document.querySelectorAll('.connection-checkbox:checked');
+    const selectAllCheckbox = document.getElementById('select-all-connections');
+    const countDisplay = document.getElementById('connections-selected-count');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-connections-btn');
+    
+    // Update select all checkbox state
+    if (selectedConnections.length === 0) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = false;
+    } else if (selectedConnections.length === connectionCheckboxes.length) {
+        selectAllCheckbox.indeterminate = false;
+        selectAllCheckbox.checked = true;
+    } else {
+        selectAllCheckbox.indeterminate = true;
+    }
+    
+    // Update count display
+    countDisplay.textContent = `${selectedConnections.length} connections selected`;
+    
+    // Update bulk delete button state
+    bulkDeleteBtn.disabled = selectedConnections.length === 0;
+}
+
+function bulkDeleteConnections() {
+    const selectedConnections = document.querySelectorAll('.connection-checkbox:checked');
+    if (selectedConnections.length === 0) return;
+    
+    const connectionIds = Array.from(selectedConnections).map(cb => cb.value);
+    const connectionList = connectionIds.join(', ');
+    
+    if (confirm(`Are you sure you want to delete ${selectedConnections.length} connections (${connectionList})?`)) {
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("bulk_delete_connections_from_network", network_id=network.id) }}';
+        
+        connectionIds.forEach(connectionId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'connection_ids';
+            input.value = connectionId;
+            form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Function to update node options in connection form
+function updateNodeOptions() {
+    const fromNode = document.getElementById('from_node');
+    const toNode = document.getElementById('to_node');
+    const fromValue = fromNode.value;
+    const toValue = toNode.value;
+    
+    // Reset both dropdowns to show all options
+    const allFromOptions = fromNode.querySelectorAll('option');
+    const allToOptions = toNode.querySelectorAll('option');
+    
+    allFromOptions.forEach(option => option.style.display = 'block');
+    allToOptions.forEach(option => option.style.display = 'block');
+    
+    // Hide selected node from the other dropdown
+    if (fromValue && fromValue !== '') {
+        const toOption = toNode.querySelector(`option[value="${fromValue}"]`);
+        if (toOption) toOption.style.display = 'none';
+    }
+    
+    if (toValue && toValue !== '') {
+        const fromOption = fromNode.querySelector(`option[value="${toValue}"]`);
+        if (fromOption) fromOption.style.display = 'none';
+    }
+}
+
+// Initialize node options when modal opens
+document.getElementById('addConnectionModal').addEventListener('shown.bs.modal', function () {
+    updateNodeOptions();
+});
+</script>
+{% endblock %} 

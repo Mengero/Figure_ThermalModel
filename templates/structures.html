@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% block title %}Structures Overview - Thermal Model Editor{% endblock %}
+
+{% block nav_structures %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-diagram-3 text-primary"></i> Structures Overview
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Structures</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Structures Section -->
+        <div class="col-md-6">
+            <a href="{{ url_for('regions') }}" class="text-decoration-none">
+                <div class="card h-100 border-primary shadow-sm hover-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-grid"></i> Structures
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h3 class="text-primary">{{ mechanical_structures|length }}</h3>
+                                <p class="text-muted mb-0">Mechanical components with thermal properties</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="bi bi-grid display-6 text-primary opacity-25"></i>
+                            </div>
+                        </div>
+                        <hr>
+                        <small class="text-muted">
+                            Total thermal conductivity paths, mesh definitions, and boundary conditions for heat transfer analysis.
+                        </small>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Actuators Section -->
+        <div class="col-md-6">
+            <a href="{{ url_for('actuators') }}" class="text-decoration-none">
+                <div class="card h-100 border-warning shadow-sm hover-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0">
+                            <i class="bi bi-cpu"></i> Actuators
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <h3 class="text-warning">{{ thermal_structures|length }}</h3>
+                                <p class="text-muted mb-0">Heat-generating thermal structures</p>
+                            </div>
+                            <div class="col-4 text-end">
+                                <i class="bi bi-cpu display-6 text-warning opacity-25"></i>
+                            </div>
+                        </div>
+                        <hr>
+                        <small class="text-muted">
+                            Combined heat generation: <strong>{{ "%.1f"|format(total_heat_generation) }} W</strong> from motors, gearboxes, and FETs.
+                        </small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <a href="{{ url_for('regions') }}" class="text-decoration-none text-primary">
+                <div class="card text-center bg-light hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-grid display-4 text-primary"></i>
+                        <h4 class="card-title mt-2">{{ mechanical_structures|length }}</h4>
+                        <p class="card-text">Structures</p>
+                    </div>
+                </div>
+            </a>
+            <a href="{{ url_for('regions') }}" class="btn btn-sm btn-outline-primary float-end">
+                <i class="bi bi-eye"></i> View All
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <a href="{{ url_for('actuators') }}" class="text-decoration-none text-warning">
+                <div class="card text-center bg-light hover-card">
+                    <div class="card-body">
+                        <i class="bi bi-cpu display-4 text-warning"></i>
+                        <h4 class="card-title mt-2">{{ thermal_structures|length }}</h4>
+                        <p class="card-text">Actuators</p>
+                    </div>
+                </div>
+            </a>
+            <a href="{{ url_for('actuators') }}" class="btn btn-sm btn-outline-warning float-end">
+                <i class="bi bi-eye"></i> View All
+            </a>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card text-center bg-light">
+                <div class="card-body">
+                    <i class="bi bi-link-45deg display-4 text-info"></i>
+                    <h4 class="card-title mt-2">{{ total_connections }}</h4>
+                    <p class="card-text">Connections</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="structureTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="mechanical-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#mechanical" type="button" role="tab">
+                                <i class="bi bi-grid text-primary"></i> Structures ({{ mechanical_structures|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="thermal-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#thermal" type="button" role="tab">
+                                <i class="bi bi-cpu text-warning"></i> Actuators ({{ thermal_structures|length }})
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="node-networks-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#node-networks" type="button" role="tab">
+                                <i class="bi bi-diagram-2" style="color: #6f42c1;"></i> Node Networks ({{ node_networks|length if node_networks else 0 }})
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-0">
+                    <div class="tab-content" id="structureTabContent">
+                        <!-- Structures Tab -->
+                        <div class="tab-pane fade show active" id="mechanical" role="tabpanel">
+                            {% if mechanical_structures %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Structure ID</th>
+                                            <th>Dimensions</th>
+                                            <th>Thermal Properties</th>
+                                            <th>Connections</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for structure in mechanical_structures %}
+                                        <tr>
+                                            <td><strong class="text-primary">{{ structure.id }}</strong></td>
+                                            <td class="small">
+                                                <strong>Size:</strong> {{ "%.1f"|format(structure.width) }}×{{ "%.1f"|format(structure.height) }}×{{ "%.1f"|format(structure.thickness) }} mm<br>
+                                                <strong>Position:</strong> ({{ "%.1f"|format(structure.centroid.x) }}, {{ "%.1f"|format(structure.centroid.y) }}, {{ "%.1f"|format(structure.centroid.z) }})
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ structure.thermal_conductivity if structure.thermal_conductivity is not none else 0 }} W/mK</span><br>
+                                                <small class="text-muted">Mesh: {{ structure.mesh_settings.dx }}×{{ structure.mesh_settings.dy }}×{{ structure.mesh_settings.dz }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-secondary">{{ structure.boundary_conditions|length }} conditions</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-grid text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-2">No structures found</h5>
+                                <p class="text-muted">Add mechanical structures to define the thermal model.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Actuators Tab -->
+                        <div class="tab-pane fade" id="thermal" role="tabpanel">
+                            {% if thermal_structures %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Actuator ID</th>
+                                            <th>Type</th>
+                                            <th>Heat Generation</th>
+                                            <th>Thermal Resistance</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for structure in thermal_structures %}
+                                        <tr>
+                                            <td><strong class="text-warning">{{ structure.id }}</strong></td>
+                                            <td><span class="badge bg-dark">{{ structure.type }}</span></td>
+                                            <td class="small">
+                                                <strong>Gearbox:</strong> {{ structure.heat_losses.gearbox }} W<br>
+                                                <strong>Motor:</strong> {{ structure.heat_losses.motor }} W<br>
+                                                <strong>FETs:</strong> {{ structure.heat_losses.FETs }} W<br>
+                                                <strong>Total:</strong> {{ structure.heat_losses.gearbox + structure.heat_losses.motor + structure.heat_losses.FETs }} W
+                                            </td>
+                                            <td class="small font-monospace">
+                                                R1-R4: {{ structure.thermal_resistance.values() | list | join(', ') }} K/W
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-cpu text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-2">No actuators found</h5>
+                                <p class="text-muted">Add thermal actuators to define heat sources.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Node Networks Tab -->
+                        <div class="tab-pane fade" id="node-networks" role="tabpanel">
+                            {% if node_networks %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Network ID</th>
+                                            <th>Name</th>
+                                            <th>Nodes</th>
+                                            <th>Connections</th>
+                                            <th>Heat Generation</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for network in node_networks %}
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #6f42c1;">{{ network.id }}</strong>
+                                                {% if network.type == 'actuator' %}
+                                                <span class="badge bg-info ms-2">Actuator</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ network.name or network.id }}</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-info">{{ network.node_count }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                <span class="badge bg-success">{{ network.connection_count }}</span>
+                                            </td>
+                                            <td class="text-center">
+                                                {% if network.total_heat > 0 %}
+                                                <span class="badge bg-danger">{{ "%.2f"|format(network.total_heat) }} W</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">0 W</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('node_network_detail', network_id=network.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="bi bi-diagram-2 text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-2">No node networks found</h5>
+                                <p class="text-muted">Add thermal node networks to model simplified thermal circuits.</p>
+                                <a href="{{ url_for('add_node_network') }}" class="btn" style="background-color: #6f42c1; color: white;">
+                                    <i class="bi bi-plus"></i> Add Node Network
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %} 

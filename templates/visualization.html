@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Boundary Condition Visualization - Thermal Model Editor{% endblock %}
+
+{% block nav_structures %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-graph-up text-primary"></i> Boundary Condition Visualization
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Visualization</li>
+            </ol>
+        </nav>
+        <div class="btn-group">
+            <a href="{{ url_for('visualize') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-clockwise"></i> Regenerate
+            </a>
+            <a href="{{ url_for('download_visualization') }}" class="btn btn-success">
+                <i class="bi bi-download"></i> Download
+            </a>
+            <a href="{{ url_for('regions') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Regions
+            </a>
+        </div>
+    </div>
+
+    <!-- Visualization Info -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-grid display-4 text-success"></i>
+                    <h4 class="card-title mt-2">{{ regions|length }}</h4>
+                    <p class="card-text">Regions</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-hexagon display-4 text-info"></i>
+                    <h4 class="card-title mt-2">{{ total_elements }}</h4>
+                    <p class="card-text">Total Elements</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <i class="bi bi-palette display-4 text-warning"></i>
+                    <h4 class="card-title mt-2">z=0</h4>
+                    <p class="card-text">Surface Level</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visualization Image -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-image"></i> Boundary Conditions Visualization
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="text-center">
+                {% if image_path %}
+                    <img src="{{ url_for('static', filename='boundary_conditions.png') }}" 
+                         class="img-fluid border rounded shadow-sm" 
+                         alt="Boundary Conditions Visualization"
+                         style="max-width: 100%; height: auto;">
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        No visualization available. Please generate one.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend and Information -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-info-circle"></i> Visualization Information
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Boundary Condition Types:</h6>
+                    <ul class="list-unstyled">
+                        <li><span class="badge" style="background-color: #808080;">■</span> INNER - Internal elements</li>
+                        <li><span class="badge" style="background-color: #0066CC;">■</span> ADIABATIC - No heat transfer</li>
+                        <li><span class="badge" style="background-color: #FF6600;">■</span> CONST_Q - Constant heat flux</li>
+                        <li><span class="badge" style="background-color: #8B0000;">■</span> CONST_T - Constant temperature</li>
+                        <li><span class="badge" style="background-color: #CC0000;">■</span> ACTUATOR_CONNECTED - Connected to actuator</li>
+                        <li><span class="badge" style="background-color: #00AA00;">■</span> PLASTIC_COVERED - Plastic insulation</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6>Additional Types:</h6>
+                    <ul class="list-unstyled">
+                        <li><span class="badge" style="background-color: #00CCCC;">■</span> CONVECTIVE - Heat convection</li>
+                        <li><span class="badge" style="background-color: #9900FF;">■</span> MAPPED - Mapped boundary</li>
+                        <li><span class="badge" style="background-color: #FF00FF;">■</span> NODE_CONNECTED - Connected to node network</li>
+                        <li><span class="badge" style="background-color: #8B4513;">■</span> USERDEF_CONDUCTION - User-defined conduction</li>
+                        <li><span class="badge" style="background-color: #20B2AA;">■</span> USERDEF_CONVECTION - User-defined convection</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <h6>Visualization Details:</h6>
+                <ul>
+                    <li>Shows boundary conditions for the z=0 (bottom) surface of each region</li>
+                    <li>Grid lines represent the finite element mesh</li>
+                    <li>Colors indicate different boundary condition types</li>
+                    <li>Region dimensions are shown in the title of each subplot</li>
+                    <li>Red lines indicate adiabatic boundaries between elements</li>
+                    <li>Legend has been removed from plots - boundary condition types are listed above</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Region List -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="bi bi-list"></i> Visualized Regions
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Region ID</th>
+                            <th>Dimensions (mm)</th>
+                            <th>Thermal Conductivity</th>
+                            <th>Boundary Conditions</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for region in regions %}
+                        <tr>
+                            <td><strong class="text-primary">{{ region.id }}</strong></td>
+                            <td><span class="font-monospace">{{ "%.1f"|format(region.width) }}×{{ "%.1f"|format(region.height) }}×{{ "%.1f"|format(region.thickness) }}</span></td>
+                            <td><span class="badge bg-info">{{ region.thermal_conductivity if region.thermal_conductivity is not none else 0 }} W/mK</span></td>
+                            <td>
+                                {% set bc_count = region.boundary_conditions|length %}
+                                <span class="badge bg-secondary">{{ bc_count }} condition{{ 's' if bc_count != 1 else '' }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('region_detail', region_id=region.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a href="{{ url_for('edit_region', region_id=region.id) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Add Node Network - Thermal Model Editor{% endblock %}
+
+{% block nav_node_networks %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('node_networks') }}">Node Networks</a></li>
+                        <li class="breadcrumb-item active">Add New Network</li>
+                    </ol>
+                </nav>
+                <h1 class="mb-0">
+                    <i class="bi bi-diagram-3 text-warning"></i> Add Node Network
+                </h1>
+            </div>
+
+            <form method="POST">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-info-circle text-info"></i> Network Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="network_id" class="form-label">
+                                Network ID <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="network_id" name="network_id" 
+                                   value="{{ form_data.network_id if form_data else '' }}" required>
+                            <div class="form-text">Unique identifier for the node network</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="network_name" class="form-label">
+                                Network Name
+                            </label>
+                            <input type="text" class="form-control" id="network_name" name="network_name"
+                                   value="{{ form_data.network_name if form_data else '' }}">
+                            <div class="form-text">Descriptive name for the network (optional)</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">
+                                Description
+                            </label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ form_data.description if form_data else '' }}</textarea>
+                            <div class="form-text">Optional description of the network's purpose or characteristics</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> After creating the network, you can add nodes and thermal resistance connections to build your thermal model.
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('node_networks') }}" class="btn btn-secondary">
+                                <i class="bi bi-x"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="bi bi-plus"></i> Create Network
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Information Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-question-circle text-primary"></i> What are Node Networks?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>Node networks are thermal models represented by discrete nodes connected through thermal resistances, rather than 3D geometry meshes.</p>
+                    
+                    <h6>Key Components:</h6>
+                    <ul>
+                        <li><strong>Nodes:</strong> Thermal lumps with capacity and optional heat sources/sinks</li>
+                        <li><strong>Connections:</strong> Thermal resistances between nodes defining heat flow paths</li>
+                        <li><strong>Network:</strong> Collection of nodes and connections forming a thermal circuit</li>
+                    </ul>
+
+                    <h6>Use Cases:</h6>
+                    <ul>
+                        <li>Simplified thermal models for complex geometries</li>
+                        <li>Reduced-order models for fast simulation</li>
+                        <li>Component-level thermal networks</li>
+                        <li>Thermal interface modeling</li>
+                    </ul>
+
+                    <div class="alert alert-light">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Tip:</strong> Start with a simple 2-3 node network to understand the workflow, then expand as needed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

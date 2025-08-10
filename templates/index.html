@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}File Manager - Thermal Model Editor{% endblock %}
+
+{% block nav_file_manager %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">
+            <i class="bi bi-thermometer-half text-primary"></i> Thermal Model Editor
+        </h1>
+        <p class="lead text-muted">Manage and edit thermal models for robotic systems</p>
+    </div>
+
+    <!-- File Selection -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-file-earmark-text"></i> Select Thermal Model File
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Upload File -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">
+                                <i class="bi bi-upload text-success"></i> Upload JSON File
+                            </h5>
+                            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <input type="file" class="form-control" name="file" accept=".json" required>
+                                    <div class="form-text">Select a JSON thermal model file to upload</div>
+                                </div>
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-upload"></i> Upload & Load
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Load Default -->
+                        <div class="col-md-6">
+                            <h5 class="mb-3">
+                                <i class="bi bi-file-earmark-check text-primary"></i> Use Default File
+                            </h5>
+                            <p class="text-muted mb-3">Load the default GEO.json file from the current directory</p>
+                            <a href="{{ url_for('load_default') }}" class="btn btn-primary w-100">
+                                <i class="bi bi-file-earmark-check"></i> Load Default (GEO.json)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if data %}
+    <!-- Quick Overview (if file is loaded) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Model Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <!-- Regions Card -->
+                        <div class="col-lg-6">
+                            <div class="card border-success mb-3">
+                                <div class="card-body">
+                                    <i class="bi bi-grid text-success" style="font-size: 2rem;"></i>
+                                    <h5 class="card-title mt-2 text-success">Thermal Regions</h5>
+                                    <p class="card-text">Manage thermal regions and their properties.</p>
+                                    <p><strong>Total Regions:</strong> {{ data.regions|length }}</p>
+                                    <div class="small text-muted mb-3">
+                                        {% for region in data.regions[:3] %}
+                                        <div>{{ region.id }}</div>
+                                        {% endfor %}
+                                        {% if data.regions|length > 3 %}
+                                        <div>+{{ data.regions|length - 3 }} more</div>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{{ url_for('regions') }}" class="btn btn-success">
+                                        <i class="bi bi-grid"></i> View Regions
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actuators Card -->
+                        <div class="col-lg-6">
+                            <div class="card border-warning mb-3">
+                                <div class="card-body">
+                                    <i class="bi bi-cpu text-warning" style="font-size: 2rem;"></i>
+                                    <h5 class="card-title mt-2 text-warning">Actuators</h5>
+                                    <p class="card-text">Configure heat-generating actuators.</p>
+                                    <p><strong>Total Actuators:</strong> {{ data.actuators|length }}</p>
+                                    <div class="small text-muted mb-3">
+                                        {% for actuator in data.actuators[:3] %}
+                                        <div>{{ actuator.id }}</div>
+                                        {% endfor %}
+                                        {% if data.actuators|length > 3 %}
+                                        <div>+{{ data.actuators|length - 3 }} more</div>
+                                        {% endif %}
+                                    </div>
+                                    <a href="{{ url_for('actuators') }}" class="btn btn-warning">
+                                        <i class="bi bi-cpu"></i> View Actuators
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Feature Overview -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-star"></i> Features
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('regions') }}" class="btn btn-outline-success">
+                                    <i class="bi bi-grid"></i><br>Regions
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('actuators') }}" class="btn btn-outline-warning">
+                                    <i class="bi bi-cpu"></i><br>Actuators
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('structures') }}" class="btn btn-outline-info">
+                                    <i class="bi bi-diagram-3"></i><br>Overview
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-grid">
+                                <a href="{{ url_for('environment') }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-globe"></i><br>Environment
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

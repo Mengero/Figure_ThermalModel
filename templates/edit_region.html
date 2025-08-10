@@ -1,0 +1,1271 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ region.id }} - Thermal Model Editor{% endblock %}
+
+{% block nav_structures %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit {{ region.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-pencil text-warning"></i> Edit Region: {{ region.id }}
+        </h1>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Edit Region Properties
+                </h5>
+                <form method="POST">
+                    <div class="form-section">
+                        <h4>Region Type</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="region_type" class="form-label">Region Type</label>
+                                    <select class="form-select" id="region_type" name="region_type" required onchange="updateEditThermalConductivityHelp()">
+                                        <option value="standard" {{ 'selected' if region.type == 'standard' or not region.type else '' }}>Standard Region</option>
+                                    </select>
+                                    <div class="form-text">Region type for material properties</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="thermal_conductivity" class="form-label">Thermal Conductivity</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="thermal_conductivity" name="thermal_conductivity" 
+                                               value="{{ region.thermal_conductivity }}" step="0.1" min="0.1" required>
+                                        <span class="input-group-text">W/mK</span>
+                                    </div>
+                                    <div class="form-text" id="edit-thermal-conductivity-help">Material thermal conductivity</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Geometry</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="width" class="form-label">Width</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="width" name="width" 
+                                               value="{{ region.width }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="height" class="form-label">Height</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="height" name="height" 
+                                               value="{{ region.height }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="thickness" class="form-label">Thickness</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="thickness" name="thickness" 
+                                               value="{{ region.thickness }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Centroid Position <small class="text-muted">(Auto-calculated)</small></h4>
+                        <div class="alert alert-info">
+                            <strong>Automatic Centroid Calculation:</strong><br>
+                            • <strong>X Coordinate:</strong> Always 0.0 mm (centered)<br>
+                            • <strong>Y Coordinate:</strong> Height ÷ 2 = <span id="auto-centroid-y">{{ region.height / 2 }}</span> mm<br>
+                            • <strong>Z Coordinate:</strong> Thickness ÷ 2 = <span id="auto-centroid-z">{{ region.thickness / 2 }}</span> mm
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-section">
+                        <h4>Mesh Settings</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dx" class="form-label">dx</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dx" name="mesh_dx" 
+                                               value="{{ region.mesh_settings.dx }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dy" class="form-label">dy</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dy" name="mesh_dy" 
+                                               value="{{ region.mesh_settings.dy }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="mesh_dz" class="form-label">dz</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mesh_dz" name="mesh_dz" 
+                                               value="{{ region.mesh_settings.dz }}" step="any" required>
+                                        <span class="input-group-text">mm</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Boundary Conditions</h4>
+                        <div id="boundary-conditions-container">
+                            {% for bc in region.boundary_conditions %}
+                            <div class="boundary-condition-item border p-3 mb-3">
+                                <div class="row mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Type</label>
+                                        <select class="form-control bc-type-select" name="bc_{{ loop.index0 }}_type" required>
+                                            <option value="ACTUATOR_CONNECTED" {{ 'selected' if bc.type == 'ACTUATOR_CONNECTED' else '' }}>ACTUATOR_CONNECTED</option>
+                                            <option value="CONST_Q" {{ 'selected' if bc.type == 'CONST_Q' else '' }}>CONST_Q</option>
+                                            <option value="CONST_T" {{ 'selected' if bc.type == 'CONST_T' else '' }}>CONST_T</option>
+                                            <option value="MAPPED" {{ 'selected' if bc.type == 'MAPPED' else '' }}>MAPPED</option>
+                                            <option value="NODE_CONNECTED" {{ 'selected' if bc.type == 'NODE_CONNECTED' else '' }}>NODE_CONNECTED</option>
+                                            <option value="ADIABATIC" {{ 'selected' if bc.type == 'ADIABATIC' else '' }}>ADIABATIC</option>
+                                            <option value="PLASTIC_COVERED" {{ 'selected' if bc.type == 'PLASTIC_COVERED' else '' }}>PLASTIC_COVERED</option>
+                                            <option value="USERDEF_CONDUCTION" {{ 'selected' if bc.type == 'USERDEF_CONDUCTION' else '' }}>USERDEF_CONDUCTION</option>
+                                            <option value="USERDEF_CONVECTION" {{ 'selected' if bc.type == 'USERDEF_CONVECTION' else '' }}>USERDEF_CONVECTION</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Comments (optional)</label>
+                                        <input type="text" class="form-control" name="bc_{{ loop.index0 }}_comments" value="{{ bc.comments or '' }}">
+                                    </div>
+                                </div>
+                                
+                                {% if bc.type != 'ADIABATIC' and bc.type != 'MAPPED' %}
+                                <div class="standard-fields">
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid X</label>
+                                        <input type="number" class="form-control bc-centroid-x" name="bc_{{ loop.index0 }}_centroid_x" value="{{ bc.centroid.x if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid Y</label>
+                                        <input type="number" class="form-control bc-centroid-y" name="bc_{{ loop.index0 }}_centroid_y" value="{{ bc.centroid.y if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Centroid Z</label>
+                                        <input type="number" class="form-control bc-centroid-z" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Width</label>
+                                        <input type="number" class="form-control bc-width" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Height</label>
+                                        <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Thickness</label>
+                                        <input type="number" class="form-control bc-thickness" name="bc_{{ loop.index0 }}_thickness" value="{{ bc.thickness if bc.thickness is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <div class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Type-specific fields -->
+                                <div class="type-specific-fields">
+                                    {% if bc.type == 'ACTUATOR_CONNECTED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Actuator ID</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_actuator_id" required>
+                                                <option value="">Select an actuator...</option>
+                                                {% for actuator in actuators %}
+                                                <option value="{{ actuator.id }}" {{ 'selected' if bc.actuator_id == actuator.id else '' }}>{{ actuator.id }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Connecting Location</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_connecting_location" required>
+                                                <option value="">Select location...</option>
+                                                <option value="Housing" {{ 'selected' if bc.connecting_location == 'Housing' else '' }}>Housing</option>
+                                                <option value="Output" {{ 'selected' if bc.connecting_location == 'Output' else '' }}>Output</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'CONST_Q' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Heat Flux (W)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_q" value="{{ bc.q if bc.q is not none else 0 }}" step="0.1">
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'CONST_T' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Temperature (°C)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_temperature" value="{{ bc.temperature if bc.temperature is defined else 20.0 }}" step="0.1">
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'ADIABATIC' %}
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <strong>Adiabatic Line Definition:</strong><br>
+                                                Define an adiabatic boundary by specifying two points. The adiabatic condition will be applied along the line connecting these points.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Point 1 X (mm)</label>
+                                            <input type="number" class="form-control adiabatic-point1-x" name="bc_{{ loop.index0 }}_point1_x" 
+                                                   value="{{ bc.point1.x if bc.point1 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Point 1 Y (mm)</label>
+                                            <input type="number" class="form-control adiabatic-point1-y" name="bc_{{ loop.index0 }}_point1_y" 
+                                                   value="{{ bc.point1.y if bc.point1 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Point 2 X (mm)</label>
+                                            <input type="number" class="form-control adiabatic-point2-x" name="bc_{{ loop.index0 }}_point2_x" 
+                                                   value="{{ bc.point2.x if bc.point2 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Point 2 Y (mm)</label>
+                                            <input type="number" class="form-control adiabatic-point2-y" name="bc_{{ loop.index0 }}_point2_y" 
+                                                   value="{{ bc.point2.y if bc.point2 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'MAPPED' %}
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <div class="alert alert-info">
+                                                <strong>Face Selection Guide:</strong><br>
+                                                • <strong>X Face:</strong> Maps temperature across +X and -X faces (left/right boundaries)<br>
+                                                • <strong>Y Face:</strong> Maps temperature across +Y and -Y faces (front/back boundaries)<br>
+                                                Start/End locations define the range along the selected face direction.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Face Selection</label>
+                                            <select class="form-control mapped-face-selection" name="bc_{{ loop.index0 }}_face_selection" data-bc-index="{{ loop.index0 }}">
+                                                <option value="x" {{ 'selected' if bc.face_selection == 'x' else '' }}>X Face (+x/-x)</option>
+                                                <option value="y" {{ 'selected' if bc.face_selection == 'y' else '' }}>Y Face (+y/-y)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Start Location (mm)</label>
+                                            <input type="number" class="form-control mapped-start-location" name="bc_{{ loop.index0 }}_start_location" 
+                                                   value="{{ bc.start_location if bc.start_location is defined else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">End Location (mm)</label>
+                                            <input type="number" class="form-control mapped-end-location" name="bc_{{ loop.index0 }}_end_location" 
+                                                   value="{{ bc.end_location if bc.end_location is defined else 100.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                            <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'NODE_CONNECTED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Connected Node ID</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_node_id" required>
+                                                <option value="">Select a node...</option>
+                                                {% for node_network in node_networks %}
+                                                    {% for node in node_network.nodes %}
+                                                        <option value="{{ node.id }}" {{ 'selected' if bc.node_id == node.id else '' }}>
+                                                            {{ node.id }}{% if node.name %} ({{ node.name }}){% endif %}
+                                                        </option>
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Thermal Resistance (K/W)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_thermal_resistance" 
+                                                   value="{{ bc.thermal_resistance if bc.thermal_resistance is defined else 1.0 }}" step="any" min="0.001" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-12">
+                                            <small class="text-muted">
+                                                <i class="bi bi-info-circle"></i> Node connection boundary - connects region elements (defined by centroid and dimensions above) to the selected thermal node.
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'PLASTIC_COVERED' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Plastic Thickness</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_thickness" 
+                                                   value="{{ bc.plastic_thickness }}" step="0.01" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Plastic Conductivity (W/mK)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_conductivity" 
+                                                   value="{{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }}" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Contact Resistance (m²K/W)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_contact_resistance" 
+                                                   value="{{ bc.contact_resistance if bc.contact_resistance is not none else 0.001 }}" step="0.0001" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_heat_transfer_coefficient" 
+                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="0.1" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Ambient Temperature (°C)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_ambient_temperature" 
+                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="0.1" required>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'USERDEF_CONDUCTION' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">User-Defined Conductivity (W/mK)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_conductivity" 
+                                                   value="{{ bc.conductivity if bc.conductivity is not none else 1.0 }}" step="0.1" required>
+                                        </div>
+                                    </div>
+                                    {% elif bc.type == 'USERDEF_CONVECTION' %}
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_heat_transfer_coefficient" 
+                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="0.1" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Ambient Temperature (°C)</label>
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_ambient_temperature" 
+                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="0.1" required>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="text-end">
+                                    <button type="button" class="btn btn-sm btn-danger remove-bc-btn">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <input type="hidden" name="bc_count" id="bc-count" value="{{ region.boundary_conditions|length }}">
+                        
+                        <div class="text-end mb-3">
+                            <button type="button" class="btn btn-success" id="add-bc-btn">
+                                <i class="bi bi-plus-circle"></i> Add Boundary Condition
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('region_detail', region_id=region.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Current Values
+                </h5>
+                <div class="form-section">
+                    <h6>Geometry</h6>
+                    <ul class="list-unstyled">
+                        <li>Width: {{ region.width }} mm</li>
+                        <li>Height: {{ region.height }} mm</li>
+                        <li>Thickness: {{ region.thickness }} mm</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Centroid</h6>
+                    <ul class="list-unstyled">
+                        <li>X: {{ region.centroid.x }} mm</li>
+                        <li>Y: {{ region.centroid.y }} mm</li>
+                        <li>Z: {{ region.centroid.z }} mm</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Thermal</h6>
+                    <ul class="list-unstyled">
+                        <li>Conductivity: {{ region.thermal_conductivity if region.thermal_conductivity is not none else 0 }} W/mK</li>
+                    </ul>
+                </div>
+                <div class="form-section">
+                    <h6>Mesh</h6>
+                    <ul class="list-unstyled">
+                        <li>dx: {{ region.mesh_settings.dx }} mm</li>
+                        <li>dy: {{ region.mesh_settings.dy }} mm</li>
+                        <li>dz: {{ region.mesh_settings.dz }} mm</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Boundary Conditions
+                </h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        You can now edit boundary conditions directly in the form. 
+                        Use the "Add Boundary Condition" button to create new ones,
+                        and the "Remove" button to delete existing ones.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('boundary-conditions-container');
+    const addBtn = document.getElementById('add-bc-btn');
+    const countInput = document.getElementById('bc-count');
+    
+    // Function to create a new boundary condition form
+    function createBoundaryConditionForm(index) {
+        const div = document.createElement('div');
+        div.className = 'boundary-condition-item border p-3 mb-3';
+        div.innerHTML = `
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label">Type</label>
+                    <select class="form-control bc-type-select" name="bc_${index}_type" required>
+                        <option value="">Select type...</option>
+                        <option value="ACTUATOR_CONNECTED">ACTUATOR_CONNECTED</option>
+                        <option value="CONST_Q">CONST_Q</option>
+                        <option value="CONST_T">CONST_T</option>
+                        <option value="MAPPED">MAPPED</option>
+                        <option value="NODE_CONNECTED">NODE_CONNECTED</option>
+                        <option value="ADIABATIC">ADIABATIC</option>
+                        <option value="PLASTIC_COVERED">PLASTIC_COVERED</option>
+                        <option value="USERDEF_CONDUCTION">USERDEF_CONDUCTION</option>
+                        <option value="USERDEF_CONVECTION">USERDEF_CONVECTION</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Comments (optional)</label>
+                    <input type="text" class="form-control" name="bc_${index}_comments" value="">
+                </div>
+            </div>
+            
+            <div class="standard-fields">
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Centroid X</label>
+                        <input type="number" class="form-control bc-centroid-x" name="bc_${index}_centroid_x" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Centroid Y</label>
+                        <input type="number" class="form-control bc-centroid-y" name="bc_${index}_centroid_y" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Centroid Z</label>
+                        <input type="number" class="form-control bc-centroid-z" name="bc_${index}_centroid_z" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Width</label>
+                        <input type="number" class="form-control bc-width" name="bc_${index}_width" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Height</label>
+                        <input type="number" class="form-control bc-height" name="bc_${index}_height" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Thickness</label>
+                        <input type="number" class="form-control bc-thickness" name="bc_${index}_thickness" value="0" step="0.01" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="type-specific-fields"></div>
+            
+            <div class="text-end">
+                <button type="button" class="btn btn-sm btn-danger remove-bc-btn">
+                    <i class="bi bi-trash"></i> Remove
+                </button>
+            </div>
+        `;
+        return div;
+    }
+    
+    // Function to update type-specific fields
+    function updateTypeSpecificFields(item, type, index) {
+        const container = item.querySelector('.type-specific-fields');
+        const standardFields = item.querySelector('.standard-fields');
+        container.innerHTML = '';
+        
+        // Hide standard fields for ADIABATIC and MAPPED, show for others
+        if (type === 'ADIABATIC' || type === 'MAPPED') {
+            standardFields.style.display = 'none';
+        } else {
+            standardFields.style.display = 'block';
+        }
+        
+        if (type === 'ACTUATOR_CONNECTED') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Actuator ID</label>
+                        <select class="form-control" name="bc_${index}_actuator_id" required>
+                            <option value="">Select an actuator...</option>
+                            {% for actuator in actuators %}
+                            <option value="{{ actuator.id }}">{{ actuator.id }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Connecting Location</label>
+                        <select class="form-control" name="bc_${index}_connecting_location" required>
+                            <option value="">Select location...</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Output">Output</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'CONST_Q') {
+            // Preserve existing value if any
+            const existingQField = item.querySelector(`input[name*="_q"]`);
+            const qValue = existingQField ? existingQField.value : "0";
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Heat Flux (W)</label>
+                        <input type="number" class="form-control" name="bc_${index}_q" value="${qValue}" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'CONST_T') {
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Temperature (°C)</label>
+                        <input type="number" class="form-control" name="bc_${index}_temperature" value="20.0" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'ADIABATIC') {
+            // Preserve existing values if any
+            const existingPoint1XField = item.querySelector(`input[name*="_point1_x"]`);
+            const existingPoint1YField = item.querySelector(`input[name*="_point1_y"]`);
+            const existingPoint2XField = item.querySelector(`input[name*="_point2_x"]`);
+            const existingPoint2YField = item.querySelector(`input[name*="_point2_y"]`);
+            const point1XValue = existingPoint1XField ? existingPoint1XField.value : "0.0";
+            const point1YValue = existingPoint1YField ? existingPoint1YField.value : "0.0";
+            const point2XValue = existingPoint2XField ? existingPoint2XField.value : "100.0";
+            const point2YValue = existingPoint2YField ? existingPoint2YField.value : "50.0";
+            container.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <strong>Adiabatic Line Definition:</strong><br>
+                            Define an adiabatic boundary by specifying two points. The adiabatic condition will be applied along the line connecting these points.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Point 1 X (mm)</label>
+                        <input type="number" class="form-control adiabatic-point1-x" name="bc_${index}_point1_x" value="${point1XValue}" step="0.1" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Point 1 Y (mm)</label>
+                        <input type="number" class="form-control adiabatic-point1-y" name="bc_${index}_point1_y" value="${point1YValue}" step="0.1" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Point 2 X (mm)</label>
+                        <input type="number" class="form-control adiabatic-point2-x" name="bc_${index}_point2_x" value="${point2XValue}" step="0.1" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Point 2 Y (mm)</label>
+                        <input type="number" class="form-control adiabatic-point2-y" name="bc_${index}_point2_y" value="${point2YValue}" step="0.1" data-bc-index="${index}">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'MAPPED') {
+            // Preserve existing values if any
+            const existingFaceField = item.querySelector(`select[name*="_face_selection"]`);
+            const existingStartField = item.querySelector(`input[name*="_start_location"]`);
+            const existingEndField = item.querySelector(`input[name*="_end_location"]`);
+            const faceValue = existingFaceField ? existingFaceField.value : "x";
+            const startValue = existingStartField ? existingStartField.value : "0.0";
+            const endValue = existingEndField ? existingEndField.value : "100.0";
+            container.innerHTML = `
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <strong>Face Selection Guide:</strong><br>
+                            • <strong>X Face:</strong> Maps temperature across +X and -X faces (left/right boundaries)<br>
+                            • <strong>Y Face:</strong> Maps temperature across +Y and -Y faces (front/back boundaries)<br>
+                            Start/End locations define the range along the selected face direction.
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Face Selection</label>
+                        <select class="form-control" name="bc_${index}_face_selection">
+                            <option value="x" ${faceValue === 'x' ? 'selected' : ''}>X Face (+x/-x)</option>
+                            <option value="y" ${faceValue === 'y' ? 'selected' : ''}>Y Face (+y/-y)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Start Location (mm)</label>
+                        <input type="number" class="form-control" name="bc_${index}_start_location" value="${startValue}" step="0.1">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">End Location (mm)</label>
+                        <input type="number" class="form-control" name="bc_${index}_end_location" value="${endValue}" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'NODE_CONNECTED') {
+            // Preserve existing values if any
+            const existingNodeField = item.querySelector(`select[name*="_node_id"]`);
+            const existingResistanceField = item.querySelector(`input[name*="_thermal_resistance"]`);
+            const nodeValue = existingNodeField ? existingNodeField.value : "";
+            const resistanceValue = existingResistanceField ? existingResistanceField.value : "1.0";
+            
+            // Build node options from available node networks
+            let nodeOptions = '<option value="">Select a node...</option>';
+            {% for node_network in node_networks %}
+                {% for node in node_network.nodes %}
+                    nodeOptions += `<option value="{{ node.id }}" ${nodeValue === "{{ node.id }}" ? "selected" : ""}>{{ node.id }}{% if node.name %} ({{ node.name }}){% endif %}</option>`;
+                {% endfor %}
+            {% endfor %}
+            
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Connected Node ID</label>
+                        <select class="form-control" name="bc_${index}_node_id" required>
+                            ${nodeOptions}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Thermal Resistance (K/W)</label>
+                        <input type="number" class="form-control" name="bc_${index}_thermal_resistance" 
+                               value="${resistanceValue}" step="any" min="0.001" required>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-12">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Node connection boundary - connects region elements (defined by centroid and dimensions above) to the selected thermal node.
+                        </small>
+                    </div>
+                </div>
+            `;
+        } else if (type === 'PLASTIC_COVERED') {
+            // Preserve existing values if any
+            const existingThicknessField = item.querySelector(`input[name*="_plastic_thickness"]`);
+            const existingConductivityField = item.querySelector(`input[name*="_plastic_conductivity"]`);
+            const existingContactResistanceField = item.querySelector(`input[name*="_contact_resistance"]`);
+            const existingHtcField = item.querySelector(`input[name*="_heat_transfer_coefficient"]`);
+            const existingTempField = item.querySelector(`input[name*="_ambient_temperature"]`);
+            const thicknessValue = existingThicknessField ? existingThicknessField.value : "0";
+            const conductivityValue = existingConductivityField ? existingConductivityField.value : "0.25";
+            const contactResistanceValue = existingContactResistanceField ? existingContactResistanceField.value : "0.001";
+            const htcValue = existingHtcField ? existingHtcField.value : "15.0";
+            const tempValue = existingTempField ? existingTempField.value : "25.0";
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Plastic Thickness</label>
+                        <input type="number" class="form-control" name="bc_${index}_plastic_thickness" value="${thicknessValue}" step="0.01">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Plastic Conductivity (W/mK)</label>
+                        <input type="number" class="form-control" name="bc_${index}_plastic_conductivity" value="${conductivityValue}" step="0.01">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Contact Resistance (m²K/W)</label>
+                        <input type="number" class="form-control" name="bc_${index}_contact_resistance" value="${contactResistanceValue}" step="0.0001">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
+                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="0.1">
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Ambient Temperature (°C)</label>
+                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'USERDEF_CONDUCTION') {
+            // Preserve existing value if any
+            const existingConductivityField = item.querySelector(`input[name*="_conductivity"]`);
+            const conductivityValue = existingConductivityField ? existingConductivityField.value : "1.0";
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">User-Defined Conductivity (W/mK)</label>
+                        <input type="number" class="form-control" name="bc_${index}_conductivity" value="${conductivityValue}" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'USERDEF_CONVECTION') {
+            // Preserve existing values if any
+            const existingHtcField = item.querySelector(`input[name*="_heat_transfer_coefficient"]`);
+            const existingTempField = item.querySelector(`input[name*="_ambient_temperature"]`);
+            const htcValue = existingHtcField ? existingHtcField.value : "15.0";
+            const tempValue = existingTempField ? existingTempField.value : "25.0";
+            container.innerHTML = `
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
+                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="0.1">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Ambient Temperature (°C)</label>
+                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="0.1">
+                    </div>
+                </div>
+            `;
+        } else if (type === 'ADIABATIC') {
+            container.innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <h6>Source 1</h6>
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid X</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_x" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid Y</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_y" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Centroid Z</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_z" value="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Width</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_width" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Height</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_height" value="0" step="0.01">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Source 1 Thickness</label>
+                                <input type="number" class="form-control" name="bc_${index}_source1_thickness" value="0" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // Add event listener for adding boundary conditions
+    addBtn.addEventListener('click', function() {
+        const currentCount = parseInt(countInput.value);
+        const newItem = createBoundaryConditionForm(currentCount);
+        container.appendChild(newItem);
+        countInput.value = currentCount + 1;
+        
+        // Add event listeners to the new item
+        const typeSelect = newItem.querySelector('.bc-type-select');
+        const removeBtn = newItem.querySelector('.remove-bc-btn');
+        
+        typeSelect.addEventListener('change', function() {
+            updateTypeSpecificFields(newItem, this.value, currentCount);
+        });
+        
+        removeBtn.addEventListener('click', function() {
+            newItem.remove();
+            updateIndices();
+        });
+    });
+    
+    // Function to update indices after removal
+    function updateIndices() {
+        const items = container.querySelectorAll('.boundary-condition-item');
+        items.forEach((item, index) => {
+            // Update all input and select names
+            const inputs = item.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                const name = input.name;
+                if (name) {
+                    input.name = name.replace(/bc_\d+_/, `bc_${index}_`);
+                }
+            });
+        });
+        countInput.value = items.length;
+    }
+    
+    // Add event listeners to existing items
+    container.querySelectorAll('.boundary-condition-item').forEach((item, index) => {
+        const typeSelect = item.querySelector('.bc-type-select');
+        const removeBtn = item.querySelector('.remove-bc-btn');
+        
+        if (typeSelect) {
+            // Only add change listener - don't call updateTypeSpecificFields on page load
+            // This preserves the template-rendered values from the server
+            typeSelect.addEventListener('change', function() {
+                updateTypeSpecificFields(item, this.value, index);
+            });
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                item.remove();
+                updateIndices();
+            });
+        }
+    });
+    
+    // Function to update thermal conductivity help text in edit form
+    function updateEditThermalConductivityHelp() {
+        const helpText = document.getElementById('edit-thermal-conductivity-help');
+        const thermalConductivityInput = document.getElementById('thermal_conductivity');
+        
+        helpText.innerHTML = 'Material thermal conductivity';
+        thermalConductivityInput.min = '0.1';
+    }
+    
+    // Function to update auto-calculated centroid values
+    function updateAutoCentroidValues() {
+        const heightInput = document.getElementById('height');
+        const thicknessInput = document.getElementById('thickness');
+        const centroidYSpan = document.getElementById('auto-centroid-y');
+        const centroidZSpan = document.getElementById('auto-centroid-z');
+        
+        if (heightInput && centroidYSpan) {
+            const height = parseFloat(heightInput.value) || 0;
+            centroidYSpan.textContent = (height / 2).toFixed(1);
+        }
+        
+        if (thicknessInput && centroidZSpan) {
+            const thickness = parseFloat(thicknessInput.value) || 0;
+            centroidZSpan.textContent = (thickness / 2).toFixed(1);
+        }
+    }
+    
+    // Function to constrain boundary condition values to valid ranges
+    function constrainBoundaryConditionValue(input, bcIndex) {
+        const regionWidth = parseFloat(document.getElementById('width').value) || 0;
+        const regionHeight = parseFloat(document.getElementById('height').value) || 0;
+        
+        const regionMinX = -regionWidth/2;
+        const regionMaxX = regionWidth/2;
+        const regionMinY = 0;
+        const regionMaxY = regionHeight;
+        
+        let value = parseFloat(input.value) || 0;
+        let constrainedValue = value;
+        let wasConstrained = false;
+        
+        // Handle MAPPED boundary conditions
+        if (input.classList.contains('mapped-start-location') || input.classList.contains('mapped-end-location')) {
+            const faceSelection = document.querySelector(`select[name="bc_${bcIndex}_face_selection"]`).value;
+            
+            if (faceSelection === 'y') {
+                // Y face selected: constrain to X limits [-width/2, width/2]
+                if (value < regionMinX) {
+                    constrainedValue = regionMinX;
+                    wasConstrained = true;
+                } else if (value > regionMaxX) {
+                    constrainedValue = regionMaxX;
+                    wasConstrained = true;
+                }
+            } else if (faceSelection === 'x') {
+                // X face selected: constrain to Y limits [0, height]
+                if (value < regionMinY) {
+                    constrainedValue = regionMinY;
+                    wasConstrained = true;
+                } else if (value > regionMaxY) {
+                    constrainedValue = regionMaxY;
+                    wasConstrained = true;
+                }
+            }
+        }
+        // Handle standard boundary conditions
+        else if (input.classList.contains('bc-centroid-x')) {
+            // For centroid X, constrain to region X bounds considering current width
+            const bcWidth = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_width"]`).value) || 0;
+            const minAllowedX = regionMinX + bcWidth/2;
+            const maxAllowedX = regionMaxX - bcWidth/2;
+            
+            if (value < minAllowedX) {
+                constrainedValue = minAllowedX;
+                wasConstrained = true;
+            } else if (value > maxAllowedX) {
+                constrainedValue = maxAllowedX;
+                wasConstrained = true;
+            }
+        } else if (input.classList.contains('bc-centroid-y')) {
+            // For centroid Y, constrain to region Y bounds considering current height
+            const bcHeight = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_height"]`).value) || 0;
+            const minAllowedY = regionMinY + bcHeight/2;
+            const maxAllowedY = regionMaxY - bcHeight/2;
+            
+            if (value < minAllowedY) {
+                constrainedValue = minAllowedY;
+                wasConstrained = true;
+            } else if (value > maxAllowedY) {
+                constrainedValue = maxAllowedY;
+                wasConstrained = true;
+            }
+        } else if (input.classList.contains('bc-width')) {
+            // For width, constrain so that centroid ± width/2 stays within region
+            const centroidX = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_centroid_x"]`).value) || 0;
+            const maxAllowedWidth = Math.min(
+                2 * (regionMaxX - centroidX),  // Distance to right edge * 2
+                2 * (centroidX - regionMinX)   // Distance to left edge * 2
+            );
+            
+            if (value > maxAllowedWidth) {
+                constrainedValue = Math.max(0, maxAllowedWidth);
+                wasConstrained = true;
+            } else if (value < 0) {
+                constrainedValue = 0;
+                wasConstrained = true;
+            }
+        } else if (input.classList.contains('bc-height')) {
+            // For height, constrain so that centroid ± height/2 stays within region
+            const centroidY = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_centroid_y"]`).value) || 0;
+            const maxAllowedHeight = Math.min(
+                2 * (regionMaxY - centroidY),  // Distance to top edge * 2
+                2 * (centroidY - regionMinY)   // Distance to bottom edge * 2
+            );
+            
+            if (value > maxAllowedHeight) {
+                constrainedValue = Math.max(0, maxAllowedHeight);
+                wasConstrained = true;
+            } else if (value < 0) {
+                constrainedValue = 0;
+                wasConstrained = true;
+            }
+        }
+        
+        if (wasConstrained) {
+            input.value = constrainedValue.toFixed(1);
+            // Show temporary feedback
+            input.style.backgroundColor = '#fff3cd';
+            setTimeout(() => {
+                input.style.backgroundColor = '';
+            }, 1000);
+        }
+        
+        return !wasConstrained;
+    }
+    
+    // Function to validate boundary condition bounds (for visual feedback)
+    function validateBoundaryCondition(bcIndex) {
+        const regionWidth = parseFloat(document.getElementById('width').value) || 0;
+        const regionHeight = parseFloat(document.getElementById('height').value) || 0;
+        
+        // Region bounds: X from -regionWidth/2 to +regionWidth/2, Y from 0 to regionHeight
+        const regionMinX = -regionWidth/2;
+        const regionMaxX = regionWidth/2;
+        const regionMinY = 0;
+        const regionMaxY = regionHeight;
+        
+        // Check for MAPPED boundary conditions
+        const startLocation = document.querySelector(`input[name="bc_${bcIndex}_start_location"]`);
+        const endLocation = document.querySelector(`input[name="bc_${bcIndex}_end_location"]`);
+        const faceSelection = document.querySelector(`select[name="bc_${bcIndex}_face_selection"]`);
+        
+        if (startLocation && endLocation && faceSelection) {
+            // Handle MAPPED boundary condition validation
+            const start = parseFloat(startLocation.value) || 0;
+            const end = parseFloat(endLocation.value) || 0;
+            const face = faceSelection.value;
+            
+            let isValid = true;
+            
+            if (face === 'y') {
+                // Y face selected: validate X limits [-width/2, width/2]
+                if (start < regionMinX || start > regionMaxX) {
+                    startLocation.classList.add('is-invalid');
+                    startLocation.nextElementSibling.textContent = `Start location ${start.toFixed(1)} outside region X limits [${regionMinX.toFixed(1)}, ${regionMaxX.toFixed(1)}] for Y face`;
+                    isValid = false;
+                } else {
+                    startLocation.classList.remove('is-invalid');
+                    startLocation.nextElementSibling.textContent = '';
+                }
+                
+                if (end < regionMinX || end > regionMaxX) {
+                    endLocation.classList.add('is-invalid');
+                    endLocation.nextElementSibling.textContent = `End location ${end.toFixed(1)} outside region X limits [${regionMinX.toFixed(1)}, ${regionMaxX.toFixed(1)}] for Y face`;
+                    isValid = false;
+                } else {
+                    endLocation.classList.remove('is-invalid');
+                    endLocation.nextElementSibling.textContent = '';
+                }
+            } else if (face === 'x') {
+                // X face selected: validate Y limits [0, height]
+                if (start < regionMinY || start > regionMaxY) {
+                    startLocation.classList.add('is-invalid');
+                    startLocation.nextElementSibling.textContent = `Start location ${start.toFixed(1)} outside region Y limits [${regionMinY.toFixed(1)}, ${regionMaxY.toFixed(1)}] for X face`;
+                    isValid = false;
+                } else {
+                    startLocation.classList.remove('is-invalid');
+                    startLocation.nextElementSibling.textContent = '';
+                }
+                
+                if (end < regionMinY || end > regionMaxY) {
+                    endLocation.classList.add('is-invalid');
+                    endLocation.nextElementSibling.textContent = `End location ${end.toFixed(1)} outside region Y limits [${regionMinY.toFixed(1)}, ${regionMaxY.toFixed(1)}] for X face`;
+                    isValid = false;
+                } else {
+                    endLocation.classList.remove('is-invalid');
+                    endLocation.nextElementSibling.textContent = '';
+                }
+            }
+            
+            return isValid;
+        }
+        
+        // Handle standard boundary conditions
+        const centroidX = document.querySelector(`input[name="bc_${bcIndex}_centroid_x"]`);
+        const centroidY = document.querySelector(`input[name="bc_${bcIndex}_centroid_y"]`);
+        const bcWidth = document.querySelector(`input[name="bc_${bcIndex}_width"]`);
+        const bcHeight = document.querySelector(`input[name="bc_${bcIndex}_height"]`);
+        
+        if (!centroidX || !centroidY || !bcWidth || !bcHeight) return true;
+        
+        const x = parseFloat(centroidX.value) || 0;
+        const y = parseFloat(centroidY.value) || 0;
+        const w = parseFloat(bcWidth.value) || 0;
+        const h = parseFloat(bcHeight.value) || 0;
+        
+        // Calculate boundary condition bounds
+        const bcMinX = x - w/2;
+        const bcMaxX = x + w/2;
+        const bcMinY = y - h/2;
+        const bcMaxY = y + h/2;
+        
+        let isValid = true;
+        
+        // Validate X bounds
+        if (bcMinX < regionMinX || bcMaxX > regionMaxX) {
+            centroidX.classList.add('is-invalid');
+            bcWidth.classList.add('is-invalid');
+            centroidX.nextElementSibling.textContent = `X bounds [${bcMinX.toFixed(1)}, ${bcMaxX.toFixed(1)}] exceed region X limits [${regionMinX.toFixed(1)}, ${regionMaxX.toFixed(1)}]`;
+            isValid = false;
+        } else {
+            centroidX.classList.remove('is-invalid');
+            bcWidth.classList.remove('is-invalid');
+            centroidX.nextElementSibling.textContent = '';
+        }
+        
+        // Validate Y bounds
+        if (bcMinY < regionMinY || bcMaxY > regionMaxY) {
+            centroidY.classList.add('is-invalid');
+            bcHeight.classList.add('is-invalid');
+            centroidY.nextElementSibling.textContent = `Y bounds [${bcMinY.toFixed(1)}, ${bcMaxY.toFixed(1)}] exceed region Y limits [${regionMinY.toFixed(1)}, ${regionMaxY.toFixed(1)}]`;
+            isValid = false;
+        } else {
+            centroidY.classList.remove('is-invalid');
+            bcHeight.classList.remove('is-invalid');
+            centroidY.nextElementSibling.textContent = '';
+        }
+        
+        return isValid;
+    }
+    
+    // Function to validate all boundary conditions
+    function validateAllBoundaryConditions() {
+        let allValid = true;
+        const bcFields = document.querySelectorAll('[data-bc-index]');
+        const bcIndices = new Set();
+        
+        bcFields.forEach(field => {
+            bcIndices.add(field.getAttribute('data-bc-index'));
+        });
+        
+        bcIndices.forEach(index => {
+            if (!validateBoundaryCondition(index)) {
+                allValid = false;
+            }
+        });
+        
+        return allValid;
+    }
+    
+    // Initialize thermal conductivity help on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateEditThermalConductivityHelp();
+        updateAutoCentroidValues();
+        
+        // Add event listeners to geometry fields
+        const heightInput = document.getElementById('height');
+        const thicknessInput = document.getElementById('thickness');
+        const widthInput = document.getElementById('width');
+        
+        if (heightInput) {
+            heightInput.addEventListener('input', function() {
+                updateAutoCentroidValues();
+                validateAllBoundaryConditions();
+            });
+        }
+        if (thicknessInput) {
+            thicknessInput.addEventListener('input', updateAutoCentroidValues);
+        }
+        if (widthInput) {
+            widthInput.addEventListener('input', validateAllBoundaryConditions);
+        }
+        
+        // Add constraining and validation to boundary condition fields
+        document.addEventListener('input', function(e) {
+            if (e.target.matches('.bc-centroid-x, .bc-centroid-y, .bc-width, .bc-height, .mapped-start-location, .mapped-end-location')) {
+                const bcIndex = e.target.getAttribute('data-bc-index');
+                if (bcIndex !== null) {
+                    // First constrain the value, then validate
+                    constrainBoundaryConditionValue(e.target, bcIndex);
+                    validateBoundaryCondition(bcIndex);
+                }
+            }
+        });
+        
+        // Add change event for face selection to revalidate locations
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.mapped-face-selection')) {
+                const bcIndex = e.target.getAttribute('data-bc-index');
+                if (bcIndex !== null) {
+                    // Revalidate start and end locations when face selection changes
+                    const startLocation = document.querySelector(`input[name="bc_${bcIndex}_start_location"]`);
+                    const endLocation = document.querySelector(`input[name="bc_${bcIndex}_end_location"]`);
+                    if (startLocation) {
+                        constrainBoundaryConditionValue(startLocation, bcIndex);
+                    }
+                    if (endLocation) {
+                        constrainBoundaryConditionValue(endLocation, bcIndex);
+                    }
+                    validateBoundaryCondition(bcIndex);
+                }
+            }
+        });
+        
+        // Add blur event to ensure values are constrained when user leaves field
+        document.addEventListener('blur', function(e) {
+            if (e.target.matches('.bc-centroid-x, .bc-centroid-y, .bc-width, .bc-height, .mapped-start-location, .mapped-end-location')) {
+                const bcIndex = e.target.getAttribute('data-bc-index');
+                if (bcIndex !== null) {
+                    constrainBoundaryConditionValue(e.target, bcIndex);
+                    validateBoundaryCondition(bcIndex);
+                }
+            }
+        }, true);
+        
+        // Form submit validation
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateAllBoundaryConditions()) {
+                    e.preventDefault();
+                    alert('Please fix boundary condition validation errors before submitting.');
+                    return false;
+                }
+            });
+        }
+        
+        // Initial validation
+        setTimeout(validateAllBoundaryConditions, 100);
+    });
+});
+</script>
+{% endblock %} 

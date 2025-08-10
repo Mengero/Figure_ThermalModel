@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}{{ region.id }} - Region Detail{% endblock %}
+
+{% block nav_structures %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('regions') }}">Regions</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ region.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-grid text-success"></i> Region: {{ region.id }}
+        </h1>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('edit_region', region_id=region.id) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit Region
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Basic Properties -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Basic Properties</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Region ID:</strong></td>
+                            <td><span class="badge bg-primary">{{ region.id }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Region Type:</strong></td>
+                            <td>
+                                <span class="badge bg-secondary">Standard</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Thermal Conductivity:</strong></td>
+                            <td><span class="badge bg-info">{{ region.thermal_conductivity if region.thermal_conductivity is not none else 0 }} W/mK</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Geometry -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-rulers"></i> Geometry</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Width:</strong></td>
+                            <td>{{ "%.2f"|format(region.width) }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Height:</strong></td>
+                            <td>{{ "%.2f"|format(region.height) }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Thickness:</strong></td>
+                            <td>{{ "%.1f"|format(region.thickness) }} mm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Centroid Position -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-crosshair"></i> Centroid Position</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>X:</strong></td>
+                            <td>{{ "%.1f"|format(region.centroid.x) }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Y:</strong></td>
+                            <td>{{ "%.2f"|format(region.centroid.y) }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Z:</strong></td>
+                            <td>{{ "%.3f"|format(region.centroid.z) }} mm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mesh Settings -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-grid-3x3"></i> Mesh Settings</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>dx:</strong></td>
+                            <td>{{ region.mesh_settings.dx }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>dy:</strong></td>
+                            <td>{{ region.mesh_settings.dy }} mm</td>
+                        </tr>
+                        <tr>
+                            <td><strong>dz:</strong></td>
+                            <td>{{ region.mesh_settings.dz }} mm</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boundary Conditions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Boundary Conditions ({{ region.boundary_conditions|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if region.boundary_conditions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Details</th>
+                                    <th>Geometry</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for bc in region.boundary_conditions %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if bc.type == 'ACTUATOR_CONNECTED' else 'secondary' }}">
+                                            {{ bc.type }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if bc.type == 'ACTUATOR_CONNECTED' %}
+                                            <strong>Actuator:</strong> {{ bc.actuator_id }}<br>
+                                            <strong>Location:</strong> {{ bc.connecting_location }}
+                                        {% elif bc.type == 'CONST_Q' %}
+                                            <strong>Heat Flux:</strong> {{ bc.q if bc.q is not none else 0 }} W/m²
+                                        {% elif bc.type == 'CONST_T' %}
+                                            <strong>Temperature:</strong> {{ bc.temperature }} °C
+                                        {% elif bc.type == 'MAPPED' %}
+                                            <strong>Symmetry Axis:</strong> {{ bc.symmetry_axis }}
+                                        {% elif bc.type == 'PLASTIC_COVERED' %}
+                                            <strong>Plastic Thickness:</strong> {{ bc.plastic_thickness }} mm<br>
+                                            <strong>Plastic Conductivity:</strong> {{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }} W/mK<br>
+                                            <strong>Contact Resistance:</strong> {{ bc.contact_resistance if bc.contact_resistance is not none else 0.001 }} m²K/W<br>
+                                            <strong>Heat Transfer Coefficient:</strong> {{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }} W/m²K<br>
+                                            <strong>Ambient Temperature:</strong> {{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }} °C
+                                        {% elif bc.type == 'USERDEF_CONDUCTION' %}
+                                            <strong>Conductivity:</strong> {{ bc.conductivity if bc.conductivity is not none else 1.0 }} W/mK
+                                        {% elif bc.type == 'USERDEF_CONVECTION' %}
+                                            <strong>Heat Transfer Coefficient:</strong> {{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }} W/m²K<br>
+                                            <strong>Ambient Temperature:</strong> {{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }} °C
+                                        {% endif %}
+                                        {% if bc.comments %}
+                                            <br><em class="text-muted">{{ bc.comments }}</em>
+                                        {% endif %}
+                                    </td>
+                                    <td class="small">
+                                        {% if bc.centroid %}
+                                            <strong>Centroid:</strong> ({{ "%.1f"|format(bc.centroid.x) }}, {{ "%.1f"|format(bc.centroid.y) }}, {{ "%.1f"|format(bc.centroid.z) }})<br>
+                                        {% endif %}
+                                        {% if bc.width %}
+                                            <strong>Size:</strong> {{ "%.1f"|format(bc.width) }}×{{ "%.1f"|format(bc.height) }}×{{ "%.1f"|format(bc.thickness) }} mm
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-link-45deg text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">No boundary conditions defined</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <a href="{{ url_for('regions') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Regions
+            </a>
+            <a href="{{ url_for('edit_region', region_id=region.id) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit Region
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

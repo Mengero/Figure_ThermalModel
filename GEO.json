@@ -1,0 +1,46 @@
+{
+  "environment": {
+    "ambient_temperature": 40.0,
+    "heat_transfer_coefficient": 15,
+    "plastic_conductivity": 0.25
+  },
+  "regions": [],
+  "actuators": [],
+  "node_networks": [
+    {
+      "id": "test_nodes",
+      "name": "",
+      "description": "",
+      "nodes": [
+        {
+          "id": "node1",
+          "name": "",
+          "thermal_capacity": 0.0,
+          "heat_source": 1.0
+        },
+        {
+          "id": "node2",
+          "name": "",
+          "thermal_capacity": 0.0,
+          "heat_source": 1.5
+        }
+      ],
+      "connections": [
+        {
+          "id": "node1to2",
+          "from_node": "node1",
+          "to_node": "node2",
+          "thermal_resistance": 1.0,
+          "description": ""
+        },
+        {
+          "id": "node2toAir",
+          "from_node": "node2",
+          "to_node": "air",
+          "thermal_resistance": 3.0,
+          "description": ""
+        }
+      ]
+    }
+  ]
+}

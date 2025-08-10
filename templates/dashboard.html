@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Thermal Model Editor{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-speedometer2 text-primary"></i> Thermal Model Dashboard
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('backup') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-shield-check"></i> Backup
+            </a>
+            <a href="{{ url_for('download') }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-download"></i> Download
+            </a>
+        </div>
+    </div>
+
+    {% if current_file %}
+    <div class="alert alert-info mb-4">
+        <i class="bi bi-file-earmark-text"></i> 
+        <strong>Current File:</strong> {{ current_file }}
+    </div>
+    {% endif %}
+
+    <!-- Main Dashboard Layout -->
+    <div class="row mb-4">
+        <!-- Environment Settings -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-globe"></i> Environment Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ data.environment.ambient_temperature }}°C</h4>
+                            <small class="text-muted">Ambient Temperature</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ data.environment.heat_transfer_coefficient }} W/m²K</h4>
+                            <small class="text-muted">Heat Transfer Coefficient</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="text-center">
+                            <h4 class="text-info">{{ data.environment.plastic_conductivity }} W/mK</h4>
+                            <small class="text-muted">Plastic Conductivity</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="text-center">
+                        <a href="{{ url_for('environment') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-gear"></i> Edit Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thermal Regions Card -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-grid text-white"></i> Thermal Regions
+                    </h5>
+                </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h3 class="text-success mb-2">{{ data.regions|length }}</h3>
+                                    <p class="mb-0 text-muted">Mechanical components with thermal properties</p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <i class="bi bi-grid display-6 text-success opacity-25"></i>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row small text-muted">
+                                {% for region in data.regions[:3] %}
+                                <div class="col-12 mb-1">
+                                    <i class="bi bi-dot"></i> {{ region.id }}
+                                </div>
+                                {% endfor %}
+                                {% if data.regions|length > 3 %}
+                                <div class="col-12">
+                                    <small class="text-muted">+{{ data.regions|length - 3 }} more regions</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <a href="{{ url_for('regions') }}" class="btn btn-success w-100">
+                                <i class="bi bi-grid"></i> View Regions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+        <!-- Actuators Card -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-warning shadow-sm h-100">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="bi bi-cpu text-dark"></i> Actuators
+                    </h5>
+                </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h3 class="text-warning mb-2">{{ data.actuators|length }}</h3>
+                                    <p class="mb-0 text-muted">Heat-generating thermal structures</p>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <i class="bi bi-cpu display-6 text-warning opacity-25"></i>
+                                </div>
+                            </div>
+                                                <hr>
+                    {% set total_heat = [] %}
+                    {% for actuator in data.actuators %}
+                        {% set actuator_heat = actuator.heat_losses.gearbox + actuator.heat_losses.motor + actuator.heat_losses.FETs %}
+                        {% if total_heat.append(actuator_heat) %}{% endif %}
+                    {% endfor %}
+                    <div class="text-center">
+                        <h4 class="text-warning mb-1">{{ "%.1f"|format(total_heat|sum) }} W</h4>
+                        <small class="text-muted">Total Heat Generation</small>
+                    </div>
+                        </div>
+                        <div class="card-footer bg-light">
+                            <a href="{{ url_for('actuators') }}" class="btn btn-warning w-100">
+                                <i class="bi bi-cpu"></i> View Actuators
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+
+
+        <!-- Node Networks Card -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card border-warning shadow-sm h-100" style="border-color: #6f42c1 !important;">
+                <div class="card-header text-white" style="background-color: #6f42c1;">
+                    <h5 class="mb-0">
+                        <i class="bi bi-diagram-2 text-white"></i> Node Networks
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <h3 class="mb-2" style="color: #6f42c1;">{{ (data.node_networks|length if data.node_networks else 0) + (data.actuators|length if data.actuators else 0) }}</h3>
+                            <p class="mb-0 text-muted">Node networks & actuators</p>
+                        </div>
+                        <div class="col-4 text-end">
+                            <i class="bi bi-diagram-2 display-6 opacity-25" style="color: #6f42c1;"></i>
+                        </div>
+                    </div>
+                    <hr>
+                    {% set node_counts = [] %}
+                    {% set heat_values = [] %}
+                    {% for network in data.node_networks if data.node_networks %}
+                        {% if node_counts.append(network.nodes|length) %}{% endif %}
+                        {% for node in network.nodes %}
+                            {% if heat_values.append(node.heat_source or 0) %}{% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    {% for actuator in data.actuators if data.actuators %}
+                        {% if node_counts.append(3) %}{% endif %}
+                        {% if heat_values.append(actuator.heat_losses.gearbox + actuator.heat_losses.motor + actuator.heat_losses.FETs) %}{% endif %}
+                    {% endfor %}
+                    <div class="text-center">
+                        <h4 class="mb-1" style="color: #6f42c1;">{{ node_counts|sum }}</h4>
+                        <small class="text-muted">Total Nodes</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <a href="{{ url_for('node_networks') }}" class="btn w-100" style="background-color: #6f42c1; color: white;">
+                        <i class="bi bi-diagram-2"></i> View Networks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('visualize') }}" class="btn btn-primary w-100 mb-2">
+                                <i class="bi bi-graph-up"></i> Visualize Boundary Conditions
+                            </a>
+                            <small class="text-muted">Generate visual representation of boundary conditions for all regions</small>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('backup') }}" class="btn btn-secondary w-100 mb-2">
+                                <i class="bi bi-shield-check"></i> Create Backup
+                            </a>
+                            <small class="text-muted">Create a timestamped backup of your current thermal model</small>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('download') }}" class="btn btn-success w-100 mb-2">
+                                <i class="bi bi-download"></i> Download Model
+                            </a>
+                            <small class="text-muted">Download the modified thermal model as a JSON file</small>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('environment') }}" class="btn btn-info w-100 mb-2">
+                                <i class="bi bi-gear"></i> Global Settings
+                            </a>
+                            <small class="text-muted">Configure global environment and thermal parameters</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

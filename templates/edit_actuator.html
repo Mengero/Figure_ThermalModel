@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ actuator.id }} - Thermal Model Editor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="bi bi-pencil text-warning"></i> Edit Actuator: {{ actuator.id }}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('actuators') }}">Actuators</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('actuator_detail', actuator_id=actuator.id) }}">{{ actuator.id }}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-gear"></i> Edit Actuator Properties
+                </h5>
+                <form method="POST">
+                    <div class="form-section">
+                        <h4>Basic Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="actuator_id" class="form-label">Actuator ID</label>
+                                    <input type="text" class="form-control bg-secondary text-light" id="actuator_id" 
+                                           value="{{ actuator.id }}" readonly>
+                                    <div class="form-text">Actuator ID cannot be changed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Heat Losses</h4>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_gearbox" class="form-label">
+                                        <i class="bi bi-gear text-danger"></i> Gearbox Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_gearbox" 
+                                               name="heat_gearbox" value="{{ actuator.heat_losses.gearbox }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_motor" class="form-label">
+                                        <i class="bi bi-lightning text-warning"></i> Motor Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_motor" 
+                                               name="heat_motor" value="{{ actuator.heat_losses.motor }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="heat_fets" class="form-label">
+                                        <i class="bi bi-cpu text-success"></i> FETs Heat Loss
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heat_fets" 
+                                               name="heat_fets" value="{{ actuator.heat_losses.FETs }}" 
+                                               step="0.1" min="0" required>
+                                        <span class="input-group-text">W</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Thermal Resistance</h4>
+                        <div class="row">
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <label for="resistance_r1" class="form-label">
+                                    <i class="bi bi-thermometer"></i> R1 (K/W)
+                                </label>
+                                <input type="number" class="form-control" 
+                                       id="resistance_r1" 
+                                       name="resistance_r1" 
+                                       value="{{ actuator.thermal_resistance.R1 }}" 
+                                       step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <label for="resistance_r2" class="form-label">
+                                    <i class="bi bi-thermometer"></i> R2 (K/W)
+                                </label>
+                                <input type="number" class="form-control" 
+                                       id="resistance_r2" 
+                                       name="resistance_r2" 
+                                       value="{{ actuator.thermal_resistance.R2 }}" 
+                                       step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <label for="resistance_r3" class="form-label">
+                                    <i class="bi bi-thermometer"></i> R3 (K/W)
+                                </label>
+                                <input type="number" class="form-control" 
+                                       id="resistance_r3" 
+                                       name="resistance_r3" 
+                                       value="{{ actuator.thermal_resistance.R3 }}" 
+                                       step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <label for="resistance_r4" class="form-label">
+                                    <i class="bi bi-thermometer"></i> R4 (K/W)
+                                </label>
+                                <input type="number" class="form-control" 
+                                       id="resistance_r4" 
+                                       name="resistance_r4" 
+                                       value="{{ actuator.thermal_resistance.R4 }}" 
+                                       step="0.01" min="0" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-3">
+                                <label for="resistance_r5" class="form-label">
+                                    <i class="bi bi-thermometer"></i> R5 (K/W)
+                                </label>
+                                <input type="number" class="form-control" 
+                                       id="resistance_r5" 
+                                       name="resistance_r5" 
+                                       value="{{ actuator.thermal_resistance.R5 or 0.3 }}" 
+                                       step="0.01" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('actuator_detail', actuator_id=actuator.id) }}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Current Values
+                </h5>
+                <div class="form-section">
+                    <h6>Heat Losses</h6>
+                    <ul class="list-unstyled">
+                        <li>Gearbox: {{ actuator.heat_losses.gearbox }} W</li>
+                        <li>Motor: {{ actuator.heat_losses.motor }} W</li>
+                        <li>FETs: {{ actuator.heat_losses.FETs }} W</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <strong>Total:</strong> {{ actuator.heat_losses.gearbox + actuator.heat_losses.motor + actuator.heat_losses.FETs }} W
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h6>Thermal Resistance</h6>
+                    <ul class="list-unstyled">
+                        <li>R1: {{ actuator.thermal_resistance.R1 }} K/W</li>
+                        <li>R2: {{ actuator.thermal_resistance.R2 }} K/W</li>
+                        <li>R3: {{ actuator.thermal_resistance.R3 }} K/W</li>
+                        <li>R4: {{ actuator.thermal_resistance.R4 }} K/W</li>
+                        <li>R5: {{ actuator.thermal_resistance.R5 or 0.0 }} K/W</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-diagram-2 text-primary"></i> Thermal Network
+                </h5>
+                <div class="text-center">
+                    <img src="{{ url_for('static', filename='Actuator_Thermal_Network.png') }}" 
+                         alt="Actuator Thermal Network Diagram" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="max-height: 300px;">
+                    <p class="text-muted mt-2">
+                        <small>Thermal network diagram for actuator connections</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="bi bi-lightbulb text-primary"></i> Tips
+                </h5>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <strong>Heat Losses:</strong> Measured in Watts (W). Higher values indicate more heat generation.<br><br>
+                        <strong>Thermal Resistance:</strong> Measured in Kelvin per Watt (K/W). Higher values indicate better thermal isolation.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

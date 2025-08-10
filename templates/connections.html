@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Thermal Connections - Thermal Model Editor{% endblock %}
+
+{% block nav_connections %}active{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">
+            <i class="bi bi-link-45deg text-info"></i> Thermal Connections
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Connections</li>
+            </ol>
+        </nav>
+    </div>
+
+    {% if connections %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list"></i> All Thermal Connections ({{ connections|length }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Source Structure</th>
+                                    <th>Connection Type</th>
+                                    <th>Details</th>
+                                    <th>Structure Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for connection in connections %}
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">{{ connection.source_structure_id }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if connection.type == 'ACTUATOR_CONNECTED' else 'secondary' }}">
+                                            {{ connection.type }}
+                                        </span>
+                                    </td>
+                                    <td class="small">
+                                        {% if connection.type == 'ACTUATOR_CONNECTED' %}
+                                            <strong>Actuator:</strong> {{ connection.details.actuator_id }}<br>
+                                            <strong>Location:</strong> {{ connection.details.connecting_location }}
+                                        {% elif connection.type == 'CONST_Q' %}
+                                            <strong>Heat Flux:</strong> {{ connection.details.q }} W/m²
+                                        {% elif connection.type == 'MAPPED' %}
+                                            <strong>Symmetry Axis:</strong> {{ connection.details.symmetry_axis }}
+                                        {% elif connection.type == 'PLASTIC_COVERED' %}
+                                            <strong>Plastic Thickness:</strong> {{ connection.details.plastic_thickness }} mm<br>
+                                            <strong>Plastic Conductivity:</strong> {{ connection.details.plastic_conductivity or 0.25 }} W/mK
+                                        {% endif %}
+                                        
+                                        {% if connection.details.centroid %}
+                                            <br><strong>Position:</strong> ({{ "%.1f"|format(connection.details.centroid.x) }}, 
+                                            {{ "%.1f"|format(connection.details.centroid.y) }}, 
+                                            {{ "%.1f"|format(connection.details.centroid.z) }})
+                                        {% endif %}
+                                        
+                                        {% if connection.details.comments %}
+                                            <br><em class="text-muted">{{ connection.details.comments }}</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set source_structure = structures[connection.source_structure_id] %}
+                                        {% if source_structure %}
+                                            <span class="badge bg-{{ 'primary' if source_structure.type == 'thermal' else 'info' }}">
+                                                {{ 'Actuator' if source_structure.type == 'thermal' else 'Structure' }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-info">{{ connections|length }}</h3>
+                    <small class="text-muted">Total Connections</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-success">{{ connections|selectattr('type', 'equalto', 'ACTUATOR_CONNECTED')|list|length }}</h3>
+                    <small class="text-muted">Actuator Connected</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-warning">{{ connections|selectattr('type', 'equalto', 'CONST_Q')|list|length }}</h3>
+                    <small class="text-muted">Constant Heat Flux</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="text-secondary">{{ connections|selectattr('type', 'in', ['MAPPED', 'PLASTIC_COVERED', 'ADIABATIC'])|list|length }}</h3>
+                    <small class="text-muted">Other Types</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-link-45deg text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">No thermal connections found</h4>
+                    <p class="text-muted">Thermal connections are created through boundary conditions in structures.</p>
+                    <a href="{{ url_for('regions') }}" class="btn btn-primary">
+                        <i class="bi bi-grid"></i> Manage Regions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %} 
