@@ -58,6 +58,21 @@
                             </div>
                             <p class="mt-2">Simulation is running... This may take a few minutes.</p>
                         </div>
+                    {% elif status.completed %}
+                        <div class="text-center mb-3">
+                            <i class="bi bi-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                            <p class="mt-2">Simulation completed successfully!</p>
+                        </div>
+                    {% elif status.error %}
+                        <div class="text-center mb-3">
+                            <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 2rem;"></i>
+                            <p class="mt-2">Simulation failed with errors.</p>
+                        </div>
+                    {% else %}
+                        <div class="text-center mb-3">
+                            <i class="bi bi-play-circle text-secondary" style="font-size: 2rem;"></i>
+                            <p class="mt-2">Ready to run simulation.</p>
+                        </div>
                     {% endif %}
 
                     {% if status.start_time %}
@@ -91,8 +106,8 @@
                     <div class="mb-3">
                         <h6>Simulation Output:</h6>
                         <div class="card">
-                            <div class="card-body p-2" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa;">
-                                <pre id="simulation-output" style="font-size: 0.8em; margin: 0; white-space: pre-wrap;">{{ status.output or "No output yet..." }}</pre>
+                            <div class="card-body p-2" style="max-height: 400px; overflow-y: auto; background-color: #000000;">
+                                <pre id="simulation-output" style="font-size: 0.8em; margin: 0; white-space: pre-wrap; color: #00ff00; font-family: 'Courier New', monospace;">{{ status.output or "No output yet..." }}</pre>
                             </div>
                         </div>
                     </div>
@@ -196,10 +211,59 @@ function updateOutput() {
         .catch(error => console.error('Error updating output:', error));
 }
 
-// Update every 2 seconds if simulation is running
+// Set up polling intervals
+let statusInterval;
+let outputInterval;
+
+function startPolling() {
+    statusInterval = setInterval(updateStatus, 2000);
+    outputInterval = setInterval(updateOutput, 1000);
+}
+
+function stopPolling() {
+    if (statusInterval) clearInterval(statusInterval);
+    if (outputInterval) clearInterval(outputInterval);
+}
+
+// Enhanced status update function
+function updateStatus() {
+    fetch('/simulation_status_api')
+        .then(response => response.json())
+        .then(data => {
+            // Update status badge
+            const statusBadge = document.getElementById('status-badge');
+            if (data.running) {
+                statusBadge.innerHTML = '<span class="badge bg-warning">Running</span>';
+            } else if (data.completed) {
+                statusBadge.innerHTML = '<span class="badge bg-success">Completed</span>';
+                stopPolling(); // Stop polling when completed
+            } else if (data.error) {
+                statusBadge.innerHTML = '<span class="badge bg-danger">Error</span>';
+                stopPolling(); // Stop polling on error
+            }
+
+            // Update duration
+            const durationElement = document.getElementById('duration');
+            if (data.duration) {
+                const minutes = Math.floor(data.duration / 60);
+                const seconds = Math.floor(data.duration % 60);
+                durationElement.textContent = `${minutes}m ${seconds}s`;
+            }
+
+            // Update output lines count
+            document.getElementById('output-lines').textContent = data.output_lines;
+
+            // Refresh page if completed (to show download buttons and hide spinner)
+            if ((data.completed || data.error) && (window.location.search.indexOf('refreshed=1') === -1)) {
+                window.location.href = window.location.href + '?refreshed=1';
+            }
+        })
+        .catch(error => console.error('Error updating status:', error));
+}
+
+// Start polling if simulation is running
 {% if status.running %}
-setInterval(updateStatus, 2000);
-setInterval(updateOutput, 1000);
+startPolling();
 {% endif %}
 
 // Initial update

@@ -2327,7 +2327,7 @@ def run_simulation():
     
     if simulation_status['running']:
         flash('Simulation is already running', 'warning')
-        return redirect(url_for('simulation_status'))
+        return redirect(url_for('simulation_status_page'))
     
     # Copy current JSON file to the solver directory
     try:
@@ -2343,7 +2343,7 @@ def run_simulation():
         thread.start()
         
         flash('Simulation started successfully', 'success')
-        return redirect(url_for('simulation_status'))
+        return redirect(url_for('simulation_status_page'))
         
     except Exception as e:
         flash(f'Error starting simulation: {str(e)}', 'error')
@@ -2395,7 +2395,7 @@ def download_simulation_results():
                         download_name='arm_thermal_results.txt')
     else:
         flash('No results file available', 'error')
-        return redirect(url_for('simulation_status'))
+        return redirect(url_for('simulation_status_page'))
 
 @app.route('/view_simulation_plot')
 def view_simulation_plot():
@@ -2404,7 +2404,7 @@ def view_simulation_plot():
         return send_file(simulation_status['plot_file'])
     else:
         flash('No plot file available', 'error')
-        return redirect(url_for('simulation_status'))
+        return redirect(url_for('simulation_status_page'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 
