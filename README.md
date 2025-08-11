@@ -25,26 +25,7 @@ A comprehensive web-based thermal modeling and simulation platform for robotic f
   - `USERDEF_CONDUCTION` - Custom conduction
   - `ACTUATOR_CONNECTED` - Connect to actuator components
 
-### **One-Click Simulation Execution**
-- **Web-Based Solver**: Execute thermal simulations directly from the browser
-- **Real-Time Monitoring**: Live status updates and output streaming
-- **Professional Output**: Terminal-style display with real-time progress
-- **Automatic Results**: Generate and download result files and plots
-- **Background Processing**: Non-blocking execution with progress tracking
 
-### **Enhanced Temperature Reporting**
-- **Node Temperatures**: Direct index-based temperature extraction
-- **Actuator Components**: Individual FETs, motor, and gearbox temperatures
-- **Boundary Analysis**: Average temperatures for each boundary condition type
-- **Thermal Networks**: Complete thermal resistance and heat flow analysis
-- **Statistical Summary**: Min/max/average temperatures with duration tracking
-
-### **Modern User Interface**
-- **Responsive Design**: Works on desktop and mobile devices
-- **Dark Theme**: Professional dark UI with excellent contrast
-- **Real-Time Updates**: AJAX-powered live data refresh
-- **Intuitive Navigation**: Clear menu structure and breadcrumbs
-- **Visual Feedback**: Status indicators, progress bars, and notifications
 
 ## Installation & Setup
 
@@ -168,42 +149,7 @@ Boundary Condition Temperatures:
 }
 ```
 
-## Advanced Features
 
-### Real-Time Simulation
-- **Live Output Streaming**: Watch solver progress in real-time
-- **Status Monitoring**: Track simulation phases and completion
-- **Background Execution**: Continue using interface while solving
-- **Automatic Results**: Download links appear on completion
-
-### Enhanced Temperature Analysis
-- **Multi-Level Reporting**: Region, node, actuator, and boundary temperatures
-- **Statistical Analysis**: Min/max/average with standard deviations
-- **Thermal Network Analysis**: Heat flow and resistance calculations
-- **Visual Results**: Automatic plot generation and display
-
-## API Reference
-
-### Simulation Control
-- `POST /run_simulation` - Start thermal simulation
-- `GET /simulation_status` - Get current simulation status
-- `GET /simulation_output` - Get real-time output
-- `GET /download_simulation_results` - Download results file
-
-### Model Management
-- `GET /dashboard` - Main model overview
-- `POST /region/add` - Add new thermal region
-- `POST /actuator/add` - Add new actuator
-- `POST /node_network/add` - Add new node network
-
-## Contributing
-
-We welcome contributions! Please see our guidelines:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## License
 
@@ -214,8 +160,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For questions, issues, or feature requests:
 - **GitHub Issues**: [Report issues](https://github.com/Mengero/Figure_ThermalModel/issues)
 - **Email Support**: 2233mengerchen@gmail.com
-- **Documentation**: Check the `/templates` folder for UI examples
-- **Examples**: See `GEO.json` for model structure
 
 ## Version History
 
@@ -235,6 +179,4 @@ For questions, issues, or feature requests:
 
 ---
 
-**Built for advanced thermal analysis**
 
-*Transform your thermal modeling workflow with our comprehensive web-based platform.*
