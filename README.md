@@ -1,18 +1,16 @@
-# 🌡️ Figure Thermal Model - Advanced Thermal Analysis Suite
+# Figure Thermal Model - Advanced Thermal Analysis Suite
 
 A comprehensive web-based thermal modeling and simulation platform for robotic figure thermal analysis with real-time execution capabilities.
 
-![Thermal Model Dashboard](static/boundary_conditions.png)
+## Features
 
-## 🚀 Features
-
-### 🖥️ **Web-Based Thermal Model Editor**
+### **Web-Based Thermal Model Editor**
 - **Complete JSON Model Management**: Edit thermal models through an intuitive web interface
 - **Real-time Validation**: Boundary condition validation with geometric constraints
 - **Visual Model Overview**: Dashboard with comprehensive model statistics
 - **File Management**: Upload, download, and backup thermal model files
 
-### 🔧 **Advanced Thermal Components**
+### **Advanced Thermal Components**
 - **Thermal Regions**: Define complex geometric regions with mesh settings
 - **Node Networks**: Create interconnected thermal nodes with custom heat sources
 - **Actuators**: Model FETs, motors, and gearbox thermal behavior
@@ -27,28 +25,28 @@ A comprehensive web-based thermal modeling and simulation platform for robotic f
   - `USERDEF_CONDUCTION` - Custom conduction
   - `ACTUATOR_CONNECTED` - Connect to actuator components
 
-### ⚡ **One-Click Simulation Execution**
+### **One-Click Simulation Execution**
 - **Web-Based Solver**: Execute thermal simulations directly from the browser
 - **Real-Time Monitoring**: Live status updates and output streaming
 - **Professional Output**: Terminal-style display with real-time progress
 - **Automatic Results**: Generate and download result files and plots
 - **Background Processing**: Non-blocking execution with progress tracking
 
-### 📊 **Enhanced Temperature Reporting**
+### **Enhanced Temperature Reporting**
 - **Node Temperatures**: Direct index-based temperature extraction
 - **Actuator Components**: Individual FETs, motor, and gearbox temperatures
 - **Boundary Analysis**: Average temperatures for each boundary condition type
 - **Thermal Networks**: Complete thermal resistance and heat flow analysis
 - **Statistical Summary**: Min/max/average temperatures with duration tracking
 
-### 🎨 **Modern User Interface**
+### **Modern User Interface**
 - **Responsive Design**: Works on desktop and mobile devices
 - **Dark Theme**: Professional dark UI with excellent contrast
 - **Real-Time Updates**: AJAX-powered live data refresh
 - **Intuitive Navigation**: Clear menu structure and breadcrumbs
 - **Visual Feedback**: Status indicators, progress bars, and notifications
 
-## 🛠️ Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 ```bash
@@ -72,7 +70,7 @@ python thermal_json_editor.py
 http://localhost:5000
 ```
 
-## 📖 Usage Guide
+## Usage Guide
 
 ### 1. **Load or Create Thermal Model**
 - **Load Default**: Click "Load Default (GEO.json)" on the file manager
@@ -92,50 +90,28 @@ http://localhost:5000
 - **View Results**: Download result files and temperature distribution plots
 - **Analyze Data**: Review comprehensive temperature reports
 
-## 🏗️ Architecture
+## Architecture
 
 ### Core Components
 ```
-📁 Project Structure
-├── 🖥️ thermal_json_editor.py      # Main Flask web application
-├── 📁 header_files/               # Core thermal solver modules
+Project Structure
+├── thermal_json_editor.py      # Main Flask web application
+├── header_files/               # Core thermal solver modules
 │   ├── arm_main_solver.py         # Main simulation entry point
 │   ├── arm_solver_utils.py        # Enhanced solver utilities
 │   ├── thermal_parameters.py      # Parameter management
 │   ├── thermal_analysis.py        # Analysis algorithms
 │   └── boundary_conditions.py     # Boundary condition handling
-├── 📁 templates/                  # Web interface templates
-├── 📁 static/                     # Static assets and images
-└── 📄 GEO.json                   # Default thermal model
+├── templates/                  # Web interface templates
+├── static/                     # Static assets and images
+└── GEO.json                   # Default thermal model
 ```
 
-### Data Flow
-```mermaid
-graph LR
-    A[Web Interface] --> B[JSON Editor]
-    B --> C[Thermal Model]
-    C --> D[Simulation Engine]
-    D --> E[Temperature Results]
-    E --> F[Plots & Reports]
-    F --> A
-```
 
-## 🔬 Technical Specifications
 
-### Solver Capabilities
-- **Multi-Physics**: Coupled thermal-mechanical analysis
-- **Advanced Meshing**: Adaptive mesh generation
-- **Boundary Conditions**: 8+ boundary condition types
-- **Material Models**: Temperature-dependent properties
-- **Convergence Control**: Adaptive solver parameters
 
-### Performance Features
-- **Background Processing**: Non-blocking web interface
-- **Memory Optimization**: Efficient sparse matrix operations
-- **Real-Time Updates**: Live simulation monitoring
-- **Error Handling**: Comprehensive error reporting and recovery
 
-## 📈 Example Results
+## Example Results
 
 ### Temperature Distribution
 The solver generates detailed temperature maps showing:
@@ -156,7 +132,7 @@ Boundary Condition Temperatures:
   NODE_CONNECTED Boundary: Avg 48.75°C (25 elements)
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Settings
 ```json
@@ -192,7 +168,7 @@ Boundary Condition Temperatures:
 }
 ```
 
-## 🚀 Advanced Features
+## Advanced Features
 
 ### Real-Time Simulation
 - **Live Output Streaming**: Watch solver progress in real-time
@@ -206,7 +182,7 @@ Boundary Condition Temperatures:
 - **Thermal Network Analysis**: Heat flow and resistance calculations
 - **Visual Results**: Automatic plot generation and display
 
-## 📝 API Reference
+## API Reference
 
 ### Simulation Control
 - `POST /run_simulation` - Start thermal simulation
@@ -220,7 +196,7 @@ Boundary Condition Temperatures:
 - `POST /actuator/add` - Add new actuator
 - `POST /node_network/add` - Add new node network
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our guidelines:
 1. Fork the repository
@@ -229,25 +205,26 @@ We welcome contributions! Please see our guidelines:
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙋‍♂️ Support
+## Support
 
 For questions, issues, or feature requests:
 - **GitHub Issues**: [Report issues](https://github.com/Mengero/Figure_ThermalModel/issues)
+- **Email Support**: 2233mengerchen@gmail.com
 - **Documentation**: Check the `/templates` folder for UI examples
 - **Examples**: See `GEO.json` for model structure
 
-## 🔄 Version History
+## Version History
 
 ### v0.3-finalized (Current)
-- ✅ Web-based simulation execution
-- ✅ Real-time status monitoring
-- ✅ Enhanced temperature reporting
-- ✅ Node resistance model improvements
-- ✅ Professional UI/UX
+- Web-based simulation execution
+- Real-time status monitoring
+- Enhanced temperature reporting
+- Node resistance model improvements
+- Professional UI/UX
 
 ### v0.2
 - Basic thermal model structure
@@ -258,6 +235,6 @@ For questions, issues, or feature requests:
 
 ---
 
-**Built with ❤️ for advanced thermal analysis**
+**Built for advanced thermal analysis**
 
 *Transform your thermal modeling workflow with our comprehensive web-based platform.*
