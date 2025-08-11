@@ -562,6 +562,9 @@ def edit_region(region_id):
                 elif bc_type == 'PLASTIC_COVERED':
                     bc['plastic_thickness'] = float(request.form.get(f'bc_{i}_plastic_thickness', 0))
                     bc['plastic_conductivity'] = float(request.form.get(f'bc_{i}_plastic_conductivity', 0.25))
+                    bc['contact_resistance'] = float(request.form.get(f'bc_{i}_contact_resistance', 0.001))
+                    bc['heat_transfer_coefficient'] = float(request.form.get(f'bc_{i}_heat_transfer_coefficient', 15.0))
+                    bc['ambient_temperature'] = float(request.form.get(f'bc_{i}_ambient_temperature', 25.0))
                 elif bc_type == 'USERDEF_CONDUCTION':
                     bc['conductivity'] = float(request.form.get(f'bc_{i}_conductivity', 1.0))
                 elif bc_type == 'USERDEF_CONVECTION':

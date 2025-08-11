@@ -180,17 +180,17 @@
                                 <div class="row mb-2">
                                     <div class="col-md-4">
                                         <label class="form-label">Centroid X</label>
-                                        <input type="number" class="form-control bc-centroid-x" name="bc_{{ loop.index0 }}_centroid_x" value="{{ bc.centroid.x if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-centroid-x" name="bc_{{ loop.index0 }}_centroid_x" value="{{ bc.centroid.x if bc.centroid else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Centroid Y</label>
-                                        <input type="number" class="form-control bc-centroid-y" name="bc_{{ loop.index0 }}_centroid_y" value="{{ bc.centroid.y if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-centroid-y" name="bc_{{ loop.index0 }}_centroid_y" value="{{ bc.centroid.y if bc.centroid else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Centroid Z</label>
-                                        <input type="number" class="form-control bc-centroid-z" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-centroid-z" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                 </div>
@@ -198,12 +198,12 @@
                                 <div class="row mb-2">
                                     <div class="col-md-4">
                                         <label class="form-label">Width</label>
-                                        <input type="number" class="form-control bc-width" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-width" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Height</label>
-                                        <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
@@ -353,31 +353,31 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Plastic Thickness</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_thickness" 
-                                                   value="{{ bc.plastic_thickness }}" step="0.01" required>
+                                                   value="{{ bc.plastic_thickness }}" step="any" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Plastic Conductivity (W/mK)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_conductivity" 
-                                                   value="{{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }}" step="0.01" required>
+                                                   value="{{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }}" step="any" required>
                                         </div>
                                     </div>
                                     <div class="row mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Contact Resistance (m²K/W)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_contact_resistance" 
-                                                   value="{{ bc.contact_resistance if bc.contact_resistance is not none else 0.001 }}" step="0.0001" required>
+                                                   value="{{ bc.contact_resistance if bc.contact_resistance is not none else 0.001 }}" step="any" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_heat_transfer_coefficient" 
-                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="0.1" required>
+                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="any" required>
                                         </div>
                                     </div>
                                     <div class="row mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Ambient Temperature (°C)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_ambient_temperature" 
-                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="0.1" required>
+                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="any" required>
                                         </div>
                                     </div>
                                     {% elif bc.type == 'USERDEF_CONDUCTION' %}
@@ -530,17 +530,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-4">
                         <label class="form-label">Centroid X</label>
-                        <input type="number" class="form-control bc-centroid-x" name="bc_${index}_centroid_x" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-centroid-x" name="bc_${index}_centroid_x" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Centroid Y</label>
-                        <input type="number" class="form-control bc-centroid-y" name="bc_${index}_centroid_y" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-centroid-y" name="bc_${index}_centroid_y" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Centroid Z</label>
-                        <input type="number" class="form-control bc-centroid-z" name="bc_${index}_centroid_z" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-centroid-z" name="bc_${index}_centroid_z" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -548,12 +548,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-4">
                         <label class="form-label">Width</label>
-                        <input type="number" class="form-control bc-width" name="bc_${index}_width" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-width" name="bc_${index}_width" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Height</label>
-                        <input type="number" class="form-control bc-height" name="bc_${index}_height" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-height" name="bc_${index}_height" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-4">
@@ -765,27 +765,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Plastic Thickness</label>
-                        <input type="number" class="form-control" name="bc_${index}_plastic_thickness" value="${thicknessValue}" step="0.01">
+                        <input type="number" class="form-control" name="bc_${index}_plastic_thickness" value="${thicknessValue}" step="any">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Plastic Conductivity (W/mK)</label>
-                        <input type="number" class="form-control" name="bc_${index}_plastic_conductivity" value="${conductivityValue}" step="0.01">
+                        <input type="number" class="form-control" name="bc_${index}_plastic_conductivity" value="${conductivityValue}" step="any">
                     </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Contact Resistance (m²K/W)</label>
-                        <input type="number" class="form-control" name="bc_${index}_contact_resistance" value="${contactResistanceValue}" step="0.0001">
+                        <input type="number" class="form-control" name="bc_${index}_contact_resistance" value="${contactResistanceValue}" step="any">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
-                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="any">
                     </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Ambient Temperature (°C)</label>
-                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="any">
                     </div>
                 </div>
             `;
@@ -827,25 +827,25 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="row mb-2">
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Centroid X</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_x" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_x" value="0" step="any">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Centroid Y</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_y" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_y" value="0" step="any">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Centroid Z</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_z" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_centroid_z" value="0" step="any">
                             </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Width</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_width" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_width" value="0" step="any">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Height</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_height" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_height" value="0" step="any">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Thickness</label>
@@ -981,63 +981,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
-        // Handle standard boundary conditions
-        else if (input.classList.contains('bc-centroid-x')) {
-            // For centroid X, constrain to region X bounds considering current width
-            const bcWidth = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_width"]`).value) || 0;
-            const minAllowedX = regionMinX + bcWidth/2;
-            const maxAllowedX = regionMaxX - bcWidth/2;
-            
-            if (value < minAllowedX) {
-                constrainedValue = minAllowedX;
-                wasConstrained = true;
-            } else if (value > maxAllowedX) {
-                constrainedValue = maxAllowedX;
-                wasConstrained = true;
-            }
-        } else if (input.classList.contains('bc-centroid-y')) {
-            // For centroid Y, constrain to region Y bounds considering current height
-            const bcHeight = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_height"]`).value) || 0;
-            const minAllowedY = regionMinY + bcHeight/2;
-            const maxAllowedY = regionMaxY - bcHeight/2;
-            
-            if (value < minAllowedY) {
-                constrainedValue = minAllowedY;
-                wasConstrained = true;
-            } else if (value > maxAllowedY) {
-                constrainedValue = maxAllowedY;
-                wasConstrained = true;
-            }
-        } else if (input.classList.contains('bc-width')) {
-            // For width, constrain so that centroid ± width/2 stays within region
-            const centroidX = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_centroid_x"]`).value) || 0;
-            const maxAllowedWidth = Math.min(
-                2 * (regionMaxX - centroidX),  // Distance to right edge * 2
-                2 * (centroidX - regionMinX)   // Distance to left edge * 2
-            );
-            
-            if (value > maxAllowedWidth) {
-                constrainedValue = Math.max(0, maxAllowedWidth);
-                wasConstrained = true;
-            } else if (value < 0) {
-                constrainedValue = 0;
-                wasConstrained = true;
-            }
-        } else if (input.classList.contains('bc-height')) {
-            // For height, constrain so that centroid ± height/2 stays within region
-            const centroidY = parseFloat(document.querySelector(`input[name="bc_${bcIndex}_centroid_y"]`).value) || 0;
-            const maxAllowedHeight = Math.min(
-                2 * (regionMaxY - centroidY),  // Distance to top edge * 2
-                2 * (centroidY - regionMinY)   // Distance to bottom edge * 2
-            );
-            
-            if (value > maxAllowedHeight) {
-                constrainedValue = Math.max(0, maxAllowedHeight);
-                wasConstrained = true;
-            } else if (value < 0) {
-                constrainedValue = 0;
-                wasConstrained = true;
-            }
+        // Handle standard boundary conditions - allow any numerical values
+        else if (input.classList.contains('bc-centroid-x') || 
+                 input.classList.contains('bc-centroid-y') || 
+                 input.classList.contains('bc-width') || 
+                 input.classList.contains('bc-height')) {
+            // No constraints - allow any numerical input
+            // Users can enter any values for centroid coordinates and dimensions
         }
         
         if (wasConstrained) {
