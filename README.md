@@ -1,4 +1,4 @@
-# Figure Thermal Model - Advanced Thermal Analysis Suite
+# Thermal Model
 
 A comprehensive web-based thermal modeling and simulation platform for robotic figure thermal analysis with real-time execution capabilities.
 
