@@ -52,7 +52,7 @@
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="heat_gearbox" 
                                                name="heat_gearbox" value="{{ actuator.heat_losses.gearbox }}" 
-                                               step="0.1" min="0" required>
+                                               step="any" min="0" required>
                                         <span class="input-group-text">W</span>
                                     </div>
                                 </div>
@@ -65,7 +65,7 @@
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="heat_motor" 
                                                name="heat_motor" value="{{ actuator.heat_losses.motor }}" 
-                                               step="0.1" min="0" required>
+                                               step="any" min="0" required>
                                         <span class="input-group-text">W</span>
                                     </div>
                                 </div>
@@ -78,7 +78,7 @@
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="heat_fets" 
                                                name="heat_fets" value="{{ actuator.heat_losses.FETs }}" 
-                                               step="0.1" min="0" required>
+                                               step="any" min="0" required>
                                         <span class="input-group-text">W</span>
                                     </div>
                                 </div>
@@ -97,7 +97,7 @@
                                        id="resistance_r1" 
                                        name="resistance_r1" 
                                        value="{{ actuator.thermal_resistance.R1 }}" 
-                                       step="0.01" min="0" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-2 col-sm-6 mb-3">
                                 <label for="resistance_r2" class="form-label">
@@ -107,7 +107,7 @@
                                        id="resistance_r2" 
                                        name="resistance_r2" 
                                        value="{{ actuator.thermal_resistance.R2 }}" 
-                                       step="0.01" min="0" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-2 col-sm-6 mb-3">
                                 <label for="resistance_r3" class="form-label">
@@ -117,7 +117,7 @@
                                        id="resistance_r3" 
                                        name="resistance_r3" 
                                        value="{{ actuator.thermal_resistance.R3 }}" 
-                                       step="0.01" min="0" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-2 col-sm-6 mb-3">
                                 <label for="resistance_r4" class="form-label">
@@ -127,7 +127,7 @@
                                        id="resistance_r4" 
                                        name="resistance_r4" 
                                        value="{{ actuator.thermal_resistance.R4 }}" 
-                                       step="0.01" min="0" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-2 col-sm-6 mb-3">
                                 <label for="resistance_r5" class="form-label">
@@ -137,7 +137,7 @@
                                        id="resistance_r5" 
                                        name="resistance_r5" 
                                        value="{{ actuator.thermal_resistance.R5 or 0.3 }}" 
-                                       step="0.01" min="0" required>
+                                       step="any" min="0" required>
                             </div>
                         </div>
                     </div>

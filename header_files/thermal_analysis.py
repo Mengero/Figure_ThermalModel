@@ -369,45 +369,115 @@ def _apply_mapped_boundary_condition(A, global_idx, i, j, k, coords, mapped_bcs,
     x, y, z = coords.get_coordinates_from_3d(i, j, k)
     
     for bc in mapped_bcs:
-        face_selection = bc.get('face_selection', '')
+        face_selection = bc.get('face_selection', '+x')
         start_location = bc.get('start_location', 0.0)
         end_location = bc.get('end_location', 0.0)
+        mapping_type = bc.get('mapping_type', 'symmetry')
+        symmetry_axis = bc.get('symmetry_axis', 'x')
         
-        if face_selection == 'x':
-            # X face mapping: check if element is at boundary (i==0 or i==Nx-1)
+        # Handle directional face selections
+        if face_selection == '+x':
+            # +X face (right): check if element is at right boundary (i==Nx-1)
             # and if Y coordinate is within [start_location, end_location]
-            if (i == 0 or i == Nx-1) and (start_location <= y <= end_location):
-                # Apply X face mapping
-                A[global_idx, global_idx] -= 1/dx_m**2
+            if (i == Nx-1) and (start_location <= y <= end_location):
+                apply_mapping_logic(A, global_idx, start_idx, i, j, k, Nx, Ny, 
+                                   mapping_type, symmetry_axis, '+x', dx_m)
                 
-                # Connect to opposite face element
-                if i == 0:
-                    # Left face: connect to right face
-                    opposite_i = Nx - 1
-                else:
-                    # Right face: connect to left face  
-                    opposite_i = 0
+        elif face_selection == '-x':
+            # -X face (left): check if element is at left boundary (i==0)
+            # and if Y coordinate is within [start_location, end_location]  
+            if (i == 0) and (start_location <= y <= end_location):
+                apply_mapping_logic(A, global_idx, start_idx, i, j, k, Nx, Ny, 
+                                   mapping_type, symmetry_axis, '-x', dx_m)
                 
-                opposite_global_idx = start_idx + k * Nx * Ny + j * Nx + opposite_i
-                A[global_idx, opposite_global_idx] = 1/dx_m**2
-                
-        elif face_selection == 'y':
-            # Y face mapping: check if element is at boundary (j==0 or j==Ny-1)
+        elif face_selection == '+y':
+            # +Y face (top): check if element is at top boundary (j==Ny-1)
             # and if X coordinate is within [start_location, end_location]
-            if (j == 0 or j == Ny-1) and (start_location <= x <= end_location):
-                # Apply Y face mapping
-                A[global_idx, global_idx] -= 1/dy_m**2
+            if (j == Ny-1) and (start_location <= x <= end_location):
+                apply_mapping_logic(A, global_idx, start_idx, i, j, k, Nx, Ny, 
+                                   mapping_type, symmetry_axis, '+y', dy_m)
                 
-                # Connect to opposite face element
-                if j == 0:
-                    # Bottom face: connect to top face
-                    opposite_j = Ny - 1
-                else:
-                    # Top face: connect to bottom face
-                    opposite_j = 0
-                
-                opposite_global_idx = start_idx + k * Nx * Ny + opposite_j * Nx + i
-                A[global_idx, opposite_global_idx] = 1/dy_m**2
+        elif face_selection == '-y':
+            # -Y face (bottom): check if element is at bottom boundary (j==0)
+            # and if X coordinate is within [start_location, end_location]
+            if (j == 0) and (start_location <= x <= end_location):
+                apply_mapping_logic(A, global_idx, start_idx, i, j, k, Nx, Ny, 
+                                   mapping_type, symmetry_axis, '-y', dy_m)
+
+def apply_mapping_logic(A, global_idx, start_idx, i, j, k, Nx, Ny, mapping_type, symmetry_axis, face_direction, thermal_conductance):
+    """
+    Apply symmetry mapping logic based on symmetry axis.
+    
+    Args:
+        A: Global system matrix
+        global_idx: Current element global index
+        start_idx: Starting index for current region
+        i, j, k: Element indices
+        Nx, Ny: Grid dimensions
+        mapping_type: Type of mapping (always 'symmetry')
+        symmetry_axis: Axis for symmetry ('x' or 'y')
+        face_direction: Face direction ('+x', '-x', '+y', '-y')
+        thermal_conductance: Thermal conductance (1/dx_m**2 or 1/dy_m**2)
+    """
+    
+    # Symmetry mapping: mirror temperature distribution
+    A[global_idx, global_idx] -= thermal_conductance
+    
+    if face_direction == '+x':
+        # +X face (right): mirror based on symmetry axis
+        if symmetry_axis == 'y':
+            # Mirror across X axis: connect to opposite X face (left face)
+            opposite_i = 0  # Left face
+            opposite_global_idx = start_idx + k * Nx * Ny + j * Nx + opposite_i
+        elif symmetry_axis == 'x':
+            # Mirror across Y axis: connect to opposite Y position on same face
+            opposite_j = Ny - 1 - j
+            opposite_global_idx = start_idx + k * Nx * Ny + opposite_j * Nx + i
+        else:
+            return  # Invalid symmetry axis
+            
+    elif face_direction == '-x':
+        # -X face (left): mirror based on symmetry axis
+        if symmetry_axis == 'y':
+            # Mirror across X axis: connect to opposite X face (right face)
+            opposite_i = Nx - 1  # Right face
+            opposite_global_idx = start_idx + k * Nx * Ny + j * Nx + opposite_i
+        elif symmetry_axis == 'x':
+            # Mirror across Y axis: connect to opposite Y position on same face
+            opposite_j = Ny - 1 - j
+            opposite_global_idx = start_idx + k * Nx * Ny + opposite_j * Nx + i
+        else:
+            return  # Invalid symmetry axis
+            
+    elif face_direction == '+y':
+        # +Y face (top): mirror based on symmetry axis
+        if symmetry_axis == 'x':
+            # Mirror across Y axis: connect to opposite Y face (bottom face)
+            opposite_j = 0  # Bottom face
+            opposite_global_idx = start_idx + k * Nx * Ny + opposite_j * Nx + i
+        elif symmetry_axis == 'y':
+            # Mirror across X axis: connect to opposite X position on same face
+            opposite_i = Nx - 1 - i
+            opposite_global_idx = start_idx + k * Nx * Ny + j * Nx + opposite_i
+        else:
+            return  # Invalid symmetry axis
+            
+    elif face_direction == '-y':
+        # -Y face (bottom): mirror based on symmetry axis
+        if symmetry_axis == 'x':
+            # Mirror across Y axis: connect to opposite Y face (top face)
+            opposite_j = Ny - 1  # Top face
+            opposite_global_idx = start_idx + k * Nx * Ny + opposite_j * Nx + i
+        elif symmetry_axis == 'y':
+            # Mirror across X axis: connect to opposite X position on same face
+            opposite_i = Nx - 1 - i
+            opposite_global_idx = start_idx + k * Nx * Ny + j * Nx + opposite_i
+        else:
+            return  # Invalid symmetry axis
+    else:
+        return  # Unsupported face direction
+        
+    A[global_idx, opposite_global_idx] = thermal_conductance
 
 def update_matrix_with_geometries(A, region_info: Dict, actuator_info: Dict) -> scipy.sparse.lil_matrix:
     """

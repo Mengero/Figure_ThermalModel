@@ -63,7 +63,7 @@
                                         <label for="thermal_capacity" class="form-label">Thermal Capacity</label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="thermal_capacity" name="thermal_capacity" 
-                                                   value="{{ node.thermal_capacity }}" step="0.1" min="0" required>
+                                                   value="{{ node.thermal_capacity }}" step="any" min="0" required>
                                             <span class="input-group-text">J/K</span>
                                         </div>
                                         <div class="form-text">Thermal mass of the node</div>
@@ -74,7 +74,7 @@
                                         <label for="heat_source" class="form-label">Heat Source</label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="heat_source" name="heat_source" 
-                                                   value="{{ node.heat_source }}" step="0.1">
+                                                   value="{{ node.heat_source }}" step="any">
                                             <span class="input-group-text">W</span>
                                         </div>
                                         <div class="form-text">Positive for heat generation, negative for heat sink</div>

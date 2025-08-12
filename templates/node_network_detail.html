@@ -371,11 +371,11 @@
                     </div>
                     <div class="mb-3">
                         <label for="thermal_capacity" class="form-label">Thermal Capacity (J/K)</label>
-                        <input type="number" class="form-control" id="thermal_capacity" name="thermal_capacity" value="0" step="0.1" min="0">
+                        <input type="number" class="form-control" id="thermal_capacity" name="thermal_capacity" value="0" step="any" min="0">
                     </div>
                     <div class="mb-3">
                         <label for="heat_source" class="form-label">Heat Source (W)</label>
-                        <input type="number" class="form-control" id="heat_source" name="heat_source" value="0" step="0.1">
+                        <input type="number" class="form-control" id="heat_source" name="heat_source" value="0" step="any">
                         <div class="form-text">Positive for heat generation, negative for heat sink</div>
                     </div>
 
@@ -448,7 +448,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="thermal_resistance" class="form-label">Thermal Resistance (K/W) <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="thermal_resistance" name="thermal_resistance" value="1.0" step="0.1" min="0" required>
+                        <input type="number" class="form-control" id="thermal_resistance" name="thermal_resistance" value="1.0" step="any" min="0" required>
                         <div class="form-text">Thermal resistance between the nodes</div>
                     </div>
                     <div class="mb-3">

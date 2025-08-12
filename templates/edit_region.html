@@ -56,7 +56,7 @@
                                     <label for="thermal_conductivity" class="form-label">Thermal Conductivity</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="thermal_conductivity" name="thermal_conductivity" 
-                                               value="{{ region.thermal_conductivity }}" step="0.1" min="0.1" required>
+                                               value="{{ region.thermal_conductivity }}" step="any" min="0.1" required>
                                         <span class="input-group-text">W/mK</span>
                                     </div>
                                     <div class="form-text" id="edit-thermal-conductivity-help">Material thermal conductivity</div>
@@ -73,7 +73,7 @@
                                     <label for="width" class="form-label">Width</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="width" name="width" 
-                                               value="{{ region.width }}" step="any" required>
+                                               value="{{ region.width }}" step="any" min="0" required>
                                         <span class="input-group-text">mm</span>
                                     </div>
                                 </div>
@@ -83,7 +83,7 @@
                                     <label for="height" class="form-label">Height</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="height" name="height" 
-                                               value="{{ region.height }}" step="any" required>
+                                               value="{{ region.height }}" step="any" min="0" required>
                                         <span class="input-group-text">mm</span>
                                     </div>
                                 </div>
@@ -93,7 +93,7 @@
                                     <label for="thickness" class="form-label">Thickness</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="thickness" name="thickness" 
-                                               value="{{ region.thickness }}" step="any" required>
+                                               value="{{ region.thickness }}" step="any" min="0" required>
                                         <span class="input-group-text">mm</span>
                                     </div>
                                 </div>
@@ -198,17 +198,17 @@
                                 <div class="row mb-2">
                                     <div class="col-md-4">
                                         <label class="form-label">Width</label>
-                                        <input type="number" class="form-control bc-width" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-width" name="bc_{{ loop.index0 }}_width" value="{{ bc.width if bc.width is defined else 0 }}" step="any" min="0" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Height</label>
-                                        <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="any" min="0" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Thickness</label>
-                                        <input type="number" class="form-control bc-thickness" name="bc_{{ loop.index0 }}_thickness" value="{{ bc.thickness if bc.thickness is defined else 0 }}" step="0.01" data-bc-index="{{ loop.index0 }}">
+                                        <input type="number" class="form-control bc-thickness" name="bc_{{ loop.index0 }}_thickness" value="{{ bc.thickness if bc.thickness is defined else 0 }}" step="any" min="0" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
                                 </div>
@@ -241,14 +241,14 @@
                                     <div class="row mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Heat Flux (W)</label>
-                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_q" value="{{ bc.q if bc.q is not none else 0 }}" step="0.1">
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_q" value="{{ bc.q if bc.q is not none else 0 }}" step="any">
                                         </div>
                                     </div>
                                     {% elif bc.type == 'CONST_T' %}
                                     <div class="row mb-2">
                                         <div class="col-md-6">
                                             <label class="form-label">Temperature (°C)</label>
-                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_temperature" value="{{ bc.temperature if bc.temperature is defined else 20.0 }}" step="0.1">
+                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_temperature" value="{{ bc.temperature if bc.temperature is defined else 20.0 }}" step="any">
                                         </div>
                                     </div>
                                     {% elif bc.type == 'ADIABATIC' %}
@@ -264,13 +264,13 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Point 1 X (mm)</label>
                                             <input type="number" class="form-control adiabatic-point1-x" name="bc_{{ loop.index0 }}_point1_x" 
-                                                   value="{{ bc.point1.x if bc.point1 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.point1.x if bc.point1 else 0.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Point 1 Y (mm)</label>
                                             <input type="number" class="form-control adiabatic-point1-y" name="bc_{{ loop.index0 }}_point1_y" 
-                                                   value="{{ bc.point1.y if bc.point1 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.point1.y if bc.point1 else 0.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
@@ -278,13 +278,13 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Point 2 X (mm)</label>
                                             <input type="number" class="form-control adiabatic-point2-x" name="bc_{{ loop.index0 }}_point2_x" 
-                                                   value="{{ bc.point2.x if bc.point2 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.point2.x if bc.point2 else 0.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Point 2 Y (mm)</label>
                                             <input type="number" class="form-control adiabatic-point2-y" name="bc_{{ loop.index0 }}_point2_y" 
-                                                   value="{{ bc.point2.y if bc.point2 else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.point2.y if bc.point2 else 0.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                     </div>
@@ -303,21 +303,33 @@
                                         <div class="col-md-4">
                                             <label class="form-label">Face Selection</label>
                                             <select class="form-control mapped-face-selection" name="bc_{{ loop.index0 }}_face_selection" data-bc-index="{{ loop.index0 }}">
-                                                <option value="x" {{ 'selected' if bc.face_selection == 'x' else '' }}>X Face (+x/-x)</option>
-                                                <option value="y" {{ 'selected' if bc.face_selection == 'y' else '' }}>Y Face (+y/-y)</option>
+                                                <option value="+x" {{ 'selected' if bc.face_selection == '+x' else '' }}>+X Face (Right)</option>
+                                                <option value="-x" {{ 'selected' if bc.face_selection == '-x' else '' }}>-X Face (Left)</option>
+                                                <option value="+y" {{ 'selected' if bc.face_selection == '+y' else '' }}>+Y Face (Top)</option>
+                                                <option value="-y" {{ 'selected' if bc.face_selection == '-y' else '' }}>-Y Face (Bottom)</option>
                                             </select>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">Start Location (mm)</label>
                                             <input type="number" class="form-control mapped-start-location" name="bc_{{ loop.index0 }}_start_location" 
-                                                   value="{{ bc.start_location if bc.start_location is defined else 0.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.start_location if bc.start_location is defined else 0.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label">End Location (mm)</label>
                                             <input type="number" class="form-control mapped-end-location" name="bc_{{ loop.index0 }}_end_location" 
-                                                   value="{{ bc.end_location if bc.end_location is defined else 100.0 }}" step="0.1" data-bc-index="{{ loop.index0 }}">
+                                                   value="{{ bc.end_location if bc.end_location is defined else 100.0 }}" step="any" data-bc-index="{{ loop.index0 }}">
                                             <div class="invalid-feedback"></div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-12">
+                                            <label class="form-label">Symmetry Axis</label>
+                                            <select class="form-control" name="bc_{{ loop.index0 }}_symmetry_axis">
+                                                <option value="x" {{ 'selected' if bc.symmetry_axis == 'x' else '' }}>X Axis (Mirror across X)</option>
+                                                <option value="y" {{ 'selected' if bc.symmetry_axis == 'y' else '' }}>Y Axis (Mirror across Y)</option>
+                                            </select>
+                                            <small class="text-muted">Select the axis for symmetry mapping</small>
                                         </div>
                                     </div>
                                     {% elif bc.type == 'NODE_CONNECTED' %}
@@ -385,7 +397,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label">User-Defined Conductivity (W/mK)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_conductivity" 
-                                                   value="{{ bc.conductivity if bc.conductivity is not none else 1.0 }}" step="0.1" required>
+                                                   value="{{ bc.conductivity if bc.conductivity is not none else 1.0 }}" step="any" required>
                                         </div>
                                     </div>
                                     {% elif bc.type == 'USERDEF_CONVECTION' %}
@@ -393,12 +405,12 @@
                                         <div class="col-md-6">
                                             <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_heat_transfer_coefficient" 
-                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="0.1" required>
+                                                   value="{{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }}" step="any" required>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Ambient Temperature (°C)</label>
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_ambient_temperature" 
-                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="0.1" required>
+                                                   value="{{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }}" step="any" required>
                                         </div>
                                     </div>
                                     {% endif %}
@@ -499,6 +511,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const addBtn = document.getElementById('add-bc-btn');
     const countInput = document.getElementById('bc-count');
     
+    // Pre-build node options HTML for reuse
+    const nodeOptionsHtml = `<option value="">Select a node...</option>
+        {% for node_network in node_networks %}
+            {% for node in node_network.nodes %}
+                <option value="{{ node.id }}">{{ node.id }}{% if node.name %} ({{ node.name }}){% endif %}</option>
+            {% endfor %}
+        {% endfor %}`;
+    
     // Function to create a new boundary condition form
     function createBoundaryConditionForm(index) {
         const div = document.createElement('div');
@@ -558,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Thickness</label>
-                        <input type="number" class="form-control bc-thickness" name="bc_${index}_thickness" value="0" step="0.01" data-bc-index="${index}">
+                        <input type="number" class="form-control bc-thickness" name="bc_${index}_thickness" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -618,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Heat Flux (W)</label>
-                        <input type="number" class="form-control" name="bc_${index}_q" value="${qValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_q" value="${qValue}" step="any">
                     </div>
                 </div>
             `;
@@ -627,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Temperature (°C)</label>
-                        <input type="number" class="form-control" name="bc_${index}_temperature" value="20.0" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_temperature" value="20.0" step="any">
                     </div>
                 </div>
             `;
@@ -653,24 +673,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Point 1 X (mm)</label>
-                        <input type="number" class="form-control adiabatic-point1-x" name="bc_${index}_point1_x" value="${point1XValue}" step="0.1" data-bc-index="${index}">
+                        <input type="number" class="form-control adiabatic-point1-x" name="bc_${index}_point1_x" value="${point1XValue}" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Point 1 Y (mm)</label>
-                        <input type="number" class="form-control adiabatic-point1-y" name="bc_${index}_point1_y" value="${point1YValue}" step="0.1" data-bc-index="${index}">
+                        <input type="number" class="form-control adiabatic-point1-y" name="bc_${index}_point1_y" value="${point1YValue}" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Point 2 X (mm)</label>
-                        <input type="number" class="form-control adiabatic-point2-x" name="bc_${index}_point2_x" value="${point2XValue}" step="0.1" data-bc-index="${index}">
+                        <input type="number" class="form-control adiabatic-point2-x" name="bc_${index}_point2_x" value="${point2XValue}" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Point 2 Y (mm)</label>
-                        <input type="number" class="form-control adiabatic-point2-y" name="bc_${index}_point2_y" value="${point2YValue}" step="0.1" data-bc-index="${index}">
+                        <input type="number" class="form-control adiabatic-point2-y" name="bc_${index}_point2_y" value="${point2YValue}" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -680,38 +700,87 @@ document.addEventListener('DOMContentLoaded', function() {
             const existingFaceField = item.querySelector(`select[name*="_face_selection"]`);
             const existingStartField = item.querySelector(`input[name*="_start_location"]`);
             const existingEndField = item.querySelector(`input[name*="_end_location"]`);
-            const faceValue = existingFaceField ? existingFaceField.value : "x";
+            const existingTargetRegionField = item.querySelector(`select[name*="_target_region_id"]`);
+            const existingTargetFaceField = item.querySelector(`select[name*="_target_face_selection"]`);
+            const existingTargetStartField = item.querySelector(`input[name*="_target_start_location"]`);
+            const existingTargetEndField = item.querySelector(`input[name*="_target_end_location"]`);
+            const existingMappingTypeField = item.querySelector(`select[name*="_mapping_type"]`);
+            const existingSymmetryAxisField = item.querySelector(`select[name*="_symmetry_axis"]`);
+            
+            const faceValue = existingFaceField ? existingFaceField.value : "+x";
             const startValue = existingStartField ? existingStartField.value : "0.0";
             const endValue = existingEndField ? existingEndField.value : "100.0";
+            const targetRegionValue = existingTargetRegionField ? existingTargetRegionField.value : "";
+            const targetFaceValue = existingTargetFaceField ? existingTargetFaceField.value : "+x";
+            const targetStartValue = existingTargetStartField ? existingTargetStartField.value : "0.0";
+            const targetEndValue = existingTargetEndField ? existingTargetEndField.value : "100.0";
+            const mappingTypeValue = existingMappingTypeField ? existingMappingTypeField.value : "symmetry";
+            const symmetryAxisValue = existingSymmetryAxisField ? existingSymmetryAxisField.value : "x";
+            
+            // Get available regions for target selection
+            let regionOptions = '<option value="">Select target region...</option>';
+            // This would be populated by Flask template with actual regions
+            
             container.innerHTML = `
                 <div class="row mb-3">
                     <div class="col-12">
                         <div class="alert alert-info">
-                            <strong>Face Selection Guide:</strong><br>
-                            • <strong>X Face:</strong> Maps temperature across +X and -X faces (left/right boundaries)<br>
-                            • <strong>Y Face:</strong> Maps temperature across +Y and -Y faces (front/back boundaries)<br>
-                            Start/End locations define the range along the selected face direction.
+                            <strong>MAPPED Boundary Condition:</strong><br>
+                            • <strong>Source Face:</strong> Define the face on this region to be mapped<br>
+                            • <strong>Symmetry Axis:</strong> Select the axis for mirroring temperature distribution
                         </div>
                     </div>
                 </div>
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label class="form-label">Face Selection</label>
-                        <select class="form-control" name="bc_${index}_face_selection">
-                            <option value="x" ${faceValue === 'x' ? 'selected' : ''}>X Face (+x/-x)</option>
-                            <option value="y" ${faceValue === 'y' ? 'selected' : ''}>Y Face (+y/-y)</option>
-                        </select>
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">Source Region (Current)</h6>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Start Location (mm)</label>
-                        <input type="number" class="form-control" name="bc_${index}_start_location" value="${startValue}" step="0.1">
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Source Face</label>
+                                <select class="form-control" name="bc_${index}_face_selection">
+                                    <option value="+x" ${faceValue === '+x' ? 'selected' : ''}>+X Face (Right)</option>
+                                    <option value="-x" ${faceValue === '-x' ? 'selected' : ''}>-X Face (Left)</option>
+                                    <option value="+y" ${faceValue === '+y' ? 'selected' : ''}>+Y Face (Top)</option>
+                                    <option value="-y" ${faceValue === '-y' ? 'selected' : ''}>-Y Face (Bottom)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Start Location (mm)</label>
+                                <input type="number" class="form-control" name="bc_${index}_start_location" value="${startValue}" step="any">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">End Location (mm)</label>
+                                <input type="number" class="form-control" name="bc_${index}_end_location" value="${endValue}" step="any">
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">End Location (mm)</label>
-                        <input type="number" class="form-control" name="bc_${index}_end_location" value="${endValue}" step="0.1">
+                </div>
+
+                
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">Mapping Configuration</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-md-12">
+                                <label class="form-label">Symmetry Axis</label>
+                                <select class="form-control" name="bc_${index}_symmetry_axis">
+                                    <option value="x" ${symmetryAxisValue === 'x' ? 'selected' : ''}>X Axis (Mirror across X)</option>
+                                    <option value="y" ${symmetryAxisValue === 'y' ? 'selected' : ''}>Y Axis (Mirror across Y)</option>
+                                </select>
+                                <small class="text-muted">Select the axis for symmetry mapping</small>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
+            
+
+            
         } else if (type === 'NODE_CONNECTED') {
             // Preserve existing values if any
             const existingNodeField = item.querySelector(`select[name*="_node_id"]`);
@@ -719,13 +788,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const nodeValue = existingNodeField ? existingNodeField.value : "";
             const resistanceValue = existingResistanceField ? existingResistanceField.value : "1.0";
             
-            // Build node options from available node networks
-            let nodeOptions = '<option value="">Select a node...</option>';
-            {% for node_network in node_networks %}
-                {% for node in node_network.nodes %}
-                    nodeOptions += `<option value="{{ node.id }}" ${nodeValue === "{{ node.id }}" ? "selected" : ""}>{{ node.id }}{% if node.name %} ({{ node.name }}){% endif %}</option>`;
-                {% endfor %}
-            {% endfor %}
+            // Use pre-built node options and set selected value dynamically
+            let nodeOptions = nodeOptionsHtml;
             
             container.innerHTML = `
                 <div class="row mb-2">
@@ -749,6 +813,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
             `;
+            
+            // Set the selected node value after creating the HTML
+            if (nodeValue) {
+                const nodeSelect = container.querySelector(`select[name="bc_${index}_node_id"]`);
+                if (nodeSelect) {
+                    nodeSelect.value = nodeValue;
+                }
+            }
+            
         } else if (type === 'PLASTIC_COVERED') {
             // Preserve existing values if any
             const existingThicknessField = item.querySelector(`input[name*="_plastic_thickness"]`);
@@ -797,7 +870,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">User-Defined Conductivity (W/mK)</label>
-                        <input type="number" class="form-control" name="bc_${index}_conductivity" value="${conductivityValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_conductivity" value="${conductivityValue}" step="any">
                     </div>
                 </div>
             `;
@@ -811,11 +884,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Heat Transfer Coefficient (W/m²K)</label>
-                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_heat_transfer_coefficient" value="${htcValue}" step="any">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Ambient Temperature (°C)</label>
-                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="0.1">
+                        <input type="number" class="form-control" name="bc_${index}_ambient_temperature" value="${tempValue}" step="any">
                     </div>
                 </div>
             `;
@@ -849,7 +922,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Source 1 Thickness</label>
-                                <input type="number" class="form-control" name="bc_${index}_source1_thickness" value="0" step="0.01">
+                                <input type="number" class="form-control" name="bc_${index}_source1_thickness" value="0" step="any">
                             </div>
                         </div>
                     </div>
@@ -1001,6 +1074,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         return !wasConstrained;
     }
+    
+
     
     // Function to validate boundary condition bounds (for visual feedback)
     function validateBoundaryCondition(bcIndex) {

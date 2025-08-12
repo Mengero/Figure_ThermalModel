@@ -54,7 +54,8 @@ simulation_status = {
     'end_time': None,
     'output': '',
     'results_file': None,
-    'plot_file': None
+    'plot_file': None,
+    'process': None
 }
 
 def allowed_file(filename):
@@ -553,9 +554,11 @@ def edit_region(region_id):
                         'y': float(request.form.get(f'bc_{i}_point2_y', 0.0))
                     }
                 elif bc_type == 'MAPPED':
-                    bc['face_selection'] = request.form.get(f'bc_{i}_face_selection', 'x')
+                    bc['face_selection'] = request.form.get(f'bc_{i}_face_selection', '+x')
                     bc['start_location'] = float(request.form.get(f'bc_{i}_start_location', 0.0))
                     bc['end_location'] = float(request.form.get(f'bc_{i}_end_location', 100.0))
+                    bc['mapping_type'] = 'symmetry'  # Always use symmetry mapping
+                    bc['symmetry_axis'] = request.form.get(f'bc_{i}_symmetry_axis', 'x')
                 elif bc_type == 'NODE_CONNECTED':
                     bc['node_id'] = request.form.get(f'bc_{i}_node_id', '')
                     bc['thermal_resistance'] = float(request.form.get(f'bc_{i}_thermal_resistance', 1.0))
@@ -577,7 +580,7 @@ def edit_region(region_id):
                     validation_error = validate_boundary_condition_bounds(bc, region)
                     if validation_error:
                         flash(f'Boundary condition {i+1} validation error: {validation_error}', 'error')
-                        return render_template('edit_region.html', region=region, actuators=actuators, node_networks=node_networks)
+                        return render_template('edit_region.html', region=region, actuators=actuators, node_networks=node_networks, data=data)
                 
                 boundary_conditions.append(bc)
         
@@ -589,9 +592,9 @@ def edit_region(region_id):
         else:
             flash('Error saving region data', 'error')
         
-        return redirect(url_for('region_detail', region_id=region_id))
+        return redirect(url_for('edit_region', region_id=region_id))
     
-    return render_template('edit_region.html', region=region, actuators=actuators, node_networks=node_networks)
+    return render_template('edit_region.html', region=region, actuators=actuators, node_networks=node_networks, data=data)
 
 @app.route('/actuators')
 def actuators():
@@ -785,8 +788,18 @@ def create_simple_region_plot(regions):
     """Create a simple region visualization without complex subplot logic"""
     from matplotlib.patches import Rectangle
     
-    # Create a single large plot
-    fig, ax = plt.subplots(figsize=(15, 10))
+    # Calculate dynamic figure size and font sizes based on number of regions
+    num_regions = len(regions)
+    fig_width = max(16, min(24, 12 + num_regions * 2))
+    fig_height = max(12, min(30, 10 + num_regions * 3))
+    
+    # Dynamic font scaling: smaller fonts for more regions
+    title_font = max(8, min(12, 12 - num_regions * 0.4))
+    region_label_font = max(4, min(8, 8 - num_regions * 0.3))
+    bc_label_font = max(3, min(6, 6 - num_regions * 0.15))
+    
+    # Create a single large plot with dynamic size
+    fig, ax = plt.subplots(figsize=(fig_width, fig_height))
     
     colors = {
         'ACTUATOR_CONNECTED': 'red',
@@ -794,7 +807,7 @@ def create_simple_region_plot(regions):
         'CONST_T': 'darkred',
         'MAPPED': 'blue', 
         'NODE_CONNECTED': 'magenta',
-        'PLASTIC_COVERED': 'purple',
+        'PLASTIC_COVERED': 'green',
         'USERDEF_CONDUCTION': 'brown',
         'USERDEF_CONVECTION': 'lightblue',
         'ADIABATIC': 'gray'
@@ -815,13 +828,13 @@ def create_simple_region_plot(regions):
         
         # Draw region outline (centered around x=0)
         rect = Rectangle((-width/2, y_offset), width, height, 
-                        fill=False, edgecolor='blue', linewidth=2,
+                        fill=False, edgecolor='black', linewidth=2,
                         label=f'{region_id}' if region == regions[0] else "")
         ax.add_patch(rect)
         
         # Add region label at top-left corner inside the region
         ax.text(-width/2 + 5, y_offset + height - 5, region_id,
-               ha='left', va='top', fontsize=12, weight='bold',
+               ha='left', va='top', fontsize=region_label_font, weight='bold',
                bbox=dict(boxstyle="round,pad=0.3", facecolor='lightblue', alpha=0.8))
         
         # Track region boundaries
@@ -834,11 +847,20 @@ def create_simple_region_plot(regions):
         min_y = min(min_y, region_min_y)
         max_y = max(max_y, region_max_y)
         
+        # Collect actuator information for this region
+        actuator_info = []
+        
         # Add boundary conditions
         for bc_data in region.get('boundary_conditions', []):
             bc_type = bc_data.get('type', 'ADIABATIC')
             comments = bc_data.get('comments', '')
             color = colors.get(bc_type, 'gray')
+            
+            # Handle actuator connection info individually
+            if bc_type == 'ACTUATOR_CONNECTED':
+                actuator_id = bc_data.get('actuator_id', 'Unknown')
+                connecting_location = bc_data.get('connecting_location', 'Unknown')
+                # This will be displayed on the individual BC rectangle below
             
             if bc_type == 'MAPPED':
                 # Handle MAPPED boundary conditions as edge highlighting
@@ -846,50 +868,84 @@ def create_simple_region_plot(regions):
                 start_location = bc_data.get('start_location', 0.0)
                 end_location = bc_data.get('end_location', 0.0)
                 
-                if face_selection == 'x':
-                    # X face mapping: highlight left and right edges
-                    # Left edge (x = -width/2)
-                    ax.plot([-width/2, -width/2], [y_offset + start_location, y_offset + end_location], 
-                           color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (X faces)' if bc_data == region.get('boundary_conditions', [])[0] else "")
-                    # Right edge (x = +width/2)
-                    ax.plot([width/2, width/2], [y_offset + start_location, y_offset + end_location], 
-                           color=color, linewidth=6, alpha=0.8)
+                if face_selection in ['x', '+x', '-x']:
+                    # X face mapping: highlight mapped edges
+                    if face_selection == '+x':
+                        # +X face only (right edge)
+                        ax.plot([width/2, width/2], [y_offset + start_location, y_offset + end_location], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (+X face)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        label_text = f'MAPPED +X\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_x = region_max_x - 5
+                        ha_align = 'right'
+                    elif face_selection == '-x':
+                        # -X face only (left edge)
+                        ax.plot([-width/2, -width/2], [y_offset + start_location, y_offset + end_location], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (-X face)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        label_text = f'MAPPED -X\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_x = region_min_x + 5
+                        ha_align = 'left'
+                    else:  # face_selection == 'x' (legacy both faces)
+                        # Both left and right edges
+                        ax.plot([-width/2, -width/2], [y_offset + start_location, y_offset + end_location], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (X faces)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        ax.plot([width/2, width/2], [y_offset + start_location, y_offset + end_location], 
+                               color=color, linewidth=6, alpha=0.8)
+                        
+                        # Add connecting lines to show mapping
+                        ax.plot([-width/2, width/2], [y_offset + start_location, y_offset + start_location], 
+                               color=color, linewidth=2, alpha=0.4, linestyle='--')
+                        ax.plot([-width/2, width/2], [y_offset + end_location, y_offset + end_location], 
+                               color=color, linewidth=2, alpha=0.4, linestyle='--')
+                        
+                        label_text = f'MAPPED X\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_x = region_min_x + 5
+                        ha_align = 'left'
                     
-                    # Add connecting lines to show mapping
-                    ax.plot([-width/2, width/2], [y_offset + start_location, y_offset + start_location], 
-                           color=color, linewidth=2, alpha=0.4, linestyle='--')
-                    ax.plot([-width/2, width/2], [y_offset + end_location, y_offset + end_location], 
-                           color=color, linewidth=2, alpha=0.4, linestyle='--')
-                    
-                    # Add label at region's left side, vertically centered within the mapped span
-                    label_text = f'MAPPED X\n[{start_location:.1f}, {end_location:.1f}]'
+                    # Add label
                     if comments:
                         label_text += f'\n{comments}'
-                    ax.text(region_min_x + 5, y_offset + (start_location + end_location)/2, label_text,
-                           ha='left', va='center', fontsize=8,
+                    ax.text(label_x, y_offset + (start_location + end_location)/2, label_text,
+                           ha=ha_align, va='center', fontsize=bc_label_font,
                            bbox=dict(boxstyle="round,pad=0.3", facecolor=color, alpha=0.25))
                     
-                elif face_selection == 'y':
-                    # Y face mapping: highlight bottom and top edges
-                    # Bottom edge (y = y_offset)
-                    ax.plot([start_location, end_location], [y_offset, y_offset], 
-                           color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (Y faces)' if bc_data == region.get('boundary_conditions', [])[0] else "")
-                    # Top edge (y = y_offset + height)
-                    ax.plot([start_location, end_location], [y_offset + height, y_offset + height], 
-                           color=color, linewidth=6, alpha=0.8)
+                elif face_selection in ['y', '+y', '-y']:
+                    # Y face mapping: highlight mapped edges
+                    if face_selection == '+y':
+                        # +Y face only (top edge)
+                        ax.plot([start_location, end_location], [y_offset + height, y_offset + height], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (+Y face)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        label_text = f'MAPPED +Y\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_y = y_offset + height - 5
+                        va_align = 'top'
+                    elif face_selection == '-y':
+                        # -Y face only (bottom edge)  
+                        ax.plot([start_location, end_location], [y_offset, y_offset], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (-Y face)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        label_text = f'MAPPED -Y\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_y = y_offset + 5
+                        va_align = 'bottom'
+                    else:  # face_selection == 'y' (legacy both faces)
+                        # Both bottom and top edges
+                        ax.plot([start_location, end_location], [y_offset, y_offset], 
+                               color=color, linewidth=6, alpha=0.8, label=f'{bc_type} (Y faces)' if bc_data == region.get('boundary_conditions', [])[0] else "")
+                        ax.plot([start_location, end_location], [y_offset + height, y_offset + height], 
+                               color=color, linewidth=6, alpha=0.8)
+                        
+                        # Add connecting lines to show mapping
+                        ax.plot([start_location, start_location], [y_offset, y_offset + height], 
+                               color=color, linewidth=2, alpha=0.4, linestyle='--')
+                        ax.plot([end_location, end_location], [y_offset, y_offset + height], 
+                               color=color, linewidth=2, alpha=0.4, linestyle='--')
+                        
+                        label_text = f'MAPPED Y\n[{start_location:.1f}, {end_location:.1f}]'
+                        label_y = y_offset + height - 5
+                        va_align = 'top'
                     
-                    # Add connecting lines to show mapping
-                    ax.plot([start_location, start_location], [y_offset, y_offset + height], 
-                           color=color, linewidth=2, alpha=0.4, linestyle='--')
-                    ax.plot([end_location, end_location], [y_offset, y_offset + height], 
-                           color=color, linewidth=2, alpha=0.4, linestyle='--')
-                    
-                    # Add label at region's left-top corner area
-                    label_text = f'MAPPED Y\n[{start_location:.1f}, {end_location:.1f}]'
+                    # Add label
                     if comments:
                         label_text += f'\n{comments}'
-                    ax.text(region_min_x + 5, y_offset + height - 5, label_text,
-                           ha='left', va='top', fontsize=8,
+                    ax.text(region_min_x + 5, label_y, label_text,
+                           ha='left', va=va_align, fontsize=bc_label_font,
                            bbox=dict(boxstyle="round,pad=0.3", facecolor=color, alpha=0.25))
                 
             elif bc_type == 'ADIABATIC':
@@ -931,7 +987,7 @@ def create_simple_region_plot(regions):
                 if comments:
                     label_text += f'\n{comments}'
                 ax.text(mid_x, mid_y, label_text, 
-                       ha='center', va='center', fontsize=8,
+                       ha='center', va='center', fontsize=bc_label_font,
                        bbox=dict(boxstyle="round,pad=0.3", facecolor=color, alpha=0.3, edgecolor='black'))
                 
             else:
@@ -951,16 +1007,30 @@ def create_simple_region_plot(regions):
                 max_y = max(max_y, bc_max_y)
                 
                 # Add BC rectangle (offset by region position)
+                # Use higher transparency for PLASTIC_COVERED to avoid color interference
+                alpha_value = 0.15 if bc_type == 'PLASTIC_COVERED' else 0.6
                 bc_rect = Rectangle((centroid['x'] - bc_width/2, y_offset + centroid['y'] - bc_height/2), 
                                   bc_width, bc_height, 
-                                  facecolor=color, alpha=0.6, edgecolor=color)
+                                  facecolor=color, alpha=alpha_value, edgecolor=color)
                 ax.add_patch(bc_rect)
                 
                 # Add BC label
-                if comments:
+                if bc_type == 'ACTUATOR_CONNECTED':
+                    # Show actuator information for ACTUATOR_CONNECTED boundary conditions
+                    actuator_id = bc_data.get('actuator_id', 'Unknown')
+                    connecting_location = bc_data.get('connecting_location', 'Unknown')
+                    label_text = f"{actuator_id}\n({connecting_location})"
+                    if comments:
+                        label_text += f"\n{comments}"
+                    ax.text(centroid['x'], y_offset + centroid['y'], label_text, 
+                           ha='center', va='center', fontsize=bc_label_font,
+                           bbox=dict(boxstyle="round,pad=0.2", facecolor='lightcoral', alpha=0.9))
+                elif comments:
                     ax.text(centroid['x'], y_offset + centroid['y'], comments, 
-                           ha='center', va='center', fontsize=8,
+                           ha='center', va='center', fontsize=bc_label_font,
                            bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8))
+        
+
         
         max_width = max(max_width, width)
         y_offset += height + 50  # Add spacing between regions
@@ -972,7 +1042,7 @@ def create_simple_region_plot(regions):
     ax.grid(True, alpha=0.3)
     ax.set_xlabel('X (mm)')
     ax.set_ylabel('Y (mm)')
-    ax.set_title('Boundary Conditions for All Regions', fontsize=16)
+    ax.set_title('Boundary Conditions for All Regions', fontsize=title_font)
     
     # Save the plot
     static_dir = os.path.join(app.root_path, 'static')
@@ -1040,7 +1110,7 @@ def visualize_regions_web_complex(regions, region_info, params):
                 # Draw region outline
                 from matplotlib.patches import Rectangle
                 ax.add_patch(Rectangle((-width/2, 0), width, height, 
-                                     fill=False, edgecolor='blue', linewidth=2))
+                                     fill=False, edgecolor='black', linewidth=2))
                 
                 # Add boundary condition visualization from region data
                 for bc_data in region.get('boundary_conditions', []):
@@ -1054,7 +1124,7 @@ def visualize_regions_web_complex(regions, region_info, params):
                         'CONST_T': 'darkred',
                         'MAPPED': 'blue',
                         'NODE_CONNECTED': 'magenta',
-                        'PLASTIC_COVERED': 'purple',
+                        'PLASTIC_COVERED': 'green',
                         'USERDEF_CONDUCTION': 'brown',
                         'USERDEF_CONVECTION': 'lightblue',
                         'ADIABATIC': 'gray'
@@ -1067,45 +1137,77 @@ def visualize_regions_web_complex(regions, region_info, params):
                         start_location = bc_data.get('start_location', 0.0)
                         end_location = bc_data.get('end_location', 0.0)
                         
-                        if face_selection == 'x':
-                            # X face mapping: highlight left and right edges
-                            ax.plot([-width/2, -width/2], [start_location, end_location], 
-                                   color=color, linewidth=4, alpha=0.8)
-                            ax.plot([width/2, width/2], [start_location, end_location], 
-                                   color=color, linewidth=4, alpha=0.8)
-                            
-                            # Add connecting lines
-                            ax.plot([-width/2, width/2], [start_location, start_location], 
-                                   color=color, linewidth=1, alpha=0.4, linestyle='--')
-                            ax.plot([-width/2, width/2], [end_location, end_location], 
-                                   color=color, linewidth=1, alpha=0.4, linestyle='--')
+                        if face_selection in ['x', '+x', '-x']:
+                            # X face mapping: highlight mapped edges
+                            if face_selection == '+x':
+                                # +X face only (right edge)
+                                ax.plot([width/2, width/2], [start_location, end_location], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                label_text = f'MAPPED +X [{start_location:.1f}, {end_location:.1f}]'
+                                label_x = width/4
+                            elif face_selection == '-x':
+                                # -X face only (left edge)
+                                ax.plot([-width/2, -width/2], [start_location, end_location], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                label_text = f'MAPPED -X [{start_location:.1f}, {end_location:.1f}]'
+                                label_x = -width/4
+                            else:  # face_selection == 'x' (legacy both faces)
+                                # Both left and right edges
+                                ax.plot([-width/2, -width/2], [start_location, end_location], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                ax.plot([width/2, width/2], [start_location, end_location], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                
+                                # Add connecting lines
+                                ax.plot([-width/2, width/2], [start_location, start_location], 
+                                       color=color, linewidth=1, alpha=0.4, linestyle='--')
+                                ax.plot([-width/2, width/2], [end_location, end_location], 
+                                       color=color, linewidth=1, alpha=0.4, linestyle='--')
+                                
+                                label_text = f'MAPPED X [{start_location:.1f}, {end_location:.1f}]'
+                                label_x = 0
                             
                             # Add label
-                            label_text = f'MAPPED X [{start_location:.1f}, {end_location:.1f}]'
                             if comments:
                                 label_text += f'\n{comments}'
-                            ax.text(0, (start_location + end_location)/2, label_text, 
+                            ax.text(label_x, (start_location + end_location)/2, label_text, 
                                    ha='center', va='center', fontsize=6,
                                    bbox=dict(boxstyle="round,pad=0.2", facecolor=color, alpha=0.3))
                             
-                        elif face_selection == 'y':
-                            # Y face mapping: highlight bottom and top edges
-                            ax.plot([start_location, end_location], [0, 0], 
-                                   color=color, linewidth=4, alpha=0.8)
-                            ax.plot([start_location, end_location], [height, height], 
-                                   color=color, linewidth=4, alpha=0.8)
-                            
-                            # Add connecting lines
-                            ax.plot([start_location, start_location], [0, height], 
-                                   color=color, linewidth=1, alpha=0.4, linestyle='--')
-                            ax.plot([end_location, end_location], [0, height], 
-                                   color=color, linewidth=1, alpha=0.4, linestyle='--')
+                        elif face_selection in ['y', '+y', '-y']:
+                            # Y face mapping: highlight mapped edges
+                            if face_selection == '+y':
+                                # +Y face only (top edge)
+                                ax.plot([start_location, end_location], [height, height], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                label_text = f'MAPPED +Y [{start_location:.1f}, {end_location:.1f}]'
+                                label_y = height * 3/4
+                            elif face_selection == '-y':
+                                # -Y face only (bottom edge)
+                                ax.plot([start_location, end_location], [0, 0], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                label_text = f'MAPPED -Y [{start_location:.1f}, {end_location:.1f}]'
+                                label_y = height * 1/4
+                            else:  # face_selection == 'y' (legacy both faces)
+                                # Both bottom and top edges
+                                ax.plot([start_location, end_location], [0, 0], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                ax.plot([start_location, end_location], [height, height], 
+                                       color=color, linewidth=4, alpha=0.8)
+                                
+                                # Add connecting lines
+                                ax.plot([start_location, start_location], [0, height], 
+                                       color=color, linewidth=1, alpha=0.4, linestyle='--')
+                                ax.plot([end_location, end_location], [0, height], 
+                                       color=color, linewidth=1, alpha=0.4, linestyle='--')
+                                
+                                label_text = f'MAPPED Y [{start_location:.1f}, {end_location:.1f}]'
+                                label_y = height/2
                             
                             # Add label
-                            label_text = f'MAPPED Y [{start_location:.1f}, {end_location:.1f}]'
                             if comments:
                                 label_text += f'\n{comments}'
-                            ax.text((start_location + end_location)/2, height/2, label_text, 
+                            ax.text((start_location + end_location)/2, label_y, label_text, 
                                    ha='center', va='center', fontsize=6,
                                    bbox=dict(boxstyle="round,pad=0.2", facecolor=color, alpha=0.3))
                     
@@ -1156,13 +1258,25 @@ def visualize_regions_web_complex(regions, region_info, params):
                         bc_height = bc_data.get('height', 10)
                         
                         # Add BC rectangle
+                        # Use higher transparency for PLASTIC_COVERED to avoid color interference
+                        alpha_value = 0.15 if bc_type == 'PLASTIC_COVERED' else 0.6
                         bc_rect = Rectangle((centroid['x'] - bc_width/2, centroid['y'] - bc_height/2), 
                                           bc_width, bc_height, 
-                                          facecolor=color, alpha=0.6, edgecolor=color)
+                                          facecolor=color, alpha=alpha_value, edgecolor=color)
                         ax.add_patch(bc_rect)
                         
                         # Add label
-                        if comments:
+                        if bc_type == 'ACTUATOR_CONNECTED':
+                            # Show actuator information for ACTUATOR_CONNECTED boundary conditions
+                            actuator_id = bc_data.get('actuator_id', 'Unknown')
+                            connecting_location = bc_data.get('connecting_location', 'Unknown')
+                            label_text = f"{actuator_id}\n({connecting_location})"
+                            if comments:
+                                label_text += f"\n{comments}"
+                            ax.text(centroid['x'], centroid['y'], label_text, 
+                                   ha='center', va='center', fontsize=8,
+                                   bbox=dict(boxstyle="round,pad=0.2", facecolor='lightcoral', alpha=0.9))
+                        elif comments:
                             ax.text(centroid['x'], centroid['y'], comments, 
                                    ha='center', va='center', fontsize=8,
                                    bbox=dict(boxstyle="round,pad=0.2", facecolor='white', alpha=0.8))
@@ -2266,6 +2380,7 @@ def run_simulation_background():
         simulation_status['error'] = None
         simulation_status['start_time'] = datetime.now()
         simulation_status['output'] = ''
+        simulation_status['process'] = None
         
         # Change to the directory containing the solver
         original_dir = os.getcwd()
@@ -2280,6 +2395,9 @@ def run_simulation_background():
             universal_newlines=True,
             cwd=solver_dir
         )
+        
+        # Store the process handle for potential termination
+        simulation_status['process'] = process
         
         # Capture output in real-time
         output_lines = []
@@ -2302,7 +2420,7 @@ def run_simulation_background():
             simulation_status['error'] = None
             
             # Check for output files
-            results_file = os.path.join(solver_dir, 'arm_thermal_results.txt')
+            results_file = os.path.join(solver_dir, 'sim_results.txt')
             plot_file = os.path.join(solver_dir, 'temperature_distribution.png')
             
             if os.path.exists(results_file):
@@ -2318,6 +2436,7 @@ def run_simulation_background():
     finally:
         simulation_status['running'] = False
         simulation_status['end_time'] = datetime.now()
+        simulation_status['process'] = None
 
 @app.route('/run_simulation', methods=['POST'])
 def run_simulation():
@@ -2395,7 +2514,7 @@ def download_simulation_results():
     if simulation_status['results_file'] and os.path.exists(simulation_status['results_file']):
         return send_file(simulation_status['results_file'], 
                         as_attachment=True, 
-                        download_name='arm_thermal_results.txt')
+                        download_name='sim_results.txt')
     else:
         flash('No results file available', 'error')
         return redirect(url_for('simulation_status_page'))
@@ -2408,6 +2527,42 @@ def view_simulation_plot():
     else:
         flash('No plot file available', 'error')
         return redirect(url_for('simulation_status_page'))
+
+@app.route('/stop_simulation', methods=['POST'])
+def stop_simulation():
+    """Stop the running simulation"""
+    global simulation_status
+    
+    if not simulation_status['running']:
+        flash('No simulation is currently running', 'warning')
+        return redirect(url_for('simulation_status_page'))
+    
+    try:
+        # Terminate the process if it exists
+        if simulation_status['process'] and simulation_status['process'].poll() is None:
+            simulation_status['process'].terminate()
+            
+            # Give it a moment to terminate gracefully
+            try:
+                simulation_status['process'].wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                # Force kill if it doesn't terminate gracefully
+                simulation_status['process'].kill()
+                simulation_status['process'].wait()
+        
+        # Update status
+        simulation_status['running'] = False
+        simulation_status['completed'] = False
+        simulation_status['error'] = 'Simulation stopped by user'
+        simulation_status['end_time'] = datetime.now()
+        simulation_status['process'] = None
+        
+        flash('Simulation stopped successfully', 'success')
+        
+    except Exception as e:
+        flash(f'Error stopping simulation: {str(e)}', 'error')
+    
+    return redirect(url_for('simulation_status_page'))
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000) 

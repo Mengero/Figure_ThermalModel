@@ -1,0 +1,205 @@
+Arm Thermal Analysis Results
+==================================================
+
+Solve time: 3.55 seconds
+Final residual norm: 8.95e-03
+Solution converged successfully!
+
+Region Results:
+--------------------------------------------------
+
+Region: shoulder
+Average Temperature: 29.04°C
+Min Temperature: 27.14°C
+Max Temperature: 32.19°C
+Plastic Covered Surface Heat Transfer: 6.41 W
+Constant Heat Flux Surface Heat Transfer: 0.00 W
+Actuator Connected Surface Heat Transfer: -0.00 W
+Total Heat Transfer Rate: 6.41 W
+
+Boundary Condition Temperatures for Region shoulder:
+  PLASTIC_COVERED Boundary:
+    Elements: 1876
+    Average Temperature: 29.04°C
+    Min Temperature: 27.14°C
+    Max Temperature: 32.19°C
+  CONST_Q Boundary:
+    Elements: 112
+    Average Temperature: 32.12°C
+    Min Temperature: 32.05°C
+    Max Temperature: 32.19°C
+    Heat Flux: 1.00 W/m²
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 532
+    Average Temperature: 27.32°C
+    Min Temperature: 27.14°C
+    Max Temperature: 27.63°C
+
+Region: humerus_upper
+Average Temperature: 22.21°C
+Min Temperature: 20.82°C
+Max Temperature: 24.21°C
+Plastic Covered Surface Heat Transfer: 2.02 W
+Actuator Connected Surface Heat Transfer: 0.02 W
+Total Heat Transfer Rate: 2.04 W
+
+Boundary Condition Temperatures for Region humerus_upper:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 358
+    Average Temperature: 23.36°C
+    Min Temperature: 21.03°C
+    Max Temperature: 24.21°C
+  PLASTIC_COVERED Boundary:
+    Elements: 2900
+    Average Temperature: 22.21°C
+    Min Temperature: 20.82°C
+    Max Temperature: 24.21°C
+
+Region: humerus_lower
+Average Temperature: 23.34°C
+Min Temperature: 20.60°C
+Max Temperature: 29.54°C
+Plastic Covered Surface Heat Transfer: 5.25 W
+Actuator Connected Surface Heat Transfer: 0.06 W
+Total Heat Transfer Rate: 5.32 W
+
+Boundary Condition Temperatures for Region humerus_lower:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 834
+    Average Temperature: 23.53°C
+    Min Temperature: 20.83°C
+    Max Temperature: 29.54°C
+  PLASTIC_COVERED Boundary:
+    Elements: 2604
+    Average Temperature: 23.34°C
+    Min Temperature: 20.60°C
+    Max Temperature: 29.54°C
+
+Region: forearm_upper
+Average Temperature: 41.24°C
+Min Temperature: 33.03°C
+Max Temperature: 58.00°C
+Plastic Covered Surface Heat Transfer: 40.07 W
+Actuator Connected Surface Heat Transfer: 0.07 W
+Total Heat Transfer Rate: 40.15 W
+
+Boundary Condition Temperatures for Region forearm_upper:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 1176
+    Average Temperature: 38.54°C
+    Min Temperature: 33.03°C
+    Max Temperature: 58.00°C
+  MAPPED Boundary:
+    Elements: 4
+    Average Temperature: 58.00°C
+    Min Temperature: 58.00°C
+    Max Temperature: 58.00°C
+  PLASTIC_COVERED Boundary:
+    Elements: 1512
+    Average Temperature: 41.24°C
+    Min Temperature: 33.03°C
+    Max Temperature: 58.00°C
+
+Region: forearm_lower
+Average Temperature: 53.76°C
+Min Temperature: 43.08°C
+Max Temperature: 74.74°C
+Plastic Covered Surface Heat Transfer: 33.98 W
+Actuator Connected Surface Heat Transfer: 0.08 W
+Total Heat Transfer Rate: 34.06 W
+
+Boundary Condition Temperatures for Region forearm_lower:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 230
+    Average Temperature: 61.70°C
+    Min Temperature: 56.17°C
+    Max Temperature: 74.74°C
+  PLASTIC_COVERED Boundary:
+    Elements: 2550
+    Average Temperature: 53.76°C
+    Min Temperature: 43.08°C
+    Max Temperature: 74.74°C
+
+Region: wrist
+Average Temperature: 78.65°C
+Min Temperature: 76.54°C
+Max Temperature: 84.11°C
+Actuator Connected Surface Heat Transfer: 0.00 W
+Total Heat Transfer Rate: 0.00 W
+
+Boundary Condition Temperatures for Region wrist:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 748
+    Average Temperature: 77.19°C
+    Min Temperature: 76.62°C
+    Max Temperature: 78.21°C
+  NODE_CONNECTED Boundary:
+    Elements: 270
+    Average Temperature: 83.27°C
+    Min Temperature: 81.88°C
+    Max Temperature: 84.11°C
+    Connected to Node: YAW_HS
+    Thermal Resistance: 1.00 K/W
+
+Node Network Temperature Results:
+--------------------------------------------------
+
+Network: hand
+Description: 
+  Node 'BACKHAND': 95.83°C
+    Heat Source: 22.36 W
+  Node 'YAW_HS': 86.11°C
+    Heat Source: 4.90 W
+  Network Connections (4):
+    YAW_HS → BACKHAND: 1.90 K/W
+    YAW_HS → air: 9.20 K/W
+    BACKHAND → air: 4.40 K/W
+    region_wrist_boundary → YAW_HS: 1.00 K/W
+
+Actuator Results:
+--------------------------------------------------
+
+Actuator: J2
+  FETs Temperature: 27.32°C (Heat: 0.00 W)
+  Motor Temperature: 27.32°C (Heat: 0.00 W)
+  Gearbox Temperature: 27.09°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 0.00 W
+  Thermal Resistances: R1=1.80, R2=0.90, R3=200.00, R4=0.30, R5=4.00 K/W
+  Housing Structure Temperature: 27.32°C
+  Output Structure Temperature: 23.98°C
+
+Actuator: J3
+  FETs Temperature: 22.26°C (Heat: 0.00 W)
+  Motor Temperature: 22.26°C (Heat: 0.00 W)
+  Gearbox Temperature: 22.24°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 0.00 W
+  Thermal Resistances: R1=1.80, R2=0.90, R3=200.00, R4=0.30, R5=4.00 K/W
+  Housing Structure Temperature: 22.26°C
+  Output Structure Temperature: 22.07°C
+
+Actuator: J4
+  FETs Temperature: 37.05°C (Heat: 0.00 W)
+  Motor Temperature: 37.05°C (Heat: 0.00 W)
+  Gearbox Temperature: 36.47°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 0.00 W
+  Thermal Resistances: R1=1.80, R2=0.90, R3=200.00, R4=0.30, R5=4.00 K/W
+  Housing Structure Temperature: 37.05°C
+  Output Structure Temperature: 28.83°C
+
+Actuator: ROLL
+  FETs Temperature: 67.21°C (Heat: 0.00 W)
+  Motor Temperature: 70.81°C (Heat: 4.00 W)
+  Gearbox Temperature: 66.57°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 4.00 W
+  Thermal Resistances: R1=1.80, R2=0.90, R3=200.00, R4=0.30, R5=4.00 K/W
+  Housing Structure Temperature: 67.21°C
+  Output Structure Temperature: 58.00°C
+
+Actuator: PITCH
+  FETs Temperature: 77.19°C (Heat: 0.00 W)
+  Motor Temperature: 82.50°C (Heat: 5.90 W)
+  Gearbox Temperature: 75.94°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 5.90 W
+  Thermal Resistances: R1=1.80, R2=0.90, R3=200.00, R4=0.30, R5=4.00 K/W
+  Housing Structure Temperature: 77.19°C
+  Output Structure Temperature: 59.29°C

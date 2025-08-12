@@ -109,7 +109,7 @@
                                         <label for="thermal_resistance" class="form-label">Thermal Resistance <span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" id="thermal_resistance" name="thermal_resistance" 
-                                                   value="{{ connection.thermal_resistance }}" step="0.1" min="0" required>
+                                                   value="{{ connection.thermal_resistance }}" step="any" min="0" required>
                                             <span class="input-group-text">K/W</span>
                                         </div>
                                         <div class="form-text">Thermal resistance between the nodes</div>
@@ -167,7 +167,7 @@
                                         <h6 class="card-title">{{ node.name or node.id }}</h6>
                                         <p class="card-text">
                                             <small class="text-muted">
-                                                Position: ({{ node.position.x }}, {{ node.position.y }})<br>
+
                                                 Capacity: {{ node.thermal_capacity }} J/K<br>
                                                 Heat: {{ node.heat_source }} W
                                             </small>
@@ -186,7 +186,7 @@
                                         <h6 class="card-title">{{ node.name or node.id }}</h6>
                                         <p class="card-text">
                                             <small class="text-muted">
-                                                Position: ({{ node.position.x }}, {{ node.position.y }})<br>
+
                                                 Capacity: {{ node.thermal_capacity }} J/K<br>
                                                 Heat: {{ node.heat_source }} W
                                             </small>

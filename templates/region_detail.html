@@ -165,7 +165,20 @@
                                         {% elif bc.type == 'CONST_T' %}
                                             <strong>Temperature:</strong> {{ bc.temperature }} °C
                                         {% elif bc.type == 'MAPPED' %}
-                                            <strong>Symmetry Axis:</strong> {{ bc.symmetry_axis }}
+                                            <strong>Face Selection:</strong> {{ bc.face_selection }}<br>
+                                            <strong>Start Location:</strong> {{ bc.start_location if bc.start_location is defined else 0.0 }} mm<br>
+                                            <strong>End Location:</strong> {{ bc.end_location if bc.end_location is defined else 100.0 }} mm<br>
+                                            {% if bc.source1_centroid %}
+                                            <strong>Source 1 Centroid:</strong> ({{ bc.source1_centroid.x }}, {{ bc.source1_centroid.y }}, {{ bc.source1_centroid.z }}) mm<br>
+                                            <strong>Source 1 Size:</strong> {{ bc.source1_width }}×{{ bc.source1_height }}×{{ bc.source1_thickness }} mm
+                                            {% endif %}
+                                        {% elif bc.type == 'ADIABATIC' %}
+                                            {% if bc.point1 and bc.point2 %}
+                                            <strong>Point 1:</strong> ({{ bc.point1.x }}, {{ bc.point1.y }}) mm<br>
+                                            <strong>Point 2:</strong> ({{ bc.point2.x }}, {{ bc.point2.y }}) mm
+                                            {% else %}
+                                            <strong>Line Definition:</strong> No points defined
+                                            {% endif %}
                                         {% elif bc.type == 'PLASTIC_COVERED' %}
                                             <strong>Plastic Thickness:</strong> {{ bc.plastic_thickness }} mm<br>
                                             <strong>Plastic Conductivity:</strong> {{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }} W/mK<br>

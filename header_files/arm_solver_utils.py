@@ -482,7 +482,7 @@ def postprocess_results(solution_data):
         print(f"  Max Temperature: {np.max(special_bc_temps):.2f}°C")
     
     # Save results to file
-    with open('arm_thermal_results.txt', 'w') as f:
+    with open('sim_results.txt', 'w') as f:
         f.write("Arm Thermal Analysis Results\n")
         f.write("=" * 50 + "\n\n")
         f.write(f"Solve time: {solve_time:.2f} seconds\n")
@@ -661,7 +661,7 @@ def postprocess_results(solution_data):
                     avg_output_temp = np.mean([u[idx] for idx in output_elements])
                     f.write(f"  Output Structure Temperature: {avg_output_temp:.2f}°C\n")
     
-    print("\nResults have been saved to 'arm_thermal_results.txt'")
+    print("\nResults have been saved to 'sim_results.txt'")
     
     # Plot temperature distributions for both bottom and top surfaces
     num_regions = len(region_info)
@@ -797,25 +797,22 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
             if 'boundary_indices' not in info:
                 continue
                 
-            for bc_type, elements in info['boundary_indices'].items():
-                bc_data = elements[0]['bc_data']
-                connecting_location = bc_data.get('connecting_location')
+            for bc_type, elements in info['boundary_indices'].items():    
                 if bc_type == "ACTUATOR_CONNECTED":
-                    if connecting_location == 'Housing':
-                        actuator_elements[actuator_id]['housing_area'] = elements[0]['bc_data']['width'] * elements[0]['bc_data']['height'] * 1e-6
-                    elif connecting_location == 'Output':
-                        actuator_elements[actuator_id]['output_area'] = elements[0]['bc_data']['width'] * elements[0]['bc_data']['height'] * 1e-6
-                        
                     for element in elements:
                         global_idx = element['global_idx']
                         bc_data = element['bc_data']
                         # Check if this element connects to current actuator
                         if bc_data.get('actuator_id') == actuator_id:
-                            connecting_loc = bc_data.get('connecting_location')
+                            connecting_loc = bc_data['connecting_location']
                             if connecting_loc == 'Housing':
                                 actuator_elements[actuator_id]['housing_elements'].append(global_idx)
+                                actuator_elements[actuator_id]['housing_area'] = bc_data['width'] * bc_data['height'] * 1e-6
                             elif connecting_loc == 'Output':
                                 actuator_elements[actuator_id]['output_elements'].append(global_idx)
+                                actuator_elements[actuator_id]['output_area'] = bc_data['width'] * bc_data['height'] * 1e-6
+                        
+                    
                                 
         act_start_idx = act_info['start_idx']
                     
@@ -893,7 +890,7 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     to_node_idx = node_index_map[to_node_id]
                     A[to_node_idx, to_node_idx] -= 1 / thermal_resistance
                     b[to_node_idx] -= T_inf_global / thermal_resistance  
-            else:
+            elif "region" not in from_node_id and "region" not in to_node_id:
                 from_node_idx = node_index_map[from_node_id]
                 to_node_idx = node_index_map[to_node_id]
                 # Connection between two nodes: (T_node - T_connected) / R

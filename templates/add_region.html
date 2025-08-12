@@ -59,7 +59,7 @@
                             <label for="thermal_conductivity" class="form-label">Thermal Conductivity (W/mK) <span class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="thermal_conductivity" name="thermal_conductivity" 
                                    value="{{ form_data.thermal_conductivity if form_data else '120.0' }}" 
-                                   step="0.1" min="0.1" required>
+                                   step="any" min="0.1" required>
                             <div class="form-text" id="thermal-conductivity-help">Typical value for aluminum: 120.0 W/mK</div>
                         </div>
                     </div>
@@ -78,19 +78,19 @@
                                 <label for="width" class="form-label">Width (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="width" name="width" 
                                        value="{{ form_data.width if form_data else '100' }}" 
-                                       step="0.01" min="0.01" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="height" class="form-label">Height (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="height" name="height" 
                                        value="{{ form_data.height if form_data else '100' }}" 
-                                       step="0.01" min="0.01" required>
+                                       step="any" min="0" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="thickness" class="form-label">Thickness (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="thickness" name="thickness" 
                                        value="{{ form_data.thickness if form_data else '2' }}" 
-                                       step="0.01" min="0.01" required>
+                                       step="any" min="0" required>
                             </div>
                         </div>
                     </div>
@@ -129,19 +129,19 @@
                                 <label for="mesh_dx" class="form-label">dx (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="mesh_dx" name="mesh_dx" 
                                        value="{{ form_data.mesh_dx if form_data else '5.0' }}" 
-                                       step="0.1" min="0.1" required>
+                                       step="any" min="0.1" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="mesh_dy" class="form-label">dy (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="mesh_dy" name="mesh_dy" 
                                        value="{{ form_data.mesh_dy if form_data else '5.0' }}" 
-                                       step="0.1" min="0.1" required>
+                                       step="any" min="0.1" required>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="mesh_dz" class="form-label">dz (mm) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control" id="mesh_dz" name="mesh_dz" 
                                        value="{{ form_data.mesh_dz if form_data else '0.5' }}" 
-                                       step="0.1" min="0.1" required>
+                                       step="any" min="0.1" required>
                             </div>
                         </div>
                         <div class="form-text">Mesh element size for thermal analysis</div>
