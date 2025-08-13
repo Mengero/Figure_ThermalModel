@@ -190,7 +190,17 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Centroid Z</label>
+                                        {% if bc.type in ['PLASTIC_COVERED', 'CONST_Q', 'CONST_T', 'NODE_CONNECTED', 'USERDEF_CONVECTION', 'ACTUATOR_CONNECTED'] %}
+                                        <select class="form-control bc-centroid-z-select" name="bc_{{ loop.index0 }}_centroid_z_option" data-bc-index="{{ loop.index0 }}" style="border: 2px solid green;">
+                                            {% set current_z = bc.centroid.z if bc.centroid else 0 %}
+                                            {% set region_thickness = region.thickness %}
+                                            <option value="top_plus_z" {{ 'selected' if (current_z - region_thickness)|abs < 0.001 else '' }}>Top +Z ({{ region_thickness }}mm)</option>
+                                            <option value="top_minus_z" {{ 'selected' if current_z|abs < 0.001 or ((current_z - region_thickness)|abs >= 0.001 and current_z|abs >= 0.001) else '' }}>Top -Z (0mm)</option>
+                                        </select>
+                                        <input type="hidden" class="bc-centroid-z-hidden" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" data-bc-index="{{ loop.index0 }}">
+                                        {% else %}
                                         <input type="number" class="form-control bc-centroid-z" name="bc_{{ loop.index0 }}_centroid_z" value="{{ bc.centroid.z if bc.centroid else 0 }}" step="any" data-bc-index="{{ loop.index0 }}">
+                                        {% endif %}
                                         <div class="invalid-feedback"></div>
                                     </div>
                                 </div>
@@ -206,11 +216,18 @@
                                         <input type="number" class="form-control bc-height" name="bc_{{ loop.index0 }}_height" value="{{ bc.height if bc.height is defined else 0 }}" step="any" min="0" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
+                                    {% if bc.type not in ['PLASTIC_COVERED', 'CONST_Q', 'CONST_T', 'NODE_CONNECTED', 'USERDEF_CONVECTION', 'ACTUATOR_CONNECTED'] %}
                                     <div class="col-md-4">
                                         <label class="form-label">Thickness</label>
                                         <input type="number" class="form-control bc-thickness" name="bc_{{ loop.index0 }}_thickness" value="{{ bc.thickness if bc.thickness is defined else 0 }}" step="any" min="0" data-bc-index="{{ loop.index0 }}">
                                         <div class="invalid-feedback"></div>
                                     </div>
+                                    {% else %}
+                                    <div class="col-md-4">
+                                        <!-- Thickness field hidden for surface boundary conditions -->
+                                        <input type="hidden" class="bc-thickness" name="bc_{{ loop.index0 }}_thickness" value="0" data-bc-index="{{ loop.index0 }}">
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 </div>
                                 {% endif %}
@@ -576,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="number" class="form-control bc-height" name="bc_${index}_height" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 bc-thickness-container">
                         <label class="form-label">Thickness</label>
                         <input type="number" class="form-control bc-thickness" name="bc_${index}_thickness" value="0" step="any" data-bc-index="${index}">
                         <div class="invalid-feedback"></div>
@@ -595,6 +612,99 @@ document.addEventListener('DOMContentLoaded', function() {
         return div;
     }
     
+    // Handle centroid Z dropdown for PLASTIC_COVERED boundary conditions
+    function handleCentroidZDropdown(item, index) {
+        const typeSelect = item.querySelector('.bc-type-select');
+        // Find the centroid Z container more reliably
+        let centroidZContainer = null;
+        const cols = item.querySelectorAll('.col-md-4');
+        for (let col of cols) {
+            if (col.querySelector('.bc-centroid-z') || col.querySelector('.bc-centroid-z-select') || 
+                (col.querySelector('label') && col.querySelector('label').textContent.includes('Centroid Z'))) {
+                centroidZContainer = col;
+                break;
+            }
+        }
+        
+        if (!centroidZContainer) return;
+        
+        const currentType = typeSelect ? typeSelect.value : '';
+        
+        if (['PLASTIC_COVERED', 'CONST_Q', 'CONST_T', 'NODE_CONNECTED', 'USERDEF_CONVECTION', 'ACTUATOR_CONNECTED'].includes(currentType)) {
+            // Get current values
+            const currentCentroidZ = item.querySelector('input[name*="_centroid_z"]');
+            const currentValue = currentCentroidZ ? parseFloat(currentCentroidZ.value) || 0 : 0;
+            
+            // Get region thickness
+            const thicknessInput = document.getElementById('thickness');
+            const regionThickness = thicknessInput ? parseFloat(thicknessInput.value) || 0 : 0;
+            
+            // Hide thickness field for surface boundary conditions
+            const thicknessContainer = item.querySelector('.bc-thickness-container') || 
+                                       Array.from(item.querySelectorAll('.col-md-4')).find(col => 
+                                           col.querySelector('label') && col.querySelector('label').textContent.includes('Thickness'));
+            if (thicknessContainer) {
+                thicknessContainer.style.display = 'none';
+                // Set thickness to 0 for surface boundary conditions
+                const thicknessInput = thicknessContainer.querySelector('.bc-thickness');
+                if (thicknessInput) {
+                    thicknessInput.value = 0;
+                }
+            }
+            
+            // Determine which option should be selected
+            let selectedOption = 'top_minus_z'; // Default to top -Z for new boundary conditions
+            if (Math.abs(currentValue - regionThickness) < 0.001) {
+                selectedOption = 'top_plus_z';
+            }
+            
+            // Replace the centroid Z input with dropdown (no custom input needed)
+            centroidZContainer.innerHTML = `
+                <label class="form-label">Centroid Z</label>
+                <select class="form-control bc-centroid-z-select" name="bc_${index}_centroid_z_option" data-bc-index="${index}" style="border: 2px solid green;">
+                    <option value="top_plus_z" ${selectedOption === 'top_plus_z' ? 'selected' : ''}>Top +Z (${regionThickness}mm)</option>
+                    <option value="top_minus_z" ${selectedOption === 'top_minus_z' ? 'selected' : ''}>Top -Z (0mm)</option>
+                </select>
+                <input type="hidden" class="bc-centroid-z-hidden" name="bc_${index}_centroid_z" value="${selectedOption === 'top_plus_z' ? regionThickness : 0}" data-bc-index="${index}">
+                <div class="invalid-feedback"></div>
+            `;
+            
+            // Add event listener for the dropdown
+            const dropdown = centroidZContainer.querySelector('.bc-centroid-z-select');
+            const hiddenInput = centroidZContainer.querySelector('.bc-centroid-z-hidden');
+            
+            if (dropdown && hiddenInput) {
+                dropdown.addEventListener('change', function() {
+                    const selectedValue = this.value;
+                    
+                    if (selectedValue === 'top_plus_z') {
+                        hiddenInput.value = regionThickness;
+                    } else if (selectedValue === 'top_minus_z') {
+                        hiddenInput.value = 0;
+                    }
+                });
+            }
+        } else {
+            // For non-PLASTIC_COVERED types, use regular number input and show thickness field
+            const currentCentroidZ = item.querySelector('input[name*="_centroid_z"]');
+            const currentValue = currentCentroidZ ? currentCentroidZ.value : 0;
+            
+            // Show thickness field for boundary conditions that need thickness
+            const thicknessContainer = item.querySelector('.bc-thickness-container') || 
+                                       Array.from(item.querySelectorAll('.col-md-4')).find(col => 
+                                           col.querySelector('label') && col.querySelector('label').textContent.includes('Thickness'));
+            if (thicknessContainer) {
+                thicknessContainer.style.display = 'block';
+            }
+            
+            centroidZContainer.innerHTML = `
+                <label class="form-label">Centroid Z</label>
+                <input type="number" class="form-control bc-centroid-z" name="bc_${index}_centroid_z" value="${currentValue}" step="any" data-bc-index="${index}">
+                <div class="invalid-feedback"></div>
+            `;
+        }
+    }
+
     // Function to update type-specific fields
     function updateTypeSpecificFields(item, type, index) {
         const container = item.querySelector('.type-specific-fields');
@@ -944,6 +1054,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         typeSelect.addEventListener('change', function() {
             updateTypeSpecificFields(newItem, this.value, currentCount);
+            handleCentroidZDropdown(newItem, currentCount);
         });
         
         removeBtn.addEventListener('click', function() {
@@ -978,6 +1089,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // This preserves the template-rendered values from the server
             typeSelect.addEventListener('change', function() {
                 updateTypeSpecificFields(item, this.value, index);
+                handleCentroidZDropdown(item, index);
             });
         }
         
@@ -1287,6 +1399,81 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
+        
+
+        
+        // Add event listeners to existing boundary condition items
+        container.querySelectorAll('.boundary-condition-item').forEach((item, index) => {
+            const typeSelect = item.querySelector('.bc-type-select');
+            
+            if (typeSelect) {
+                // Set up centroid Z dropdown for existing items
+                handleCentroidZDropdown(item, index);
+                
+                // Update hidden input value based on selected option
+                const centroidZSelect = item.querySelector('.bc-centroid-z-select');
+                const centroidZHidden = item.querySelector('.bc-centroid-z-hidden');
+                if (centroidZSelect && centroidZHidden) {
+                    const thicknessInput = document.getElementById('thickness');
+                    const regionThickness = thicknessInput ? parseFloat(thicknessInput.value) || 0 : 0;
+                    
+                    if (centroidZSelect.value === 'top_plus_z') {
+                        centroidZHidden.value = regionThickness;
+                    } else if (centroidZSelect.value === 'top_minus_z') {
+                        centroidZHidden.value = 0;
+                    }
+                }
+                
+                // Add listener for type changes
+                typeSelect.addEventListener('change', function() {
+                    updateTypeSpecificFields(item, this.value, index);
+                    handleCentroidZDropdown(item, index);
+                });
+            }
+            
+            // Add listeners for existing PLASTIC_COVERED dropdowns
+            const centroidZSelect = item.querySelector('.bc-centroid-z-select');
+            const centroidZHidden = item.querySelector('.bc-centroid-z-hidden');
+            
+            if (centroidZSelect && centroidZHidden) {
+                centroidZSelect.addEventListener('change', function() {
+                    const thicknessInput = document.getElementById('thickness');
+                    const regionThickness = thicknessInput ? parseFloat(thicknessInput.value) || 0 : 0;
+                    
+                    if (this.value === 'top_plus_z') {
+                        centroidZHidden.value = regionThickness;
+                    } else if (this.value === 'top_minus_z') {
+                        centroidZHidden.value = 0;
+                    }
+                });
+            }
+        });
+        
+        // Override the existing add button functionality 
+        addBtn.onclick = null; // Remove any existing onclick
+        addBtn.addEventListener('click', function() {
+            const currentCount = parseInt(countInput.value);
+            const newItem = createBoundaryConditionForm(currentCount);
+            container.appendChild(newItem);
+            countInput.value = currentCount + 1;
+            
+            // Add event listeners to the new item
+            const typeSelect = newItem.querySelector('.bc-type-select');
+            const removeBtn = newItem.querySelector('.remove-bc-btn');
+            
+            typeSelect.addEventListener('change', function() {
+                updateTypeSpecificFields(newItem, this.value, currentCount);
+                handleCentroidZDropdown(newItem, currentCount);
+            });
+            
+            removeBtn.addEventListener('click', function() {
+                newItem.remove();
+                updateIndices();
+            });
+            
+            // Handle centroid Z dropdown for new item
+            handleCentroidZDropdown(newItem, currentCount);
+        });
         
         // Initial validation
         setTimeout(validateAllBoundaryConditions, 100);

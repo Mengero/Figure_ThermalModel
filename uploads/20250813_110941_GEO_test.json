@@ -1,0 +1,30 @@
+{
+  "environment": {
+    "ambient_temperature": 20.0,
+    "heat_transfer_coefficient": 15.0,
+    "plastic_conductivity": 0.25
+  },
+  "regions": [
+    {
+      "id": "test1",
+      "type": "standard",
+      "centroid": {
+        "x": 0.0,
+        "y": 50.0,
+        "z": 1.0
+      },
+      "width": 100.0,
+      "height": 100.0,
+      "thickness": 2.0,
+      "thermal_conductivity": 120.0,
+      "mesh_settings": {
+        "dx": 5.0,
+        "dy": 5.0,
+        "dz": 0.5
+      },
+      "boundary_conditions": []
+    }
+  ],
+  "actuators": [],
+  "node_networks": []
+}

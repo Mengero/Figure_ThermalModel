@@ -1,12 +1,12 @@
 {
   "environment": {
-    "ambient_temperature": 20.0,
+    "ambient_temperature": 25.0,
     "heat_transfer_coefficient": 15.0,
     "plastic_conductivity": 0.25
   },
   "regions": [
     {
-      "id": "test1",
+      "id": "main_region",
       "type": "standard",
       "centroid": {
         "x": 0.0,
@@ -24,19 +24,9 @@
       },
       "boundary_conditions": [
         {
-          "type": "CONST_Q",
-          "centroid": {
-            "x": 0.0,
-            "y": 50.0,
-            "z": 0
-          },
-          "width": 30.0,
-          "height": 30.0,
-          "thickness": 0.0,
-          "q": 2.0
-        },
-        {
           "type": "PLASTIC_COVERED",
+          "comments": "Default plastic covering",
+          "surface_selection": "+z",
           "centroid": {
             "x": 0.0,
             "y": 50.0,
@@ -45,11 +35,24 @@
           "width": 100.0,
           "height": 100.0,
           "thickness": 0.0,
-          "plastic_thickness": 0.0,
+          "plastic_thickness": 2.0,
           "plastic_conductivity": 0.25,
           "contact_resistance": 0.001,
           "heat_transfer_coefficient": 15.0,
           "ambient_temperature": 25.0
+        },
+        {
+          "type": "CONST_Q",
+          "surface_selection": "+z",
+          "centroid": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 2.0
+          },
+          "width": 0.0,
+          "height": 0.0,
+          "thickness": 0.0,
+          "q": 1.34
         }
       ]
     }

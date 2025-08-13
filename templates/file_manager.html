@@ -24,7 +24,7 @@
                 
                 <div class="row">
                     <!-- Upload New File -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card border-primary h-100">
                             <div class="card-body text-center">
                                 <i class="bi bi-cloud-upload display-1 text-primary mb-3"></i>
@@ -57,8 +57,44 @@
                         </div>
                     </div>
                     
+                    <!-- Create New File -->
+                    <div class="col-md-4">
+                        <div class="card border-warning h-100">
+                            <div class="card-body text-center">
+                                <i class="bi bi-file-earmark-plus display-1 text-warning mb-3"></i>
+                                <h5 class="card-title">Create New File</h5>
+                                <p class="card-text">
+                                    Start with a new blank thermal model template
+                                </p>
+                                
+                                <form action="{{ url_for('create_new_file') }}" method="post" class="mt-3">
+                                    <div class="mb-3">
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="new_filename" 
+                                               name="filename" 
+                                               placeholder="Enter filename (without .json)" 
+                                               pattern="[a-zA-Z0-9_-]+" 
+                                               title="Only letters, numbers, underscore and dash allowed"
+                                               required>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-file-earmark-plus"></i> Create & Edit
+                                    </button>
+                                </form>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> 
+                                        Creates a minimal thermal model template
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Load Default File -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="card border-success h-100">
                             <div class="card-body text-center">
                                 <i class="bi bi-file-earmark-text display-1 text-success mb-3"></i>

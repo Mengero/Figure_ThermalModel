@@ -522,10 +522,25 @@ def edit_region(region_id):
                 # Centroid and dimensions (not for ADIABATIC or MAPPED)
                 if bc_type != 'ADIABATIC' and bc_type != 'MAPPED':
                     if request.form.get(f'bc_{i}_centroid_x') is not None:
+                        # Handle centroid Z based on boundary condition type
+                        centroid_z = 0
+                        if bc_type in ['PLASTIC_COVERED', 'CONST_Q', 'CONST_T', 'NODE_CONNECTED', 'USERDEF_CONVECTION', 'ACTUATOR_CONNECTED']:
+                            # Check if there's a centroid Z option (dropdown) for surface boundary conditions
+                            centroid_z_option = request.form.get(f'bc_{i}_centroid_z_option')
+                            if centroid_z_option == 'top_plus_z':
+                                centroid_z = region['thickness']  # Top surface
+                            elif centroid_z_option == 'top_minus_z':
+                                centroid_z = 0  # Bottom surface
+                            else:  # custom or no option specified
+                                centroid_z = float(request.form.get(f'bc_{i}_centroid_z', 0))
+                        else:
+                            # For other boundary condition types, use the regular centroid Z input
+                            centroid_z = float(request.form.get(f'bc_{i}_centroid_z', 0))
+                        
                         bc['centroid'] = {
                             'x': float(request.form.get(f'bc_{i}_centroid_x', 0)),
                             'y': float(request.form.get(f'bc_{i}_centroid_y', 0)),
-                            'z': float(request.form.get(f'bc_{i}_centroid_z', 0))
+                            'z': centroid_z
                         }
                     
                     # Dimensions
@@ -717,6 +732,56 @@ def load_default():
         return redirect(url_for('dashboard'))
     else:
         flash(f'Default file "{DEFAULT_JSON_FILE}" not found', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/create_new_file', methods=['POST'])
+def create_new_file():
+    """Create a new thermal model JSON file from template"""
+    filename = request.form.get('filename', '').strip()
+    
+    if not filename:
+        flash('Please provide a filename', 'error')
+        return redirect(url_for('index'))
+    
+    # Validate filename
+    if not re.match(r'^[a-zA-Z0-9_-]+$', filename):
+        flash('Filename can only contain letters, numbers, underscore and dash', 'error')
+        return redirect(url_for('index'))
+    
+    # Add .json extension
+    json_filename = f"{filename}.json"
+    
+    # Check if file already exists
+    if os.path.exists(json_filename):
+        flash(f'File "{json_filename}" already exists. Please choose a different name.', 'error')
+        return redirect(url_for('index'))
+    
+    # Create minimal thermal model template
+    template_data = {
+        "environment": {
+            "ambient_temperature": 20.0,
+            "heat_transfer_coefficient": 15.0,
+            "plastic_conductivity": 0.25
+        },
+        "regions": [],
+        "actuators": [],
+        "node_networks": []
+    }
+    
+    try:
+        # Create the new file
+        with open(json_filename, 'w') as f:
+            json.dump(template_data, f, indent=2)
+        
+        # Set it as the current file in session
+        session['current_json_file'] = json_filename
+        session['original_filename'] = json_filename
+        
+        flash(f'New file "{json_filename}" created successfully', 'success')
+        return redirect(url_for('dashboard'))
+        
+    except Exception as e:
+        flash(f'Error creating new file: {e}', 'error')
         return redirect(url_for('index'))
 
 @app.route('/download')

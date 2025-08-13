@@ -6,16 +6,16 @@
   },
   "regions": [
     {
-      "id": "test1",
+      "id": "test_region",
       "type": "standard",
       "centroid": {
         "x": 0.0,
         "y": 50.0,
-        "z": 1.0
+        "z": 4.0
       },
       "width": 100.0,
       "height": 100.0,
-      "thickness": 2.0,
+      "thickness": 8.0,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
         "dx": 5.0,
@@ -24,28 +24,16 @@
       },
       "boundary_conditions": [
         {
-          "type": "CONST_Q",
-          "centroid": {
-            "x": 0.0,
-            "y": 50.0,
-            "z": 0
-          },
-          "width": 30.0,
-          "height": 30.0,
-          "thickness": 0.0,
-          "q": 2.0
-        },
-        {
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
             "y": 50.0,
-            "z": 2.0
+            "z": 8.0
           },
           "width": 100.0,
           "height": 100.0,
           "thickness": 0.0,
-          "plastic_thickness": 0.0,
+          "plastic_thickness": 3.0,
           "plastic_conductivity": 0.25,
           "contact_resistance": 0.001,
           "heat_transfer_coefficient": 15.0,
