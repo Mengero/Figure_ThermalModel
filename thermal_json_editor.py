@@ -318,7 +318,6 @@ def update_environment():
     # Update environment data
     data['environment']['ambient_temperature'] = float(request.form.get('ambient_temperature', 0))
     data['environment']['heat_transfer_coefficient'] = float(request.form.get('heat_transfer_coefficient', 0))
-    data['environment']['plastic_conductivity'] = float(request.form.get('plastic_conductivity', 0))
     
     if save_json_data(data):
         flash('Environment settings updated successfully', 'success')
@@ -760,8 +759,7 @@ def create_new_file():
     template_data = {
         "environment": {
             "ambient_temperature": 20.0,
-            "heat_transfer_coefficient": 15.0,
-            "plastic_conductivity": 0.25
+            "heat_transfer_coefficient": 15.0
         },
         "regions": [],
         "actuators": [],

@@ -1119,7 +1119,7 @@ def calculate_system_size(regions: List[dict], actuators: List[dict], params: Th
             y_max = bc_centroid['y'] + bc_height/2
 
             # Add buffer zone for CONST_Q and ACTUATOR_CONNECTED boundary conditions
-            if bc_type in ["CONST_Q", "ACTUATOR_CONNECTED"]:
+            if bc_type in ["PLASTIC_COVERED", "NODE_CONNECTED", "CONST_Q", "CONST_T", "ACTUATOR_CONNECTED", "USERDEF_CONVECTION"]:
                 # Add dx/2, dy/2 buffer to the region bounds
                 x_min -= coords.dx/2
                 x_max += coords.dx/2
@@ -1140,8 +1140,21 @@ def calculate_system_size(regions: List[dict], actuators: List[dict], params: Th
                     
                     # Check if element is within boundary region
                     if (x_min <= x <= x_max and y_min <= y <= y_max):
-                        # Add both top and bottom surface elements if they exist
-                        for k in [0, coords.Nz-1]:
+                        # For surface-type boundary conditions, only add the appropriate surface based on centroid_z
+                        surface_bc_types = ["PLASTIC_COVERED", "NODE_CONNECTED", "CONST_Q", "CONST_T", "ACTUATOR_CONNECTED", "USERDEF_CONVECTION"]
+                        
+                        if bc_type in surface_bc_types:
+                            # Determine which surface (top or bottom) based on centroid_z
+                            bc_centroid_z = bc_centroid.get('z', 0)
+                            region_centroid_z = region["centroid"]["z"]
+                            
+                            # If BC centroid_z is above region centroid_z, apply to top surface (k = Nz-1)
+                            # If BC centroid_z is below region centroid_z, apply to bottom surface (k = 0)
+                            if bc_centroid_z >= region_centroid_z:
+                                k = coords.Nz - 1  # Top surface
+                            else:
+                                k = 0  # Bottom surface
+                            
                             local_idx = coords.get_global_index(coords.Nx, coords.Ny, i, j, k)
                             global_idx = total_elements + local_idx
                             bc_indices[bc_type].append({
@@ -1149,6 +1162,16 @@ def calculate_system_size(regions: List[dict], actuators: List[dict], params: Th
                                 'i': i, 'j': j, 'k': k,
                                 'bc_data': bc  # Store the full boundary condition data
                             })
+                        else:
+                            # For all other boundary conditions, add both top and bottom surface elements
+                            for k in [0, coords.Nz-1]:
+                                local_idx = coords.get_global_index(coords.Nx, coords.Ny, i, j, k)
+                                global_idx = total_elements + local_idx
+                                bc_indices[bc_type].append({
+                                    'global_idx': global_idx,
+                                    'i': i, 'j': j, 'k': k,
+                                    'bc_data': bc  # Store the full boundary condition data
+                                })
         
         # Store region information
         region_info[region_id] = {

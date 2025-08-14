@@ -258,13 +258,18 @@ def postprocess_results(solution_data):
     print("\nTemperature and Heat Transfer Results:")
     
     # Calculate heat transfer rates for each region
+    global_heat_balance = 0.0  # Total energy balance across all regions
+    
     for region_id, info in region_info.items():
+        ratio_1 = 1
         start_idx = info['start_idx']
         num_elements = info['num_elements']
         region_temps = u[start_idx:start_idx + num_elements]
         coords = info['coords']
         thermal_conductivity = info['region_data']['thermal_conductivity']
         dx_m, dy_m, dz_m = coords.dx * 1e-3, coords.dy * 1e-3, coords.dz * 1e-3
+        A_region = info['region_data']['width'] * info['region_data']['height'] * 1e-6 * 2
+        A_convection = A_region
         
         print(f"\nRegion: {region_id}")
         print(f"Average Temperature: {np.mean(region_temps):.2f}°C")
@@ -272,68 +277,539 @@ def postprocess_results(solution_data):
         print(f"Max Temperature: {np.max(region_temps):.2f}°C")
         
         # Calculate heat transfer rates for different boundary conditions
-        total_heat_transfer = 0.0
+        region_heat_transfer = 0.0
         
-        # Process PLASTIC_COVERED boundary conditions
+        # Track elements that have specific boundary conditions applied (to skip in default convection)
+        elements_with_bc = set()
+        
+        # Process PLASTIC_COVERED boundary conditions (identify unique BCs by parameters)
         if "PLASTIC_COVERED" in info['boundary_indices']:
             plastic_heat_transfer = 0.0
-            for element in info['boundary_indices']["PLASTIC_COVERED"]:
-                global_idx = element['global_idx']
+            plastic_elements = info['boundary_indices']["PLASTIC_COVERED"]
+            
+            # First, identify unique boundary conditions by their parameters
+            unique_bcs = {}
+            for element in plastic_elements:
                 bc_data = element['bc_data']
-                plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3
+                bc_key = (bc_data.get('plastic_thickness', 1.0), 
+                         bc_data.get('plastic_conductivity', 0.3),
+                         bc_data.get('heat_transfer_coefficient', htc_global),
+                         bc_data.get('ambient_temperature', T_inf_global),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                if bc_key not in unique_bcs:
+                    unique_bcs[bc_key] = {
+                        'bc_data': bc_data,
+                        'comments': bc_data.get('comments', f'PLASTIC_{len(unique_bcs)+1}'),
+                        'heat_total': 0.0,
+                        'temp_sum': 0.0,
+                        'element_count': 0
+                    }
+            
+            print(f"  Processing {len(unique_bcs)} original PLASTIC_COVERED boundary condition(s):")
+            
+            # Loop through all elements once and assign to appropriate boundary condition
+            for element in plastic_elements:
+                bc_data = element['bc_data']
+                global_idx = element['global_idx']
+                
+                # Track this element as having a specific boundary condition
+                elements_with_bc.add(global_idx)
+                
+                # Find which boundary condition this element belongs to
+                bc_key = (bc_data.get('plastic_thickness', 1.0), 
+                         bc_data.get('plastic_conductivity', 0.3),
+                         bc_data.get('heat_transfer_coefficient', htc_global),
+                         bc_data.get('ambient_temperature', T_inf_global),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                # Calculate heat transfer for this element using matrix physics
+                plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3  # Convert mm to m
                 plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
                 htc = bc_data.get('heat_transfer_coefficient', htc_global)
                 T_inf = bc_data.get('ambient_temperature', T_inf_global)
+                R_contact = bc_data.get('contact_resistance', 0.0)  # m²·K/W
                 
-                # Calculate heat transfer through plastic and convection
-                h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity)
+                # Same physics as matrix assembly: h_eff = 1/(1/htc + thickness/k + R_contact)
+                h_eff = 1.0 / (1.0/htc + plastic_thickness/plastic_conductivity + R_contact)
+                
                 element_temp = u[global_idx]
-                element_area = dx_m * dy_m
-                q_element = h_eff * element_area * (element_temp - T_inf)
-                plastic_heat_transfer += q_element
+                # Heat transfer: Q = h_eff * A * (T - T_inf), matches matrix: -h_eff*(T-T_inf)/dz
+                element_heat = -h_eff * (element_temp - T_inf)
+                
+                # Accumulate for this boundary condition
+                unique_bcs[bc_key]['heat_total'] += element_heat
+                unique_bcs[bc_key]['temp_sum'] += element_temp
+                unique_bcs[bc_key]['element_count'] += 1
             
-            print(f"Plastic Covered Surface Heat Transfer: {plastic_heat_transfer:.2f} W")
-            total_heat_transfer += plastic_heat_transfer
+            # Display results for each boundary condition
+            for bc_key, bc_info in unique_bcs.items():
+                bc_data = bc_info['bc_data']
+                avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+                total_area = bc_info['element_count'] * dx_m * dy_m * 1e6  # Convert to mm²
+                
+                plastic_thickness = bc_data.get('plastic_thickness', 1.0)  # Keep in mm for display
+                plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
+                htc = bc_data.get('heat_transfer_coefficient', htc_global)
+                h_eff = 1.0 / (1.0/htc + (plastic_thickness*1e-3)/plastic_conductivity)
+                
+                print(f"    {bc_info['comments']}: t={plastic_thickness:.1f}mm, k={plastic_conductivity:.3f}W/m·K, h_eff={h_eff:.1f}W/m²K, Area={total_area:.1f}mm², Heat={bc_info['heat_total']:.3f}W, Avg_T={avg_temp:.2f}°C")
+                plastic_heat_transfer += bc_info['heat_total']
+            
+            print(f"  Total Plastic Covered Surface Heat Transfer: {plastic_heat_transfer:.2f} W")
+            region_heat_transfer += plastic_heat_transfer
         
-        # Process CONST_Q boundary conditions
+        # Process CONST_Q boundary conditions (identify unique BCs by parameters)
         if "CONST_Q" in info['boundary_indices']:
+            const_q_heat = 0.0
             const_q_elements = info['boundary_indices']["CONST_Q"]
-            const_q_temps = [u[elem['global_idx']] for elem in const_q_elements]
-            const_q_heat = sum(elem['bc_data'].get('heat_flux', 0.0) * dx_m * dy_m 
-                             for elem in const_q_elements)
-            print(f"Constant Heat Flux Surface Heat Transfer: {const_q_heat:.2f} W")
-            total_heat_transfer += const_q_heat
+            
+            # First, identify unique boundary conditions by their parameters
+            unique_bcs = {}
+            for element in const_q_elements:
+                bc_data = element['bc_data']
+                bc_key = (bc_data.get('q', 0), 
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                if bc_key not in unique_bcs:
+                    unique_bcs[bc_key] = {
+                        'bc_data': bc_data,
+                        'comments': bc_data.get('comments', f'CONST_Q_{len(unique_bcs)+1}'),
+                        'heat_total': 0.0,
+                        'temp_sum': 0.0,
+                        'element_count': 0
+                    }
+            
+            print(f"  Processing {len(unique_bcs)} original CONST_Q boundary condition(s):")
+            
+            # Loop through all elements once and assign to appropriate boundary condition
+            for element in const_q_elements:
+                bc_data = element['bc_data']
+                global_idx = element['global_idx']
+                
+                # Find which boundary condition this element belongs to
+                bc_key = (bc_data.get('q', 0), 
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                # Calculate heat transfer for this element using matrix physics
+                # From matrix: Q is total heat transfer rate (W), q is heat flux (W/m²)
+                q_tmp = bc_data['q'] / (bc_data['width'] * bc_data['height'] * 1e-6) # W (total heat transfer rate for this BC)
+                
+                element_temp = u[global_idx]
+                
+                # Accumulate for this boundary condition
+                unique_bcs[bc_key]['heat_total'] += q_tmp * dx_m * dy_m
+                unique_bcs[bc_key]['temp_sum'] += element_temp
+                unique_bcs[bc_key]['element_count'] += 1
+            
+            # Display results for each boundary condition
+            for bc_key, bc_info in unique_bcs.items():
+                avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+                total_area = bc_info['bc_data']['width'] * bc_info['bc_data']['height'] # Convert to mm²
+                E_const_Q = bc_info['heat_total']
+                heat_total = bc_info['heat_total'] * total_area * 1e-6 / (bc_info['element_count'] * dx_m * dy_m)
+                # ratio_1 = heat_total / E_const_Q
+                
+                print(f"    {bc_info['comments']}: Area={total_area:.1f} mm², Heat={E_const_Q:.3f} W, Avg_T={avg_temp:.2f}°C")
+                const_q_heat += E_const_Q
+            
+            print(f"  Total Constant Heat Flux Surface Heat Transfer: {const_q_heat:.2f} W")
+            region_heat_transfer += const_q_heat
         
-        # Process ACTUATOR_CONNECTED boundary conditions
+        # Process ACTUATOR_CONNECTED boundary conditions (group by actuator_id and connecting_location)
         if "ACTUATOR_CONNECTED" in info['boundary_indices']:
             actuator_heat_transfer = 0.0
-            # T_Housing = np.average([u[idx] for idx in actuator_elements[actuator_id]['housing_elements']])
-            # T_Output = np.average([u[idx] for idx in actuator_elements[actuator_id]['output_elements']])
-            for element in info['boundary_indices']["ACTUATOR_CONNECTED"]:
-                global_idx = element['global_idx']
+            actuator_elements = info['boundary_indices']["ACTUATOR_CONNECTED"]
+            A_actuator = 0
+            
+            # Group elements by actuator_id and connecting_location only
+            actuator_groups = {}
+            for element in actuator_elements:
                 bc_data = element['bc_data']
-                actuator_id = bc_data.get('actuator_id')
+                actuator_id = bc_data.get('actuator_id', '')
+                connecting_location = bc_data.get('connecting_location', '')
+                group_key = (actuator_id, connecting_location)
                 
+                if group_key not in actuator_groups:
+                    actuator_groups[group_key] = {
+                        'actuator_id': actuator_id,
+                        'connecting_location': connecting_location,
+                        'temp_sum': 0.0,
+                        'element_count': 0
+                    }
+                
+                # Accumulate temperature and count for averaging
+                global_idx = element['global_idx']
+                element_temp = u[global_idx]
+                
+                # Track this element as having a specific boundary condition
+                elements_with_bc.add(global_idx)
+                
+                actuator_groups[group_key]['temp_sum'] += element_temp
+                actuator_groups[group_key]['element_count'] += 1
+            
+            print(f"  Processing {len(actuator_groups)} ACTUATOR_CONNECTED group(s):")
+            
+            # Calculate heat transfer for each actuator-location group
+            for group_key, group_info in actuator_groups.items():
+                actuator_id = group_info['actuator_id']
+                connecting_location = group_info['connecting_location']
+                
+                # Calculate average temperature for this actuator-location group
+                avg_temp = group_info['temp_sum'] / group_info['element_count']
+                total_area = group_info['element_count'] * dx_m * dy_m * 1e6  # Convert to mm²
+                A_actuator += total_area * 1e-6
+                heat_transfer = 0.0
                 if actuator_id in actuator_info:
                     T_FETs = u[actuator_info[actuator_id]['start_idx']]
                     T_Motor = u[actuator_info[actuator_id]['start_idx'] + 1]
                     T_Gearbox = u[actuator_info[actuator_id]['start_idx'] + 2]
-                    element_temp = u[global_idx]
                     R1 = actuator_info[actuator_id]['thermal_resistance']['R1']
                     R2 = actuator_info[actuator_id]['thermal_resistance']['R2']
                     R3 = actuator_info[actuator_id]['thermal_resistance']['R3']
                     R4 = actuator_info[actuator_id]['thermal_resistance']['R4']
                     R5 = actuator_info[actuator_id]['thermal_resistance']['R5']
-                    # Get the appropriate thermal resistance based on connecting location
-                    if bc_data['connecting_location'] == 'Housing':
-                        actuator_heat_transfer += ((T_FETs - element_temp)/R1 + (T_Motor - element_temp)/R2 + (T_Gearbox - element_temp)/R4) * actuator_elements[actuator_id]['housing_area'] / len(actuator_elements[actuator_id]['housing_elements'])
-                    elif bc_data['connecting_location'] == 'Output':
-                        actuator_heat_transfer += (T_Gearbox - element_temp)/R5 * actuator_elements[actuator_id]['output_area'] / len(actuator_elements[actuator_id]['output_elements']) 
+                    
+                    # Calculate heat transfer using average temperature
+                    if connecting_location == 'Housing':
+                        heat_transfer = ((T_FETs - avg_temp)/R1 + (T_Motor - avg_temp)/R2 + (T_Gearbox - avg_temp)/R4)
+                    elif connecting_location == 'Output':
+                        heat_transfer = (T_Gearbox - avg_temp)/R5
+                
+                print(f"    ACTUATOR_{actuator_id}_{connecting_location}: Area={total_area:.1f}mm², Heat={heat_transfer:.3f}W, Avg_T={avg_temp:.2f}°C")
+                actuator_heat_transfer += heat_transfer
             
-            # print(f"Actuator Connected Surface Heat Transfer: {actuator_heat_transfer:.2f} W")
-        #     total_heat_transfer += actuator_heat_transfer
+            print(f"  Total Actuator Connected Surface Heat Transfer: {actuator_heat_transfer:.2f} W")
+            region_heat_transfer += actuator_heat_transfer
         
-        # print(f"Total Heat Transfer Rate: {total_heat_transfer:.2f} W")
+        # Process CONST_T boundary conditions (identify unique BCs by parameters)
+        # if "CONST_T" in info['boundary_indices']:
+        #     const_t_heat = 0.0
+        #     const_t_elements = info['boundary_indices']["CONST_T"]
+            
+        #     # First, identify unique boundary conditions by their parameters
+        #     unique_bcs = {}
+        #     for element in const_t_elements:
+        #         bc_data = element['bc_data']
+        #         bc_key = (bc_data.get('temperature', 0.0),
+        #                  bc_data.get('width', 0), 
+        #                  bc_data.get('height', 0),
+        #                  bc_data.get('centroid', {}).get('x', 0),
+        #                  bc_data.get('centroid', {}).get('y', 0),
+        #                  bc_data.get('centroid', {}).get('z', 0))
+                
+        #         if bc_key not in unique_bcs:
+        #             unique_bcs[bc_key] = {
+        #                 'bc_data': bc_data,
+        #                 'comments': bc_data.get('comments', f'CONST_T_{bc_data.get("temperature", 0):.1f}C'),
+        #                 'heat_total': 0.0,
+        #                 'temp_sum': 0.0,
+        #                 'element_count': 0
+        #             }
+            
+        #     print(f"  Processing {len(unique_bcs)} original CONST_T boundary condition(s):")
+            
+        #     # Loop through all elements once and assign to appropriate boundary condition
+        #     for element in const_t_elements:
+        #         bc_data = element['bc_data']
+        #         global_idx = element['global_idx']
+                
+        #         # Find which boundary condition this element belongs to
+        #         bc_key = (bc_data.get('temperature', 0.0),
+        #                  bc_data.get('width', 0), 
+        #                  bc_data.get('height', 0),
+        #                  bc_data.get('centroid', {}).get('x', 0),
+        #                  bc_data.get('centroid', {}).get('y', 0),
+        #                  bc_data.get('centroid', {}).get('z', 0))
+                
+        #         element_temp = u[global_idx]
+        #         set_temperature = bc_data.get('temperature', 0.0)
+                
+        #         # For CONST_T, calculate the heat transfer needed to maintain the fixed temperature
+        #         # This is done by calculating what heat would flow in/out based on temperature differences
+        #         # with neighboring elements (same physics as matrix assembly)
+                
+        #         # Get element position and neighbors
+        #         coords = info['coords']
+        #         start_idx = info['start_idx']
+        #         thermal_conductivity = info['region_data']['thermal_conductivity']
+                
+        #         # Find the 3D position of this element
+        #         local_idx = global_idx - start_idx
+        #         Nx, Ny, Nz = coords.Nx, coords.Ny, coords.Nz
+                
+        #         # Convert local index to i,j,k coordinates
+        #         k = local_idx // (Nx * Ny)
+        #         remainder = local_idx % (Nx * Ny)
+        #         j = remainder // Nx
+        #         i = remainder % Nx
+                
+        #         # Calculate heat flow to/from neighbors to maintain set temperature
+        #         element_heat = 0.0
+                
+        #         # Check each direction for neighbors and calculate conduction heat transfer
+        #         # X-direction neighbors
+        #         if i > 0:  # Left neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i-1, j, k)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dy_m * dz_m
+        #             q_x = thermal_conductivity * area * (neighbor_temp - set_temperature) / dx_m
+        #             element_heat += q_x
+                
+        #         if i < Nx-1:  # Right neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i+1, j, k)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dy_m * dz_m
+        #             q_x = thermal_conductivity * area * (neighbor_temp - set_temperature) / dx_m
+        #             element_heat += q_x
+                
+        #         # Y-direction neighbors
+        #         if j > 0:  # Bottom neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i, j-1, k)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dx_m * dz_m
+        #             q_y = thermal_conductivity * area * (neighbor_temp - set_temperature) / dy_m
+        #             element_heat += q_y
+                
+        #         if j < Ny-1:  # Top neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i, j+1, k)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dx_m * dz_m
+        #             q_y = thermal_conductivity * area * (neighbor_temp - set_temperature) / dy_m
+        #             element_heat += q_y
+                
+        #         # Z-direction neighbors
+        #         if k > 0:  # Bottom neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i, j, k-1)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dx_m * dy_m
+        #             q_z = thermal_conductivity * area * (neighbor_temp - set_temperature) / dz_m
+        #             element_heat += q_z
+                
+        #         if k < Nz-1:  # Top neighbor
+        #             neighbor_idx = start_idx + coords.get_global_index(Nx, Ny, i, j, k+1)
+        #             neighbor_temp = u[neighbor_idx]
+        #             area = dx_m * dy_m
+        #             q_z = thermal_conductivity * area * (neighbor_temp - set_temperature) / dz_m
+        #             element_heat += q_z
+                
+        #         # Accumulate for this boundary condition
+        #         unique_bcs[bc_key]['heat_total'] += element_heat
+        #         unique_bcs[bc_key]['temp_sum'] += element_temp
+        #         unique_bcs[bc_key]['element_count'] += 1
+            
+        #     # Display results for each boundary condition
+        #     for bc_key, bc_info in unique_bcs.items():
+        #         total_area = bc_info['bc_data']['width'] * bc_info['bc_data']['height']  # Convert to mm²
+        #         ratio_1 = total_area * 1e-6 / (bc_info['element_count'] * dx_m * dy_m)
+        #         avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+        #         heat_total = bc_info['heat_total'] * ratio_1
+                
+        #         print(f"    {bc_info['comments']}: Area={total_area:.1f}mm², Heat={heat_total:.3f}W, Avg_T={avg_temp:.2f}°C")
+        #         const_t_heat += heat_total
+            
+        #     print(f"  Total Constant Temperature Heat Transfer: {const_t_heat:.2f} W")
+        #     region_heat_transfer += const_t_heat
+        
+        # Process NODE_CONNECTED boundary conditions (identify unique BCs by parameters)
+        if "NODE_CONNECTED" in info['boundary_indices']:
+            node_heat_transfer = 0.0
+            node_elements = info['boundary_indices']["NODE_CONNECTED"]
+            
+            # First, identify unique boundary conditions by their parameters
+            unique_bcs = {}
+            for element in node_elements:
+                bc_data = element['bc_data']
+                bc_key = (bc_data.get('node_id', ''),
+                         bc_data.get('thermal_resistance', 1.0),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                if bc_key not in unique_bcs:
+                    unique_bcs[bc_key] = {
+                        'bc_data': bc_data,
+                        'comments': bc_data.get('comments', f'NODE_{bc_data.get("node_id", "UNKNOWN")}'),
+                        'heat_total': 0.0,
+                        'temp_sum': 0.0,
+                        'element_count': 0
+                    }
+            
+            print(f"  Processing {len(unique_bcs)} original NODE_CONNECTED boundary condition(s):")
+            
+            # First pass: collect temperatures for each boundary condition
+            for element in node_elements:
+                bc_data = element['bc_data']
+                global_idx = element['global_idx']
+                
+                # Track this element as having a specific boundary condition
+                elements_with_bc.add(global_idx)
+                
+                # Find which boundary condition this element belongs to
+                bc_key = (bc_data.get('node_id', ''),
+                         bc_data.get('thermal_resistance', 1.0),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                element_temp = u[global_idx]
+                
+                # Accumulate temperature and count for averaging
+                unique_bcs[bc_key]['temp_sum'] += element_temp
+                unique_bcs[bc_key]['element_count'] += 1
+            
+            # Second pass: calculate heat transfer using average temperature for each BC
+            for bc_key, bc_info in unique_bcs.items():
+                bc_data = bc_info['bc_data']
+                
+                # Calculate average temperature for this boundary condition
+                avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+                
+                thermal_resistance = bc_data.get('thermal_resistance', 1.0)
+                node_id = bc_data.get('node_id')
+                
+                node_idx = solution_data['node_index_map'][node_id]
+                node_temp = u[node_idx]
+                
+                # Calculate heat transfer: Q = (T_surface - T_node) / R_thermal
+                bc_info['heat_total'] = -(avg_temp - node_temp) / thermal_resistance
+            
+            # Display results for each boundary condition
+            for bc_key, bc_info in unique_bcs.items():
+                avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+                total_area = bc_info['element_count'] * dx_m * dy_m * 1e6  # Convert to mm²
+                
+                print(f"    {bc_info['comments']}: Area={total_area:.1f}mm², Heat={bc_info['heat_total']:.3f}W, Avg_T={avg_temp:.2f}°C")
+                # node_heat_transfer += bc_info['heat_total']
+                node_heat_transfer += bc_info['heat_total'] * total_area * 1e-6 / (bc_info['bc_data']['width'] * bc_info['bc_data']['height'] * 1e-6)
+            
+            print(f"  Total Node Connected Heat Transfer: {node_heat_transfer:.2f} W")
+            region_heat_transfer += node_heat_transfer
+        
+        # Process USERDEF_CONVECTION boundary conditions (identify unique BCs by parameters)
+        if "USERDEF_CONVECTION" in info['boundary_indices']:
+            convection_heat_transfer = 0.0
+            convection_elements = info['boundary_indices']["USERDEF_CONVECTION"]
+            
+            # First, identify unique boundary conditions by their parameters
+            unique_bcs = {}
+            for element in convection_elements:
+                bc_data = element['bc_data']
+                bc_key = (bc_data.get('heat_transfer_coefficient', htc_global),
+                         bc_data.get('ambient_temperature', T_inf_global),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                if bc_key not in unique_bcs:
+                    unique_bcs[bc_key] = {
+                        'bc_data': bc_data,
+                        'comments': bc_data.get('comments', f'USERDEF_CONV_{len(unique_bcs)+1}'),
+                        'heat_total': 0.0,
+                        'temp_sum': 0.0,
+                        'element_count': 0
+                    }
+            
+            print(f"  Processing {len(unique_bcs)} original USERDEF_CONVECTION boundary condition(s):")
+            
+            # Loop through all elements once and assign to appropriate boundary condition
+            for element in convection_elements:
+                bc_data = element['bc_data']
+                global_idx = element['global_idx']
+                
+                # Track this element as having a specific boundary condition
+                elements_with_bc.add(global_idx)
+                
+                # Find which boundary condition this element belongs to
+                bc_key = (bc_data.get('heat_transfer_coefficient', htc_global),
+                         bc_data.get('ambient_temperature', T_inf_global),
+                         bc_data.get('width', 0), 
+                         bc_data.get('height', 0),
+                         bc_data.get('centroid', {}).get('x', 0),
+                         bc_data.get('centroid', {}).get('y', 0),
+                         bc_data.get('centroid', {}).get('z', 0))
+                
+                # Calculate heat transfer using matrix physics
+                htc = bc_data.get('heat_transfer_coefficient', htc_global)
+                T_inf = bc_data.get('ambient_temperature', T_inf_global)
+                element_temp = u[global_idx]
+                element_area = dx_m * dy_m  # Element area in m²
+                # Heat transfer: Q = htc * A * (T - T_inf), matches matrix: -htc*(T-T_inf)/dz
+                element_heat = htc * element_area * (element_temp - T_inf)
+                
+                # Accumulate for this boundary condition
+                unique_bcs[bc_key]['heat_total'] += element_heat
+                unique_bcs[bc_key]['temp_sum'] += element_temp
+                unique_bcs[bc_key]['element_count'] += 1
+            
+            # Display results for each boundary condition
+            for bc_key, bc_info in unique_bcs.items():
+                avg_temp = bc_info['temp_sum'] / bc_info['element_count']
+                total_area = bc_info['element_count'] * dx_m * dy_m * 1e6  # Convert to mm²
+                
+                print(f"    {bc_info['comments']}: Area={total_area:.1f}mm², Heat={bc_info['heat_total']:.3f}W, Avg_T={avg_temp:.2f}°C")
+                convection_heat_transfer += bc_info['heat_total']
+            
+            print(f"  Total User-Defined Convection Heat Transfer: {convection_heat_transfer:.2f} W")
+            region_heat_transfer += convection_heat_transfer
+        
+        # Process default convection for surface elements without specific boundary conditions
+        default_convection_heat_tmp = 0.0
+        surface_element_count = 0
+        
+        # Get default convection parameters
+        default_htc = env_data['heat_transfer_coefficient']
+        default_T_inf = env_data['ambient_temperature']
+        
+        region_data = info['region_data']
+        htc = region_data.get('heat_transfer_coefficient', htc_global)
+        T_inf = region_data.get('ambient_temperature', T_inf_global)
+        element_area = dx_m * dy_m  # Element area in m²
+        
+        # Process surface, edge, and corner elements that don't have specific BCs
+        for element_type in ['surface', 'edge', 'corner']:
+            if element_type in info['element_indices']:
+                for global_idx, i, j, k in info['element_indices'][element_type]:
+                    # Only process elements that don't have specific boundary conditions
+                    if global_idx not in elements_with_bc:
+                        # Only apply to top (k=Nz-1) and bottom (k=0) surfaces
+                        if k == 0 or k == coords.Nz-1:
+                            element_temp = u[global_idx]
+                            # Default convection: Q = htc * A * (T - T_inf)
+                            element_heat = -htc * element_area * (element_temp - T_inf)
+                            default_convection_heat_tmp += element_heat
+                            surface_element_count += 1
+        
+        if surface_element_count > 0:
+            default_convection_heat = ratio_1 * default_convection_heat_tmp
+            print(f"  Default Convection Heat Transfer: {default_convection_heat:.2f} W")
+            print(f"    Surface Elements: {surface_element_count}, Area: {A_convection*1e6:.1f}mm², HTC: {default_htc:.1f}W/m²K")
+            region_heat_transfer += default_convection_heat
+        
+        print(f"Region {region_id} Total Heat Transfer: {region_heat_transfer:.2f} W")
+        global_heat_balance += region_heat_transfer
         
         # Detailed boundary condition temperatures
         print(f"\nBoundary Condition Temperatures for Region {region_id}:")
@@ -353,36 +829,43 @@ def postprocess_results(solution_data):
                     
                     # Add specific boundary condition parameters
                     if elements:
-                        bc_data = elements[0]['bc_data']
                         if bc_type == 'CONST_Q':
-                            q_flux = bc_data.get('q', 0.0)
-                            print(f"    Heat Flux: {q_flux:.2f} W/m²")
-                        elif bc_type == 'CONST_T':
-                            set_temp = bc_data.get('temperature', 0.0)
-                            print(f"    Set Temperature: {set_temp:.2f}°C")
-                        elif bc_type == 'PLASTIC_COVERED':
-                            thickness = bc_data.get('plastic_thickness', 0.0)
-                            conductivity = bc_data.get('plastic_conductivity', 0.0)
-                            print(f"    Plastic Thickness: {thickness:.3f} mm")
-                            print(f"    Plastic Conductivity: {conductivity:.3f} W/m·K")
-                        elif bc_type == 'ACTUATOR_CONNECTED':
-                            actuator_id = bc_data.get('actuator_id', 'Unknown')
-                            location = bc_data.get('connecting_location', 'Unknown')
-                            print(f"    Connected to Actuator: {actuator_id}")
-                            print(f"    Connection Location: {location}")
-                        elif bc_type == 'NODE_CONNECTED':
-                            node_id = bc_data.get('node_id', 'Unknown')
-                            resistance = bc_data.get('thermal_resistance', 0.0)
-                            print(f"    Connected to Node: {node_id}")
-                            print(f"    Thermal Resistance: {resistance:.2f} K/W")
-                        elif bc_type == 'USERDEF_CONVECTION':
-                            htc = bc_data.get('heat_transfer_coefficient', 0.0)
-                            t_amb = bc_data.get('ambient_temperature', 0.0)
-                            print(f"    Heat Transfer Coefficient: {htc:.2f} W/m²·K")
-                            print(f"    Ambient Temperature: {t_amb:.2f}°C")
-                        elif bc_type == 'USERDEF_CONDUCTION':
-                            conductivity = bc_data.get('conductivity', 0.0)
-                            print(f"    Conductivity: {conductivity:.2f} W/m·K")
+                            # Show all individual CONST_Q heat flux values
+                            q_values = [elem['bc_data'].get('q', 0.0) for elem in elements]
+                            if len(set(q_values)) == 1:
+                                print(f"    Heat Flux: {q_values[0]:.2f} W/m² (all elements)")
+                            else:
+                                print(f"    Heat Flux: {min(q_values):.2f} to {max(q_values):.2f} W/m² (range)")
+                                print(f"    Individual values: {[f'{q:.2f}' for q in q_values]}")
+                        else:
+                            # For other BC types, use the first element's bc_data
+                            bc_data = elements[0]['bc_data']
+                            if bc_type == 'CONST_T':
+                                set_temp = bc_data.get('temperature', 0.0)
+                                print(f"    Set Temperature: {set_temp:.2f}°C")
+                            elif bc_type == 'PLASTIC_COVERED':
+                                thickness = bc_data.get('plastic_thickness', 0.0)
+                                conductivity = bc_data.get('plastic_conductivity', 0.0)
+                                print(f"    Plastic Thickness: {thickness:.3f} mm")
+                                print(f"    Plastic Conductivity: {conductivity:.3f} W/m·K")
+                            elif bc_type == 'ACTUATOR_CONNECTED':
+                                actuator_id = bc_data.get('actuator_id', 'Unknown')
+                                location = bc_data.get('connecting_location', 'Unknown')
+                                print(f"    Connected to Actuator: {actuator_id}")
+                                print(f"    Connection Location: {location}")
+                            elif bc_type == 'NODE_CONNECTED':
+                                node_id = bc_data.get('node_id', 'Unknown')
+                                resistance = bc_data.get('thermal_resistance', 0.0)
+                                print(f"    Connected to Node: {node_id}")
+                                print(f"    Thermal Resistance: {resistance:.2f} K/W")
+                            elif bc_type == 'USERDEF_CONVECTION':
+                                htc = bc_data.get('heat_transfer_coefficient', 0.0)
+                                t_amb = bc_data.get('ambient_temperature', 0.0)
+                                print(f"    Heat Transfer Coefficient: {htc:.2f} W/m²·K")
+                                print(f"    Ambient Temperature: {t_amb:.2f}°C")
+                            elif bc_type == 'USERDEF_CONDUCTION':
+                                conductivity = bc_data.get('conductivity', 0.0)
+                                print(f"    Conductivity: {conductivity:.2f} W/m·K")
     
     # Process node network temperatures
     if 'node_index_map' in solution_data:
@@ -740,6 +1223,122 @@ def postprocess_results(solution_data):
     plt.tight_layout()
     plt.savefig('temperature_distribution.png', dpi=300, bbox_inches='tight')
     plt.close()
+    
+    # Final Energy Balance Check
+    print("\n" + "=" * 60)
+    print("GLOBAL ENERGY BALANCE CHECK")
+    print("=" * 60)
+    print(f"Total Heat Transfer across all regions: {global_heat_balance:.6f} W")
+    
+    # Check if energy balance is satisfied (should be close to zero)
+    tolerance = 1e-3  # 1 mW tolerance
+    if abs(global_heat_balance) < tolerance:
+        print(f"✅ ENERGY BALANCE SATISFIED: |{global_heat_balance:.6f}| < {tolerance} W")
+    else:
+        print(f"❌ ENERGY BALANCE NOT SATISFIED: |{global_heat_balance:.6f}| ≥ {tolerance} W")
+        print("   Check boundary conditions and heat sources/sinks!")
+    
+    print("=" * 60)
+
+def calculate_conduction_heat_transfer(region_info, u, dx_m, dy_m, dz_m):
+    """
+    Calculate conduction heat transfer within a region using the same physics as matrix assembly.
+    
+    Args:
+        region_info: Region information with coordinates and boundary conditions
+        u: Solution vector with temperatures
+        dx_m, dy_m, dz_m: Element dimensions in meters
+        
+    Returns:
+        Total internal conduction heat transfer (W)
+    """
+    coords = region_info['coords']
+    thermal_conductivity = region_info['region_data']['thermal_conductivity']
+    start_idx = region_info['start_idx']
+    
+    Nx, Ny, Nz = coords.Nx, coords.Ny, coords.Nz
+    total_conduction_heat = 0.0
+    
+    # Get adiabatic pairs (where conduction is blocked)
+    adiabatic_pairs = region_info.get('adiabatic_pairs', [])
+    adiabatic_blocked = set()
+    for pair in adiabatic_pairs:
+        idx1, idx2 = pair['element1']['global_idx'], pair['element2']['global_idx']
+        adiabatic_blocked.add((min(idx1, idx2), max(idx1, idx2)))
+    
+    # Get USERDEF_CONDUCTION elements (modified conductivity)
+    userdef_conductivity = {}
+    if "USERDEF_CONDUCTION" in region_info['boundary_indices']:
+        for element in region_info['boundary_indices']["USERDEF_CONDUCTION"]:
+            global_idx = element['global_idx']
+            new_k = element['bc_data']['conductivity']
+            userdef_conductivity[global_idx] = new_k
+    
+    # Calculate conduction heat transfer between neighboring elements
+    # Same physics as matrix assembly: Q = k * A * (T2 - T1) / distance
+    
+    for i in range(Nx):
+        for j in range(Ny):
+            for k in range(Nz):
+                local_idx = coords.get_global_index(Nx, Ny, i, j, k)
+                global_idx = start_idx + local_idx
+                T1 = u[global_idx]
+                
+                # Get thermal conductivity for this element
+                k1 = userdef_conductivity.get(global_idx, thermal_conductivity)
+                
+                # Check x-direction neighbor (i+1)
+                if i < Nx - 1:
+                    neighbor_local_idx = coords.get_global_index(Nx, Ny, i+1, j, k)
+                    neighbor_global_idx = start_idx + neighbor_local_idx
+                    
+                    # Check if this connection is blocked by adiabatic BC
+                    pair_key = (min(global_idx, neighbor_global_idx), max(global_idx, neighbor_global_idx))
+                    if pair_key not in adiabatic_blocked:
+                        T2 = u[neighbor_global_idx]
+                        k2 = userdef_conductivity.get(neighbor_global_idx, thermal_conductivity)
+                        k_avg = (k1 + k2) / 2.0  # Average conductivity at interface
+                        
+                        # Heat transfer: Q = k * A * (T2 - T1) / dx
+                        area = dy_m * dz_m  # Cross-sectional area
+                        q_x = k_avg * area * (T2 - T1) / dx_m
+                        total_conduction_heat += abs(q_x)
+                
+                # Check y-direction neighbor (j+1)
+                if j < Ny - 1:
+                    neighbor_local_idx = coords.get_global_index(Nx, Ny, i, j+1, k)
+                    neighbor_global_idx = start_idx + neighbor_local_idx
+                    
+                    # Check if this connection is blocked by adiabatic BC
+                    pair_key = (min(global_idx, neighbor_global_idx), max(global_idx, neighbor_global_idx))
+                    if pair_key not in adiabatic_blocked:
+                        T2 = u[neighbor_global_idx]
+                        k2 = userdef_conductivity.get(neighbor_global_idx, thermal_conductivity)
+                        k_avg = (k1 + k2) / 2.0  # Average conductivity at interface
+                        
+                        # Heat transfer: Q = k * A * (T2 - T1) / dy
+                        area = dx_m * dz_m  # Cross-sectional area
+                        q_y = k_avg * area * (T2 - T1) / dy_m
+                        total_conduction_heat += abs(q_y)
+                
+                # Check z-direction neighbor (k+1)
+                if k < Nz - 1:
+                    neighbor_local_idx = coords.get_global_index(Nx, Ny, i, j, k+1)
+                    neighbor_global_idx = start_idx + neighbor_local_idx
+                    
+                    # Check if this connection is blocked by adiabatic BC
+                    pair_key = (min(global_idx, neighbor_global_idx), max(global_idx, neighbor_global_idx))
+                    if pair_key not in adiabatic_blocked:
+                        T2 = u[neighbor_global_idx]
+                        k2 = userdef_conductivity.get(neighbor_global_idx, thermal_conductivity)
+                        k_avg = (k1 + k2) / 2.0  # Average conductivity at interface
+                        
+                        # Heat transfer: Q = k * A * (T2 - T1) / dz
+                        area = dx_m * dy_m  # Cross-sectional area
+                        q_z = k_avg * area * (T2 - T1) / dz_m
+                        total_conduction_heat += abs(q_z)
+    
+    return total_conduction_heat
 
 def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.ndarray, region_info: Dict, actuator_info: Dict, node_index_map: dict, geo_data: dict) -> Tuple[scipy.sparse.lil_matrix, np.ndarray, Dict, Dict]:
     """
