@@ -181,7 +181,6 @@
                                             {% endif %}
                                         {% elif bc.type == 'PLASTIC_COVERED' %}
                                             <strong>Plastic Thickness:</strong> {{ bc.plastic_thickness }} mm<br>
-                                            <strong>Plastic Conductivity:</strong> {{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }} W/mK<br>
                                             <strong>Contact Resistance:</strong> {{ bc.contact_resistance if bc.contact_resistance is not none else 0.001 }} m²K/W<br>
                                             <strong>Heat Transfer Coefficient:</strong> {{ bc.heat_transfer_coefficient if bc.heat_transfer_coefficient is not none else 15.0 }} W/m²K<br>
                                             <strong>Ambient Temperature:</strong> {{ bc.ambient_temperature if bc.ambient_temperature is not none else 25.0 }} °C

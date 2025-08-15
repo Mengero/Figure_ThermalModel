@@ -245,13 +245,10 @@ def postprocess_results(solution_data):
     env_data = geo_data.get('environment', {})
     T_inf_global = env_data.get('ambient_temperature')
     htc_global = env_data.get('heat_transfer_coefficient')
-    plastic_conductivity_global = env_data.get('plastic_conductivity')
     if T_inf_global is None:
         raise ValueError("Ambient temperature must be specified in the environment data")
     elif htc_global is None:
         raise ValueError("Heat transfer coefficient must be specified in the environment data")
-    elif plastic_conductivity_global is None:
-        raise ValueError("Plastic conductivity must be specified in the environment data")
     
     # Print temperatures and heat transfer rates for each region
     print("\n" + "=" * 50)
@@ -292,7 +289,7 @@ def postprocess_results(solution_data):
             for element in plastic_elements:
                 bc_data = element['bc_data']
                 bc_key = (bc_data.get('plastic_thickness', 1.0), 
-                         bc_data.get('plastic_conductivity', 0.3),
+                         bc_data.get('plastic_conductivity', 0.25),
                          bc_data.get('heat_transfer_coefficient', htc_global),
                          bc_data.get('ambient_temperature', T_inf_global),
                          bc_data.get('width', 0), 
@@ -322,7 +319,7 @@ def postprocess_results(solution_data):
                 
                 # Find which boundary condition this element belongs to
                 bc_key = (bc_data.get('plastic_thickness', 1.0), 
-                         bc_data.get('plastic_conductivity', 0.3),
+                         bc_data.get('plastic_conductivity', 0.25),
                          bc_data.get('heat_transfer_coefficient', htc_global),
                          bc_data.get('ambient_temperature', T_inf_global),
                          bc_data.get('width', 0), 
@@ -333,7 +330,7 @@ def postprocess_results(solution_data):
                 
                 # Calculate heat transfer for this element using matrix physics
                 plastic_thickness = bc_data.get('plastic_thickness', 1.0) * 1e-3  # Convert mm to m
-                plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
+                plastic_conductivity = bc_data.get('plastic_conductivity', 0.25)
                 htc = bc_data.get('heat_transfer_coefficient', htc_global)
                 T_inf = bc_data.get('ambient_temperature', T_inf_global)
                 R_contact = bc_data.get('contact_resistance', 0.0)  # m²·K/W
@@ -357,7 +354,7 @@ def postprocess_results(solution_data):
                 total_area = bc_info['element_count'] * dx_m * dy_m * 1e6  # Convert to mm²
                 
                 plastic_thickness = bc_data.get('plastic_thickness', 1.0)  # Keep in mm for display
-                plastic_conductivity = bc_data.get('plastic_conductivity', 0.3)
+                plastic_conductivity = bc_data.get('plastic_conductivity', 0.25)
                 htc = bc_data.get('heat_transfer_coefficient', htc_global)
                 h_eff = 1.0 / (1.0/htc + (plastic_thickness*1e-3)/plastic_conductivity)
                 
@@ -995,7 +992,7 @@ def postprocess_results(solution_data):
                     global_idx = element['global_idx']
                     bc_data = element['bc_data']
                     plastic_thickness = bc_data['plastic_thickness'] * 1e-3
-                    plastic_conductivity = bc_data['plastic_conductivity']
+                    plastic_conductivity = bc_data.get('plastic_conductivity', 0.25)
                     R_contact = bc_data['contact_resistance'] # m^2C/W
                     htc = bc_data.get('heat_transfer_coefficient', htc_global)
                     T_inf = bc_data.get('ambient_temperature', T_inf_global)
@@ -1551,7 +1548,7 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     
                     # Get boundary condition parameters
                     plastic_thickness = bc_data['plastic_thickness'] * 1e-3  # Convert to meters
-                    plastic_conductivity = bc_data['plastic_conductivity']  # W/mK
+                    plastic_conductivity = bc_data.get('plastic_conductivity', 0.25)  # W/mK
                     htc = bc_data.get('heat_transfer_coefficient', htc_global)  # W/m²K
                     T_inf = bc_data.get('ambient_temperature', T_inf_global)  # C
                     R_contact = bc_data['contact_resistance'] # m^2C/W

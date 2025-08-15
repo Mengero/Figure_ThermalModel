@@ -24,7 +24,7 @@
       },
       "boundary_conditions": [
         {
-          "type": "NODE_CONNECTED",
+          "type": "CONST_Q",
           "centroid": {
             "x": 0.0,
             "y": 50.0,
@@ -33,35 +33,11 @@
           "width": 30.0,
           "height": 30.0,
           "thickness": 0.0,
-          "node_id": "node1",
-          "thermal_resistance": 1.0
+          "q": 2.0
         }
       ]
     }
   ],
   "actuators": [],
-  "node_networks": [
-    {
-      "id": "test",
-      "name": "",
-      "description": "",
-      "nodes": [
-        {
-          "id": "node1",
-          "name": "",
-          "thermal_capacity": 0.0,
-          "heat_source": 5.0
-        }
-      ],
-      "connections": [
-        {
-          "id": "node1toair",
-          "from_node": "node1",
-          "to_node": "air",
-          "thermal_resistance": 2.0,
-          "description": ""
-        }
-      ]
-    }
-  ]
+  "node_networks": []
 }

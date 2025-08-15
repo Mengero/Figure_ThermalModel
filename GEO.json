@@ -1,8 +1,7 @@
 {
   "environment": {
     "ambient_temperature": 20.0,
-    "heat_transfer_coefficient": 15.0,
-    "plastic_conductivity": 0.25
+    "heat_transfer_coefficient": 15.0
   },
   "regions": [
     {

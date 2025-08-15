@@ -384,11 +384,7 @@
                                             <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_thickness" 
                                                    value="{{ bc.plastic_thickness }}" step="any" required>
                                         </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label">Plastic Conductivity (W/mK)</label>
-                                            <input type="number" class="form-control" name="bc_{{ loop.index0 }}_plastic_conductivity" 
-                                                   value="{{ bc.plastic_conductivity if bc.plastic_conductivity is not none else 0.25 }}" step="any" required>
-                                        </div>
+
                                     </div>
                                     <div class="row mb-2">
                                         <div class="col-md-6">
@@ -935,12 +931,11 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (type === 'PLASTIC_COVERED') {
             // Preserve existing values if any
             const existingThicknessField = item.querySelector(`input[name*="_plastic_thickness"]`);
-            const existingConductivityField = item.querySelector(`input[name*="_plastic_conductivity"]`);
+
             const existingContactResistanceField = item.querySelector(`input[name*="_contact_resistance"]`);
             const existingHtcField = item.querySelector(`input[name*="_heat_transfer_coefficient"]`);
             const existingTempField = item.querySelector(`input[name*="_ambient_temperature"]`);
             const thicknessValue = existingThicknessField ? existingThicknessField.value : "0";
-            const conductivityValue = existingConductivityField ? existingConductivityField.value : "0.25";
             const contactResistanceValue = existingContactResistanceField ? existingContactResistanceField.value : "0.001";
             const htcValue = existingHtcField ? existingHtcField.value : "15.0";
             const tempValue = existingTempField ? existingTempField.value : "25.0";
@@ -950,10 +945,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label class="form-label">Plastic Thickness</label>
                         <input type="number" class="form-control" name="bc_${index}_plastic_thickness" value="${thicknessValue}" step="any">
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Plastic Conductivity (W/mK)</label>
-                        <input type="number" class="form-control" name="bc_${index}_plastic_conductivity" value="${conductivityValue}" step="any">
-                    </div>
+
                 </div>
                 <div class="row mb-2">
                     <div class="col-md-6">

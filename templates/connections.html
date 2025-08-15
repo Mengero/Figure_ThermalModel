@@ -57,8 +57,7 @@
                                         {% elif connection.type == 'MAPPED' %}
                                             <strong>Symmetry Axis:</strong> {{ connection.details.symmetry_axis }}
                                         {% elif connection.type == 'PLASTIC_COVERED' %}
-                                            <strong>Plastic Thickness:</strong> {{ connection.details.plastic_thickness }} mm<br>
-                                            <strong>Plastic Conductivity:</strong> {{ connection.details.plastic_conductivity or 0.25 }} W/mK
+                                            <strong>Plastic Thickness:</strong> {{ connection.details.plastic_thickness }} mm
                                         {% endif %}
                                         
                                         {% if connection.details.centroid %}
