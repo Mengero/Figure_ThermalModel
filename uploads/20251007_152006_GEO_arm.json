@@ -10,16 +10,16 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 97.955,
+        "y": 146.9325,
         "z": 4.0
       },
-      "width": 37.5,
-      "height": 195.91,
+      "width": 56.25,
+      "height": 293.865,
       "thickness": 8.0,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 4.0,
-        "dy": 4.0,
+        "dx": 6.0,
+        "dy": 6.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -27,11 +27,11 @@
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
-            "y": 97.955,
+            "y": 146.9325,
             "z": 8.0
           },
-          "width": 37.5,
-          "height": 195.91,
+          "width": 56.25,
+          "height": 293.865,
           "thickness": 0.0,
           "plastic_thickness": 6.0,
           "contact_resistance": 1e-05,
@@ -43,11 +43,11 @@
           "comments": "J1_GEARBOX_1",
           "centroid": {
             "x": 0.0,
-            "y": 1.5625,
+            "y": 2.34375,
             "z": 0
           },
-          "width": 37.5,
-          "height": 3.125,
+          "width": 56.25,
+          "height": 4.6875,
           "thickness": 0.0,
           "q": 1.0
         },
@@ -56,11 +56,11 @@
           "comments": "J1_GEARBOX_2",
           "centroid": {
             "x": 0.0,
-            "y": 194.3475,
+            "y": 291.52125,
             "z": 0
           },
-          "width": 37.5,
-          "height": 3.125,
+          "width": 56.25,
+          "height": 4.6875,
           "thickness": 0.0,
           "q": 1.0
         },
@@ -68,11 +68,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 97.955,
+            "y": 146.9325,
             "z": 0
           },
-          "width": 37.5,
-          "height": 54.3118,
+          "width": 56.25,
+          "height": 81.4677,
           "thickness": 0.0,
           "actuator_id": "J2",
           "connecting_location": "Housing"
@@ -81,7 +81,7 @@
           "type": "MAPPED",
           "face_selection": "-x",
           "start_location": 0.0,
-          "end_location": 70.8,
+          "end_location": 141.6,
           "mapping_type": "symmetry",
           "symmetry_axis": "y"
         },
@@ -89,7 +89,7 @@
           "type": "MAPPED",
           "face_selection": "+x",
           "start_location": 0.0,
-          "end_location": 70.8,
+          "end_location": 141.6,
           "mapping_type": "symmetry",
           "symmetry_axis": "y"
         }
@@ -100,28 +100,28 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 31.175,
+        "y": 46.7625,
         "z": 1.1
       },
-      "width": 142.165,
-      "height": 62.35,
+      "width": 213.2475,
+      "height": 93.525,
       "thickness": 2.2,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 3.0,
-        "dy": 3.0,
+        "dx": 5.0,
+        "dy": 5.0,
         "dz": 0.5
       },
       "boundary_conditions": [
         {
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
-            "x": 35.54,
-            "y": 42.25,
+            "x": 54.06,
+            "y": 63.375,
             "z": 0
           },
-          "width": 25.56765,
-          "height": 25.56765,
+          "width": 38.351475,
+          "height": 38.351475,
           "thickness": 0.0,
           "actuator_id": "J2",
           "connecting_location": "Output"
@@ -130,11 +130,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 5.19805,
+            "y": 7.797075,
             "z": 0
           },
-          "width": 142.165,
-          "height": 0.75,
+          "width": 213.2475,
+          "height": 1.125,
           "thickness": 0.0,
           "actuator_id": "J3",
           "connecting_location": "Output"
@@ -143,7 +143,7 @@
           "type": "MAPPED",
           "face_selection": "+x",
           "start_location": 0.0,
-          "end_location": 20.0,
+          "end_location": 40.0,
           "mapping_type": "symmetry",
           "symmetry_axis": "x"
         },
@@ -151,22 +151,22 @@
           "type": "ADIABATIC",
           "point1": {
             "x": 0.0,
-            "y": 19.995
+            "y": 29.9925
           },
           "point2": {
             "x": 0.0,
-            "y": 62.35
+            "y": 93.525
           }
         },
         {
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
-            "y": 31.175,
+            "y": 46.7625,
             "z": 2.2
           },
-          "width": 142.165,
-          "height": 62.35,
+          "width": 213.2475,
+          "height": 93.525,
           "thickness": 0.0,
           "plastic_thickness": 3.0,
           "contact_resistance": 0.0001,
@@ -180,16 +180,16 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 51.4025,
+        "y": 77.10375,
         "z": 1.25
       },
-      "width": 141.965,
-      "height": 102.805,
+      "width": 212.9475,
+      "height": 154.2075,
       "thickness": 2.5,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 4.0,
-        "dy": 4.0,
+        "dx": 7.0,
+        "dy": 7.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -197,11 +197,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 91.65,
+            "y": 137.475,
             "z": 0
           },
-          "width": 141.965,
-          "height": 22.31,
+          "width": 212.9475,
+          "height": 33.465,
           "thickness": 0.0,
           "actuator_id": "J3",
           "connecting_location": "Housing"
@@ -209,12 +209,12 @@
         {
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
-            "x": -35.49,
-            "y": 20.555,
+            "x": -53.235,
+            "y": 30.8325,
             "z": 0
           },
-          "width": 26.455,
-          "height": 26.455,
+          "width": 39.6825,
+          "height": 39.6825,
           "thickness": 0.0,
           "actuator_id": "J4",
           "connecting_location": "Output"
@@ -223,11 +223,11 @@
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
-            "y": 51.4025,
+            "y": 77.10375,
             "z": 2.5
           },
-          "width": 141.965,
-          "height": 102.805,
+          "width": 212.9475,
+          "height": 154.2075,
           "thickness": 0.0,
           "plastic_thickness": 3.0,
           "contact_resistance": 1e-06,
@@ -242,7 +242,7 @@
           },
           "point2": {
             "x": 0.0,
-            "y": 70.0
+            "y": 105.0
           }
         }
       ]
@@ -252,16 +252,16 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 85.725,
+        "y": 128.5875,
         "z": 1.0
       },
-      "width": 97.635,
-      "height": 171.45,
+      "width": 146.4525,
+      "height": 257.175,
       "thickness": 2.0,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.5,
-        "dy": 1.5,
+        "dx": 10.0,
+        "dy": 10.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -269,11 +269,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 85.725,
+            "y": 128.5875,
             "z": 0
           },
-          "width": 97.635,
-          "height": 126.675,
+          "width": 146.4525,
+          "height": 190.0125,
           "thickness": 0.0,
           "actuator_id": "J4",
           "connecting_location": "Housing"
@@ -282,11 +282,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 0.5175,
+            "y": 0.77625,
             "z": 0
           },
-          "width": 97.635,
-          "height": 1.035,
+          "width": 146.4525,
+          "height": 1.5525,
           "thickness": 0.0,
           "actuator_id": "ROLL",
           "connecting_location": "Output"
@@ -295,11 +295,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 170.925,
+            "y": 256.3875,
             "z": 0
           },
-          "width": 96.135,
-          "height": 1.035,
+          "width": 144.2025,
+          "height": 1.5525,
           "thickness": 0.0,
           "actuator_id": "ROLL",
           "connecting_location": "Output"
@@ -308,7 +308,7 @@
           "type": "MAPPED",
           "face_selection": "+x",
           "start_location": 0.0,
-          "end_location": 44.775,
+          "end_location": 89.55,
           "mapping_type": "symmetry",
           "symmetry_axis": "y"
         },
@@ -316,11 +316,11 @@
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
-            "y": 85.725,
+            "y": 128.5875,
             "z": 0
           },
-          "width": 97.635,
-          "height": 171.45,
+          "width": 146.4525,
+          "height": 257.175,
           "thickness": 0.0,
           "plastic_thickness": 2.248,
           "contact_resistance": 0.001,
@@ -331,7 +331,7 @@
           "type": "MAPPED",
           "face_selection": "-x",
           "start_location": 0.0,
-          "end_location": 44.775,
+          "end_location": 89.55,
           "mapping_type": "symmetry",
           "symmetry_axis": "y"
         }
@@ -342,16 +342,16 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 34.91,
+        "y": 52.365,
         "z": 1.03
       },
-      "width": 123.215,
-      "height": 69.82,
+      "width": 184.8225,
+      "height": 104.73,
       "thickness": 2.06,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.5,
-        "dy": 2.0,
+        "dx": 5.0,
+        "dy": 6.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -359,11 +359,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 64.0415,
+            "y": 96.06225,
             "z": 0
           },
-          "width": 6.885,
-          "height": 11.557,
+          "width": 10.3275,
+          "height": 17.3355,
           "thickness": 0.0,
           "actuator_id": "ROLL",
           "connecting_location": "Housing"
@@ -371,12 +371,12 @@
         {
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
-            "x": -59.885,
-            "y": 64.0415,
+            "x": -89.8275,
+            "y": 96.06225,
             "z": 0
           },
-          "width": 3.445,
-          "height": 11.557,
+          "width": 5.1675,
+          "height": 17.3355,
           "thickness": 0.0,
           "actuator_id": "ROLL",
           "connecting_location": "Housing"
@@ -384,12 +384,12 @@
         {
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
-            "x": 59.885,
-            "y": 64.0415,
+            "x": 89.8275,
+            "y": 96.06225,
             "z": 0
           },
-          "width": 3.445,
-          "height": 11.557,
+          "width": 5.1675,
+          "height": 17.3355,
           "thickness": 0.0,
           "actuator_id": "ROLL",
           "connecting_location": "Housing"
@@ -397,12 +397,12 @@
         {
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
-            "x": 30.805,
-            "y": 13.485,
+            "x": 46.2075,
+            "y": 20.2275,
             "z": 0
           },
-          "width": 20.915,
-          "height": 20.915,
+          "width": 31.3725,
+          "height": 31.3725,
           "thickness": 0.0,
           "actuator_id": "PITCH",
           "connecting_location": "Output"
@@ -411,11 +411,11 @@
           "type": "PLASTIC_COVERED",
           "centroid": {
             "x": 0.0,
-            "y": 34.91,
+            "y": 52.365,
             "z": 0
           },
-          "width": 123.215,
-          "height": 69.82,
+          "width": 184.8225,
+          "height": 104.73,
           "thickness": 0.0,
           "plastic_thickness": 1.25,
           "contact_resistance": 0.001,
@@ -429,16 +429,16 @@
       "type": "standard",
       "centroid": {
         "x": 0.0,
-        "y": 65.93,
+        "y": 98.895,
         "z": 4.395
       },
-      "width": 23.32,
-      "height": 131.86,
+      "width": 34.98,
+      "height": 197.79,
       "thickness": 8.79,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.0,
-        "dy": 1.5,
+        "dx": 3.0,
+        "dy": 5.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -446,11 +446,11 @@
           "type": "ACTUATOR_CONNECTED",
           "centroid": {
             "x": 0.0,
-            "y": 90.92,
+            "y": 136.38,
             "z": 0
           },
-          "width": 13.60965,
-          "height": 81.88,
+          "width": 20.414475,
+          "height": 122.82,
           "thickness": 0.0,
           "actuator_id": "PITCH",
           "connecting_location": "Housing"
@@ -460,11 +460,11 @@
           "comments": "YAW_GB",
           "centroid": {
             "x": 0.0,
-            "y": 10.41325,
+            "y": 15.619875,
             "z": 0
           },
-          "width": 20.8265,
-          "height": 20.8265,
+          "width": 31.23975,
+          "height": 31.23975,
           "thickness": 0.0,
           "node_id": "YAW_HS",
           "thermal_resistance": 1.0
@@ -522,7 +522,7 @@
       "id": "ROLL",
       "heat_losses": {
         "gearbox": 0.0,
-        "motor": 2.5,
+        "motor": 1.5,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -537,7 +537,7 @@
       "id": "PITCH",
       "heat_losses": {
         "gearbox": 0.0,
-        "motor": 2.5,
+        "motor": 1.5,
         "FETs": 0.0
       },
       "thermal_resistance": {
@@ -565,7 +565,7 @@
           "id": "YAW_HS",
           "name": "",
           "thermal_capacity": 0.0,
-          "heat_source": 2.5
+          "heat_source": 1.5
         }
       ],
       "connections": [
@@ -573,21 +573,21 @@
           "id": "YAW_HStoBH",
           "from_node": "YAW_HS",
           "to_node": "BACKHAND",
-          "thermal_resistance": 2.53,
+          "thermal_resistance": 4.398,
           "description": ""
         },
         {
           "id": "YAW_HStoAIR",
           "from_node": "YAW_HS",
           "to_node": "air",
-          "thermal_resistance": 12.2666666663599,
+          "thermal_resistance": 9.2,
           "description": "NC"
         },
         {
           "id": "BHtoAIR",
           "from_node": "BACKHAND",
           "to_node": "air",
-          "thermal_resistance": 5.863998534,
+          "thermal_resistance": 4.398,
           "description": ""
         },
         {

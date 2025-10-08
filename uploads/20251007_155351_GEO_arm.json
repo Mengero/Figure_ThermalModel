@@ -18,8 +18,8 @@
       "thickness": 8.0,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 4.0,
-        "dy": 4.0,
+        "dx": 6.0,
+        "dy": 6.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -108,8 +108,8 @@
       "thickness": 2.2,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 3.0,
-        "dy": 3.0,
+        "dx": 5.0,
+        "dy": 5.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -188,8 +188,8 @@
       "thickness": 2.5,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 4.0,
-        "dy": 4.0,
+        "dx": 7.0,
+        "dy": 7.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -260,8 +260,8 @@
       "thickness": 2.0,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.5,
-        "dy": 1.5,
+        "dx": 10.0,
+        "dy": 10.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -350,8 +350,8 @@
       "thickness": 2.06,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.5,
-        "dy": 2.0,
+        "dx": 5.0,
+        "dy": 6.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -437,8 +437,8 @@
       "thickness": 8.79,
       "thermal_conductivity": 120.0,
       "mesh_settings": {
-        "dx": 1.0,
-        "dy": 1.5,
+        "dx": 3.0,
+        "dy": 5.0,
         "dz": 0.5
       },
       "boundary_conditions": [
@@ -580,14 +580,14 @@
           "id": "YAW_HStoAIR",
           "from_node": "YAW_HS",
           "to_node": "air",
-          "thermal_resistance": 12.2666666663599,
+          "thermal_resistance": 10.914266639381,
           "description": "NC"
         },
         {
           "id": "BHtoAIR",
           "from_node": "BACKHAND",
           "to_node": "air",
-          "thermal_resistance": 5.863998534,
+          "thermal_resistance": 4.5116,
           "description": ""
         },
         {

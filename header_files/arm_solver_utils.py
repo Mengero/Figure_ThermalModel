@@ -432,12 +432,12 @@ def postprocess_results(solution_data):
         # Process ACTUATOR_CONNECTED boundary conditions (group by actuator_id and connecting_location)
         if "ACTUATOR_CONNECTED" in info['boundary_indices']:
             actuator_heat_transfer = 0.0
-            actuator_elements = info['boundary_indices']["ACTUATOR_CONNECTED"]
+            actuator_boundary_elements = info['boundary_indices']["ACTUATOR_CONNECTED"]
             A_actuator = 0
             
             # Group elements by actuator_id and connecting_location only
             actuator_groups = {}
-            for element in actuator_elements:
+            for element in actuator_boundary_elements:
                 bc_data = element['bc_data']
                 actuator_id = bc_data.get('actuator_id', '')
                 connecting_location = bc_data.get('connecting_location', '')
