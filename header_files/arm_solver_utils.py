@@ -1662,12 +1662,17 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                     
                     if node_id in node_index_map:
                         node_global_idx = node_index_map[node_id]
+                        # Get the number of elements connected to this specific node (not all NODE_CONNECTED elements in region)
+                        num_elements_for_node = len(node_connected_elements[node_id]['elements'])
                         # Add symmetric conductance G = 1/R
                         for element_idx in node_connected_elements[node_id]['elements']:
-                            A[global_idx, element_idx] -= 1.0 / thermal_resistance / len(elements) / dz_m / area
+                            A[global_idx, element_idx] -= 1.0 / thermal_resistance / num_elements_for_node / dz_m / area
                         A[global_idx, node_global_idx] += 1.0 / thermal_resistance / dz_m / area
-                        A[node_global_idx, global_idx] += 1.0 / thermal_resistance / len(elements)
-                A[node_global_idx, node_global_idx] -= 1.0 / thermal_resistance
+                        A[node_global_idx, global_idx] += 1.0 / thermal_resistance / num_elements_for_node
+                        # Update node diagonal: accumulate negative conductance from all connected elements
+                        A[node_global_idx, node_global_idx] -= 1.0 / thermal_resistance / num_elements_for_node
+                
+                
             
             
         # Get convection parameters from region data
@@ -1687,5 +1692,6 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                         A[global_idx, global_idx] -= htc / dz_m
                         b[global_idx] -= htc * T_inf / dz_m
 
+    print(A[-1,-1])
 
     return A, b, actuator_elements, node_connected_elements 

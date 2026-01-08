@@ -5,7 +5,7 @@
   },
   "regions": [
     {
-      "id": "test1",
+      "id": "test_region",
       "type": "standard",
       "centroid": {
         "x": 0.0,
@@ -23,16 +23,43 @@
       },
       "boundary_conditions": [
         {
-          "type": "CONST_Q",
+          "type": "NODE_CONNECTED",
+          "centroid": {
+            "x": -10.0,
+            "y": 40.0,
+            "z": 0
+          },
+          "width": 20.0,
+          "height": 20.0,
+          "thickness": 0.0,
+          "node_id": "test1",
+          "thermal_resistance": 3.0
+        },
+        {
+          "type": "NODE_CONNECTED",
+          "centroid": {
+            "x": 30.0,
+            "y": 20.0,
+            "z": 0
+          },
+          "width": 10.0,
+          "height": 10.0,
+          "thickness": 0.0,
+          "node_id": "tset2",
+          "thermal_resistance": 2.0
+        },
+        {
+          "type": "USERDEF_CONVECTION",
           "centroid": {
             "x": 0.0,
             "y": 50.0,
-            "z": 0
+            "z": 2.0
           },
-          "width": 30.0,
-          "height": 30.0,
+          "width": 100.0,
+          "height": 100.0,
           "thickness": 0.0,
-          "q": 10.0
+          "heat_transfer_coefficient": 15.0,
+          "ambient_temperature": 25.0
         }
       ]
     }
@@ -41,45 +68,67 @@
   "node_networks": [
     {
       "id": "test",
-      "name": "",
+      "name": "test",
       "description": "",
       "nodes": [
         {
-          "id": "node1",
+          "id": "test1",
           "name": "",
           "thermal_capacity": 0.0,
-          "heat_source": 5.0
+          "heat_source": 1.0
+        },
+        {
+          "id": "tset2",
+          "name": "test2",
+          "thermal_capacity": 0.0,
+          "heat_source": 2.0
         }
       ],
       "connections": [
         {
-          "id": "node1toair",
-          "from_node": "node1",
-          "to_node": "air",
-          "thermal_resistance": 2.0,
-          "description": ""
-        },
-        {
-          "id": "region_test1_bc_0_to_node1",
-          "from_node": "region_test1_boundary",
-          "to_node": "node1",
-          "thermal_resistance": 1.0,
-          "description": "Region test1 boundary connection",
+          "id": "region_test_region_bc_0_to_test1",
+          "from_node": "region_test_region_boundary",
+          "to_node": "test1",
+          "thermal_resistance": 3.0,
+          "description": "Region test_region boundary connection",
           "type": "boundary_connection",
-          "region_id": "test1",
+          "region_id": "test_region",
           "boundary_condition_index": 0,
           "boundary_condition": {
             "type": "NODE_CONNECTED",
             "centroid": {
-              "x": 0.0,
-              "y": 50.0,
+              "x": -10.0,
+              "y": 40.0,
               "z": 0
             },
-            "width": 30.0,
-            "height": 30.0,
+            "width": 20.0,
+            "height": 20.0,
             "thickness": 0.0,
-            "node_id": "node1",
-            "thermal_resistance": 1.0
+            "node_id": "test1",
+            "thermal_resistance": 3.0
+          }
+        },
+        {
+          "id": "region_test_region_bc_1_to_tset2",
+          "from_node": "region_test_region_boundary",
+          "to_node": "tset2",
+          "thermal_resistance": 2.0,
+          "description": "Region test_region boundary connection",
+          "type": "boundary_connection",
+          "region_id": "test_region",
+          "boundary_condition_index": 1,
+          "boundary_condition": {
+            "type": "NODE_CONNECTED",
+            "centroid": {
+              "x": 30.0,
+              "y": 20.0,
+              "z": 0
+            },
+            "width": 10.0,
+            "height": 10.0,
+            "thickness": 0.0,
+            "node_id": "tset2",
+            "thermal_resistance": 2.0
           }
         }
       ]
