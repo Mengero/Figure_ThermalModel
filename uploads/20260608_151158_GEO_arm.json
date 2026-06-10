@@ -205,7 +205,7 @@
           "width": 283.93,
           "height": 44.62,
           "thickness": 0.0,
-          "actuator_id": "upper_arm_twist",
+          "actuator_id": "J3",
           "connecting_location": "Housing"
         },
         {
@@ -218,7 +218,7 @@
           "width": 52.91,
           "height": 52.91,
           "thickness": 0.0,
-          "actuator_id": "elbow",
+          "actuator_id": "J4",
           "connecting_location": "Output"
         },
         {
@@ -494,7 +494,7 @@
       }
     },
     {
-      "id": "upper_arm_twist",
+      "id": "J3",
       "heat_losses": {
         "gearbox": 0.0,
         "motor": 0.0,
@@ -509,7 +509,7 @@
       }
     },
     {
-      "id": "elbow",
+      "id": "J4",
       "heat_losses": {
         "gearbox": 0.0,
         "motor": 0.0,

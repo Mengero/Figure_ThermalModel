@@ -137,7 +137,7 @@
           "width": 284.33,
           "height": 1.5,
           "thickness": 0.0,
-          "actuator_id": "upper_arm_twist",
+          "actuator_id": "J3",
           "connecting_location": "Output"
         },
         {
@@ -205,7 +205,7 @@
           "width": 283.93,
           "height": 44.62,
           "thickness": 0.0,
-          "actuator_id": "upper_arm_twist",
+          "actuator_id": "J3",
           "connecting_location": "Housing"
         },
         {
@@ -218,7 +218,7 @@
           "width": 52.91,
           "height": 52.91,
           "thickness": 0.0,
-          "actuator_id": "elbow",
+          "actuator_id": "J4",
           "connecting_location": "Output"
         },
         {
@@ -278,7 +278,7 @@
           "width": 195.27,
           "height": 253.35,
           "thickness": 0.0,
-          "actuator_id": "elbow",
+          "actuator_id": "J4",
           "connecting_location": "Housing"
         },
         {
@@ -475,6 +475,25 @@
           "thermal_resistance": 1.0
         }
       ]
+    },
+    {
+      "id": "Hook",
+      "type": "standard",
+      "centroid": {
+        "x": 0.0,
+        "y": 200.0,
+        "z": 2.7
+      },
+      "width": 91.2,
+      "height": 400.0,
+      "thickness": 5.4,
+      "thermal_conductivity": 120.0,
+      "mesh_settings": {
+        "dx": 5.0,
+        "dy": 5.0,
+        "dz": 2.5
+      },
+      "boundary_conditions": []
     }
   ],
   "actuators": [
@@ -494,7 +513,7 @@
       }
     },
     {
-      "id": "upper_arm_twist",
+      "id": "J3",
       "heat_losses": {
         "gearbox": 0.0,
         "motor": 0.0,
@@ -509,7 +528,7 @@
       }
     },
     {
-      "id": "elbow",
+      "id": "J4",
       "heat_losses": {
         "gearbox": 0.0,
         "motor": 0.0,

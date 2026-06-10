@@ -485,9 +485,9 @@ def postprocess_results(solution_data):
                     
                     # Calculate heat transfer using average temperature
                     if connecting_location == 'Housing':
-                        heat_transfer = ((T_FETs - avg_temp)/R1 + (T_Motor - avg_temp)/R2 + (T_Gearbox - avg_temp)/R3)
+                        heat_transfer = ((T_FETs - avg_temp)/R1 + (T_Motor - avg_temp)/R2 + (T_Gearbox - avg_temp)/R4)
                     elif connecting_location == 'Output':
-                        heat_transfer = (T_Gearbox - avg_temp)/R4
+                        heat_transfer = (T_Gearbox - avg_temp)/R5
                 
                 print(f"    ACTUATOR_{actuator_id}_{connecting_location}: Area={total_area:.1f}mm², Heat={heat_transfer:.3f}W, Avg_T={avg_temp:.2f}°C")
                 actuator_heat_transfer += heat_transfer
@@ -1442,18 +1442,18 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
         A[Tmotor_idx, Tmotor_idx] -= 1/R2
         b[Tmotor_idx] -= Q_motor
         # Gearbox
-        # Equation: (THousing - TGearbox)/R3 + (TOutput - TGearbox)/R4 = 0
-        A[Tgearbox_idx, Tgearbox_idx] -= 1/R3+1/R4
+        # Equation: (THousing - TGearbox)/R4 + (TOutput - TGearbox)/R5 = 0
+        A[Tgearbox_idx, Tgearbox_idx] -= 1/R4+1/R5
         b[Tgearbox_idx] -= Q_gearbox
         
         for element_idx in housing_elements:
             # Thousing = sum(Thousing_elem) / len(housing_elements), average of the housing elements
             A[TFETs_idx, element_idx] += 1/R1 /len(housing_elements)
             A[Tmotor_idx, element_idx] += 1/R2 /len(housing_elements)
-            A[Tgearbox_idx, element_idx] += 1/R3 /len(housing_elements)
+            A[Tgearbox_idx, element_idx] += 1/R4 /len(housing_elements)
         for element_idx in output_elements:
             # Thousing = sum(TOutput) / len(output_elements), average of the output elements
-            A[Tgearbox_idx, element_idx] += 1/R4 /len(output_elements)
+            A[Tgearbox_idx, element_idx] += 1/R5 /len(output_elements)
     
     # Node Network Internal Physics: Process each node and its connections
     # Logic: For each node, find all its connections and apply heat generation
@@ -1635,21 +1635,21 @@ def update_matrix_with_boundary_conditions(A: scipy.sparse.lil_matrix, b: np.nda
                         # Loop through elements in boundary region to create coupling between all elements
                         for element_idx in housing_elements:
                             # Thousing = sum(Thousing_elem) / len(housing_elements), average of the housing elements
-                            # Equation: (TFETs - THousing)/R1 + (TMotor - THousing)/R2 + (TOutput - THousing)/R5 + (TGearbox - THousing)/R3 + (TNeighbors - THousing)/Rcond + (Tamb - THousing)/Rhtc = 0
-                            A[global_idx, element_idx] -= (1/R1+1/R2+1/R5+1/R3) /len(housing_elements)/dz_m / actuator_elements[actuator_id]['housing_area']
+                            # Equation: (TFETs - THousing)/R1 + (TMotor - THousing)/R2 + (TOutput - THousing)/R3 + (TGearbox - THousing)/R4 + (TNeighbors - THousing)/Rcond + (Tamb - THousing)/Rhtc = 0
+                            A[global_idx, element_idx] -= (1/R1+1/R2+1/R3+1/R4) /len(housing_elements)/dz_m / actuator_elements[actuator_id]['housing_area']
                         for element_idx in output_elements:
-                            # Equation: (THousing - TOutput)/R5 + Q_Output = 0
-                            A[global_idx, element_idx] += (1/R5) /len(output_elements)/dz_m / actuator_elements[actuator_id]['housing_area']
+                            # Equation: (THousing - TOutput)/R3 + Q_Output = 0
+                            A[global_idx, element_idx] += (1/R3) /len(output_elements)/dz_m / actuator_elements[actuator_id]['housing_area']
                         A[global_idx, TFETs_idx] += 1/R1/dz_m / actuator_elements[actuator_id]['housing_area']
                         A[global_idx, Tmotor_idx] += 1/R2/dz_m / actuator_elements[actuator_id]['housing_area']
-                        A[global_idx, Tgearbox_idx] += 1/R3/dz_m / actuator_elements[actuator_id]['housing_area']
+                        A[global_idx, Tgearbox_idx] += 1/R4/dz_m / actuator_elements[actuator_id]['housing_area']
                         
                     elif connecting_location == "Output":
                         for element_idx in output_elements:
-                            A[global_idx, element_idx] -= (1/R5+1/R4) /len(output_elements)/dz_m / actuator_elements[actuator_id]['output_area']
+                            A[global_idx, element_idx] -= (1/R3+1/R5) /len(output_elements)/dz_m / actuator_elements[actuator_id]['output_area']
                         for element_idx in housing_elements:
-                            A[global_idx, element_idx] += 1/R5 /len(housing_elements)/dz_m/ actuator_elements[actuator_id]['output_area']
-                        A[global_idx, Tgearbox_idx] += 1/R4 /dz_m/ actuator_elements[actuator_id]['output_area']
+                            A[global_idx, element_idx] += 1/R3 /len(housing_elements)/dz_m/ actuator_elements[actuator_id]['output_area']
+                        A[global_idx, Tgearbox_idx] += 1/R5 /dz_m/ actuator_elements[actuator_id]['output_area']
 
             elif bc_type == "NODE_CONNECTED":
                 for element in elements:
