@@ -1,0 +1,7 @@
+# generated figures (regenerate with `python main.py --limb <limb> all`)
+figures/
+*.png
+
+# python
+__pycache__/
+*.pyc
