@@ -38,25 +38,32 @@ _AREA = {
     'foot':    0.0119,   #  11,874 mm^2
 }                        # total = 0.5177 m^2
 
-# Placeholder serial chain: one actuator per inter-segment joint, plus the spine boundary.
-# 8 segments -> 8 actuators (1 boundary + 7 links), mirroring the arm's J1+6-link layout. TODO real DOF.
-_ACTS = ['SPINE', 'HIP_YAW', 'HIP_ROLL', 'HIP_PITCH', 'KNEE', 'ANKLE_PITCH', 'ANKLE_ROLL', 'FOOT']
+# Spine has TWO SM85 motors (SPN Z + SPN X). Distal joints are placeholder serial links
+# (one actuator per inter-segment joint). 8 segments, 8 motors. TODO real DOF below the pelvis.
+_ACTS = ['SPN_Z', 'SPN_X', 'HIP_YAW', 'HIP_ROLL', 'HIP_PITCH', 'KNEE', 'ANKLE_PITCH', 'ANKLE_ROLL']
 _N = len(_ACTS)
+
+# --- spine thermal masses (MEASURED, SM85; halved for left/right symmetry) ---
+#   Node 1a/1b stator+rotor: 237.5 J/K each -> /2 = 118.75 ;  windings 74.8 -> /2 = 37.4
+#   Node 2 structural+drivetrain+electronics: 1040.7 J/K -> /2 = 520.35
+_SPN_CM = 237.5 / 2     # 118.75 J/K per spine motor (assembly)
+_SPN_CW = 74.8 / 2      # 37.40  J/K per spine motor (windings)
+_SPN_CS = 1040.7 / 2    # 520.35 J/K spine structure (Node 2)
 
 CONFIG = LimbConfig(
     name='leg',
     ACTS=_ACTS,
     STRUCTS=_STRUCTS,
     FABRICS=['thigh_u', 'thigh_l', 'shin'],          # TODO confirm covered segments
-    TOPO={                                            # TODO confirm (housing, output) per joint
-        'SPINE':       ('spine', 'spine'),            # boundary: housing==output (no link)
-        'HIP_YAW':     ('spine', 'pelvis'),           # link spine -> pelvis
-        'HIP_ROLL':    ('pelvis', 'hip'),
-        'HIP_PITCH':   ('hip', 'thigh_u'),
-        'KNEE':        ('thigh_u', 'thigh_l'),
-        'ANKLE_PITCH': ('thigh_l', 'shin'),
-        'ANKLE_ROLL':  ('shin', 'ankle'),
-        'FOOT':        ('ankle', 'foot'),
+    TOPO={                                            # TODO confirm (housing, output) per joint below pelvis
+        'SPN_Z':       ('spine', 'spine'),            # spine Z motor: leaf on spine (no link)
+        'SPN_X':       ('spine', 'pelvis'),           # spine X motor: links spine -> pelvis
+        'HIP_YAW':     ('pelvis', 'hip'),
+        'HIP_ROLL':    ('hip', 'thigh_u'),
+        'HIP_PITCH':   ('thigh_u', 'thigh_l'),
+        'KNEE':        ('thigh_l', 'shin'),
+        'ANKLE_PITCH': ('shin', 'ankle'),
+        'ANKLE_ROLL':  ('ankle', 'foot'),
     },
     TS_COLS={                                         # TODO match the leg thermocouple CSV columns
         'spine': 'Ts_spine', 'pelvis': 'Ts_pelvis', 'hip': 'Ts_hip',
@@ -64,9 +71,12 @@ CONFIG = LimbConfig(
         'ankle': 'Ts_ankle', 'foot': 'Ts_foot',
     },
 
-    C_M=np.full(_N, 150.0),                           # TODO motor assembly C [J/K]
-    C_WIND=np.full(_N, 15.0),                         # TODO winding C [J/K]
-    C_S_FIX={s: 400.0 for s in _STRUCTS},             # TODO structure C [J/K]
+    # motor assembly C [J/K]: SPN_Z, SPN_X measured (SM85/2); the rest TODO
+    C_M=np.array([_SPN_CM, _SPN_CM, 150.0, 150.0, 150.0, 150.0, 150.0, 150.0]),
+    # winding C [J/K]: SPN_Z, SPN_X measured (SM85/2); the rest TODO
+    C_WIND=np.array([_SPN_CW, _SPN_CW, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0]),
+    C_S_FIX={'spine': _SPN_CS, 'pelvis': 400.0, 'hip': 400.0, 'thigh_u': 400.0,
+             'thigh_l': 400.0, 'shin': 400.0, 'ankle': 400.0, 'foot': 400.0},   # spine measured; rest TODO
     C_F_FIX={'thigh_u': 40.0, 'thigh_l': 40.0, 'shin': 30.0},   # TODO fabric C [J/K]
 
     R_STACK={'thigh_u': 1.0, 'thigh_l': 1.0, 'shin': 1.0},      # TODO structure->fabric [K/W]
@@ -75,10 +85,11 @@ CONFIG = LimbConfig(
     QFET=4.0,                                         # TODO confirm FET load
     EXTRA_Q={},                                       # TODO any constant electronics load
 
-    BOUNDARY_ACTS=['SPINE'],                          # TODO the measured spine/torso-side boundary
+    BOUNDARY_ACTS=[],                                 # TODO no measured torso boundary yet; spine motors driven
     ENCLOSED={},                                      # every segment has a measured ambient area
 
-    DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
+    # leg uses the MEASURED winding mass directly (scale 1.0); the arm used 2.5 as a fit fudge.
+    DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=1.0,
 
     TRAIN=[],                                         # TODO data tags once collected
     TEST=[],
