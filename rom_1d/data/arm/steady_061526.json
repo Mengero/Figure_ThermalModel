@@ -1,0 +1,7 @@
+{
+  "_source": "061526-085846 arm endurance, steady-state plateau; HELD-OUT TEST (not training)",
+  "_note": "iq = applied continuous q-axis current [A]; Tm = measured steady-state motor (winding) temp [C]; T_amb from logger ch15; torso assumed 40 C",
+  "T_amb": 23.59,
+  "iq":  {"J1": 7.1, "J2": 7.0, "TWIST": 9.8, "ELBOW": 8.9, "ROLL": 3.9, "PITCH": 2.8, "YAW": 2.9},
+  "Tm":  {"J1": 67.37, "J2": 92.61, "TWIST": 104.90, "ELBOW": 108.18, "ROLL": 109.50, "PITCH": 92.97, "YAW": 85.58}
+}

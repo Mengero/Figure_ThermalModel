@@ -46,7 +46,8 @@ mot = np.arange(M.NM); free = np.arange(M.NM, M.NX)
 QF = M._fet_inputs(np.zeros((1, M.NM)))[0]                 # FET + extra loads per actuator
 
 # ---- steady state: all motors fixed at T_LIMIT, solve the rest ----
-u_ss = np.concatenate([np.zeros(M.NM), QF, [a.tamb]])
+u_ss = np.concatenate([np.zeros(M.NM), QF, [a.tamb]] +
+                      ([[M.torso_temp]] if M.has_torso else []))   # match Bq width (torso col)
 Tm = np.full(M.NM, a.tlimit)
 rhs = G[np.ix_(free, mot)] @ Tm + Bq[free, :] @ u_ss
 Tfree = np.linalg.solve(G[np.ix_(free, free)], -rhs)
@@ -75,11 +76,12 @@ tau_slow = -1.0 / evr[evr < 0].max()                     # slowest mode (closest
 t_max = min(6.0 * tau_slow, 8 * 3600.0)                  # cover the slow mode (~6 tau), cap at 8 h
 n = int(t_max / a.dt) + 1
 Ad = expm(A * a.dt); Bd = np.linalg.solve(A, (Ad - np.eye(M.NX))) @ B
+torso = [M.torso_temp] if M.has_torso else []
 x = np.full(M.NX, a.tamb); X = np.zeros((n, M.NX))
 for k in range(n):
     X[k] = x
     P = Pcu * (234.5 + x[mot]) / (234.5 + a.tlimit)      # constant iq -> P(Tw)
-    x = Ad @ x + Bd @ np.concatenate([P, QF, [a.tamb]])
+    x = Ad @ x + Bd @ np.concatenate([P, QF, [a.tamb], torso])
 t = np.arange(n) * a.dt / 60.0                           # minutes
 
 # time for each motor to reach 95% of its rise toward the limit

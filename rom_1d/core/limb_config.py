@@ -46,6 +46,7 @@ class LimbConfig:
     # --- special nodes ---
     BOUNDARY_ACTS: list = field(default_factory=list)   # clamped to measured Tm each step
     ENCLOSED: dict = field(default_factory=dict)        # struct -> neighbour it inherits init temp from
+    TORSO: tuple = None                                 # (struct, temp[C]): fixed-T sink via fitted R_torso
 
     # --- adaptive motor capacitance (rate-triggered dip + exponential recovery) ---
     DPDT_THRESH: float = 5.0     # |dP/dt| [W/s] that fully dips C to winding

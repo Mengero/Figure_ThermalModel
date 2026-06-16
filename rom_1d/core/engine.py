@@ -48,8 +48,18 @@ class ThermalROM:
         for a, q in cfg.EXTRA_Q.items():
             self.extra_q[cfg.ACTS.index(a)] = q
 
+        # optional torso boundary: a fixed-temperature sink on one structure,
+        # coupled through a fitted R_torso (an extra parameter appended to p).
+        self.has_torso = cfg.TORSO is not None
+        if self.has_torso:
+            tn = cfg.TORSO[0]                       # may be an actuator (motor node) or a structure
+            self.torso_node = self.ACTS.index(tn) if tn in self.ACTS else self.SIDX[tn]
+            self.torso_temp = float(cfg.TORSO[1])
+        self.n_in = 2 * self.NM + 1 + (1 if self.has_torso else 0)   # width of u
+        self.NP = 2 * self.NM + self.NB + (1 if self.has_torso else 0)   # number of fit params
+
         self._opcache = {}
-        self.G_MAT = self.BQ_MAT = self.R2_VEC = self.B_COEF = None
+        self.G_MAT = self.BQ_MAT = self.R2_VEC = self.B_COEF = self.R_TORSO = None
 
     # ---------- parameters ----------
     def unpack(self, p):
@@ -94,7 +104,7 @@ class ThermalROM:
         cfg = self.cfg; NM, NX = self.NM, self.NX
         R2, Rl, bvec = self.unpack(p)
         self.B_COEF = dict(zip(self.BSTRUCTS, bvec)); self.R2_VEC = R2
-        G = np.zeros((NX, NX)); Bq = np.zeros((NX, 2 * NM + 1))   # u=[P(NM),QF(NM),Tamb]
+        G = np.zeros((NX, NX)); Bq = np.zeros((NX, self.n_in))   # u=[P(NM),QF(NM),Tamb(,Ttorso)]
 
         def couple(n1, n2, R):
             G[n1, n1] -= 1 / R
@@ -115,6 +125,10 @@ class ThermalROM:
         for s in self.BARE:
             couple(self.SIDX[s], 'amb', 1 / (self.B_COEF[s] * cfg.AREA[s]))
         # enclosed structures: no ambient, no extra link (anchored only via their actuators)
+        if self.has_torso:
+            self.R_TORSO = 10 ** p[2 * NM + self.NB]          # fitted torso-link resistance [K/W]
+            G[self.torso_node, self.torso_node] -= 1 / self.R_TORSO
+            Bq[self.torso_node, 2 * NM + 1] += 1 / self.R_TORSO   # fixed torso temp = column 2NM+1
         self.G_MAT, self.BQ_MAT = G, Bq; self._opcache.clear()
         return self._mats_from_C(self.C_M)
 
@@ -166,10 +180,11 @@ class ThermalROM:
         for i, arr in Tb.items():
             if np.isfinite(arr[0]):
                 x[i] = arr[0]
+        torso = [self.torso_temp] if self.has_torso else []
         X[0] = x
         for k in range(n - 1):
             Ad, Bd = self._op_for_Cm(Cser[k], dt)
-            u = np.concatenate([P[k], QF[k], [Tamb_t[k]]])
+            u = np.concatenate([P[k], QF[k], [Tamb_t[k]], torso])
             x = Ad @ x + Bd @ u
             for i, arr in Tb.items():
                 if np.isfinite(arr[k + 1]):
@@ -208,7 +223,22 @@ class ThermalROM:
         Qm = (dT[:, self.free_mot] * Cmt[:, self.free_mot]).sum(1)
         Qs = (sum(cfg.C_S_FIX[s] * dT[:, self.SIDX[s]] for s in self.STRUCTS) +
               sum(cfg.C_F_FIX[s] * dT[:, self.FIDX[s]] for s in self.FABRICS))
-        return dict(t=t / 60.0, gen=Qgen, bnd=Qbnd, mot=Qm, struct=Qs, amb=Qamb)
+        Qtorso = ((X[:, self.torso_node] - self.torso_temp) / self.R_TORSO
+                  if self.has_torso else np.zeros(len(t)))
+        return dict(t=t / 60.0, gen=Qgen, bnd=Qbnd, mot=Qm, struct=Qs, amb=Qamb, torso=Qtorso)
+
+    # ---------- steady state ----------
+    def steady_state(self, P, Tamb):
+        """solve all node temps at steady state given motor copper power P [W] (len NM)
+        and ambient [C]; all motors driven (no clamping). Capacitance irrelevant here.
+        Build() must have been called. Torso (if any) is held at its fixed temp."""
+        NM = self.NM
+        QF = self._fet_inputs(np.asarray(P)[None, :])[0]
+        rhs = self.BQ_MAT[:, NM:2 * NM] @ QF + self.BQ_MAT[:, 2 * NM] * Tamb
+        if self.has_torso:
+            rhs = rhs + self.BQ_MAT[:, 2 * NM + 1] * self.torso_temp
+        rhs[:NM] = rhs[:NM] + np.asarray(P)
+        return np.linalg.solve(self.G_MAT, -rhs)
 
     # ---------- fitting ----------
     def residuals(self, p, runs, dt=2.0):

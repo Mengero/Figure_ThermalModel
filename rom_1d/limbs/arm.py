@@ -3,7 +3,7 @@
 Chain: J1(shoulder) -> J2 -> TWIST -> ELBOW -> ROLL -> PITCH -> YAW(hand).
 J1 is a driven boundary (clamped to its measured temperature); the shoulder is
 enclosed in the torso shell (no ambient path) and inherits humerus_u's metal temp.
-Hand low-voltage electronics add 8.36 W on YAW.  All masses are measured
+Hand low-voltage electronics add 4.36 W on YAW.  All masses are measured
 (Node1 = motor assembly, Node2 = structure, Node3 = fabric); only R2, R_link, b are fit.
 """
 import numpy as np
@@ -31,13 +31,14 @@ CONFIG = LimbConfig(
 
     R_STACK={'hum_u': 1.749, 'hum_l': 0.227, 'fore_u': 1.319, 'fore_l': 1.913},
     AREA={'shoulder': 0.015875, 'hum_u': 0.047561 - 0.015875, 'hum_l': 0.039904,
-          'fore_u': 0.026855, 'fore_l': 0.027882, 'wrist': 0.015730, 'hand': 0.010},
+          'fore_u': 0.026855, 'fore_l': 0.027882, 'wrist': 0.015730, 'hand': 0.049},
 
     QFET=4.0,
-    EXTRA_Q={'YAW': 8.36},                 # hand low-voltage electronics
+    EXTRA_Q={'YAW': 4.36},                 # hand low-voltage electronics
 
-    BOUNDARY_ACTS=['J1'],                  # measured torso-side boundary
-    ENCLOSED={'shoulder': 'hum_u'},        # enclosed in torso shell; inherits humerus_u metal
+    BOUNDARY_ACTS=[],                      # J1 now predicted (no clamp); torso is its heat sink
+    ENCLOSED={'shoulder': 'hum_u'},        # no TC; inherits humerus_u metal at init
+    TORSO=('J1', 35.0),                    # J1 motor sinks to a 40 C torso via fitted R_torso (its mount)
 
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
 

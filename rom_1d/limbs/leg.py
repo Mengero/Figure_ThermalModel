@@ -1,23 +1,28 @@
-"""Lower-limb LimbConfig — SKELETON (fill in from measurements before fitting).
+"""Lower-limb LimbConfig — masses/areas loaded from measured part tables.
 
-Chain (proximal -> distal):  spine -> pelvis -> hip -> thigh -> shin -> ankle -> foot.
-This mirrors limbs/arm.py: write the topology and drop in measured masses / areas /
-resistances, then it runs on the SAME engine (core.ThermalROM) — no new solver code.
+Chain (proximal -> distal):  spine -> pelvis -> hip -> thigh_u -> thigh_l -> shin
+-> ankle(talus) -> foot.  Runs on the SAME engine (core.ThermalROM) as the arm.
 
-AREA is REAL (measured external heat-transfer area, right side; total 0.5177 m^2).
-Everything else tagged `# TODO` is still a placeholder.
+Motor inventory (8 motors), by the segment each is housed in:
+  spine   : SPN_Z, SPN_X        (2x SM85)        — halved (shared/symmetric)
+  pelvis  : HIP_Y               (SM85)           — halved (shared/symmetric)
+  hip     : HIP_X               (SM72)           — exact
+  thigh_u : THIGH_U             (SM72)           — exact
+  thigh_l : (none — passive segment)
+  shin    : SHIN_KNEE (SM72), SHIN_ANKLE (SM85)  — exact
+  ankle   : TALUS               (SM44L)          — exact
+Covered (fabric) segments: hip, thigh_u, thigh_l, shin (each has a Node 3 covering).
+Bare segments: spine, pelvis, ankle, foot.
+
+AREA is measured (right side, total 0.5177 m^2). Spine & pelvis are halved per the
+left/right symmetry instruction; hip and below are loaded exact.
 
 ================================ TODО / FILL IN ================================
-  * ACTS / TOPO   — confirm the real joint set & DOF (hip is typically 3-DOF:
-                    yaw/roll/pitch; ankle 2-DOF). The serial 1-actuator-per-joint
-                    chain below is a placeholder so the config constructs.
-  * C_M / C_WIND  — motor assembly + winding C [J/K] (Node 1 tables), one per actuator.
-  * C_S_FIX       — structure thermal masses [J/K] (Node 2), per segment.
-  * FABRICS / C_F_FIX / R_STACK — which segments wear fabric + fabric mass / stack R.
-  * TS_COLS       — leg thermocouple CSV column names.
-  * BOUNDARY_ACTS / ENCLOSED — driven boundary joint; any no-ambient segment.
-  * EXTRA_Q       — any constant electronics load.
-  * TRAIN / TEST  — data tags once data/leg/data_<tag>.csv exist.
+  * C_S_FIX['foot'] — no foot table yet (placeholder); confirm if foot has a motor.
+  * TS_COLS — actual leg thermocouple CSV column names.
+  * R20 / MOTOR — per-actuator phase resistance for current_limit.py.
+  * TRAIN / TEST — data tags once data/leg/data_<tag>.csv exist.
+  * Confirm joint->segment housing map (esp. that shin houses both knee & ankle motors).
 ===============================================================================
 """
 import numpy as np
@@ -34,36 +39,65 @@ _AREA = {
     'thigh_u': 0.1622,   # 162,178 mm^2  (upper thigh)
     'thigh_l': 0.0383,   #  38,262 mm^2  (lower thigh / knee)
     'shin':    0.1322,   # 132,216 mm^2  (lower leg / shin)
-    'ankle':   0.0093,   #   9,280 mm^2
+    'ankle':   0.0093,   #   9,280 mm^2  (talus)
     'foot':    0.0119,   #  11,874 mm^2
 }                        # total = 0.5177 m^2
 
-# Spine has TWO SM85 motors (SPN Z + SPN X). Distal joints are placeholder serial links
-# (one actuator per inter-segment joint). 8 segments, 8 motors. TODO real DOF below the pelvis.
-_ACTS = ['SPN_Z', 'SPN_X', 'HIP_YAW', 'HIP_ROLL', 'HIP_PITCH', 'KNEE', 'ANKLE_PITCH', 'ANKLE_ROLL']
-_N = len(_ACTS)
+# 8 real motors, ordered by housing segment (proximal -> distal)
+_ACTS = ['SPN_Z', 'SPN_X', 'HIP_Y', 'HIP_X', 'THIGH_U', 'SHIN_KNEE', 'SHIN_ANKLE', 'TALUS']
 
-# --- spine thermal masses (MEASURED, SM85; halved for left/right symmetry) ---
-#   Node 1a/1b stator+rotor: 237.5 J/K each -> /2 = 118.75 ;  windings 74.8 -> /2 = 37.4
-#   Node 2 structural+drivetrain+electronics: 1040.7 J/K -> /2 = 520.35
-_SPN_CM = 237.5 / 2     # 118.75 J/K per spine motor (assembly)
-_SPN_CW = 74.8 / 2      # 37.40  J/K per spine motor (windings)
-_SPN_CS = 1040.7 / 2    # 520.35 J/K spine structure (Node 2)
+# ---- motor thermal masses [J/K]  (assembly = Node 1 ; winding = Winding TM) ----
+# spine + pelvis SM85 are HALVED (shared/symmetric); hip and below are EXACT.
+_CM = {  # assembly thermal mass
+    'SPN_Z': 237.5 / 2, 'SPN_X': 237.5 / 2,   # SM85  (halved) = 118.75
+    'HIP_Y': 237.5 / 2,                        # SM85  (halved) = 118.75
+    'HIP_X': 151.0, 'THIGH_U': 151.0, 'SHIN_KNEE': 151.0,   # SM72  (exact)
+    'SHIN_ANKLE': 237.5,                       # SM85  (exact)
+    'TALUS': 259.9,                            # SM44L (exact)
+}
+_CW = {  # winding thermal mass
+    'SPN_Z': 74.8 / 2, 'SPN_X': 74.8 / 2,      # SM85  (halved) = 37.40
+    'HIP_Y': 74.8 / 2,                         # SM85  (halved) = 37.40
+    'HIP_X': 39.95, 'THIGH_U': 39.95, 'SHIN_KNEE': 39.95,   # SM72  (exact)
+    'SHIN_ANKLE': 74.77,                       # SM85  (exact)
+    'TALUS': 19.03,                            # SM44L (exact)
+}
+
+# ---- structure thermal masses [J/K] (Node 2) ----
+_CS = {
+    'spine':   1040.7 / 2,   # 520.35  (halved)
+    'pelvis':  1137.2 / 2,   # 568.60  (halved, rest of pelvis right side)
+    'hip':     695.7,        # all structural + drivetrain + electronics
+    'thigh_u': 859.6,        # structural + drivetrain + electronics
+    'thigh_l': 709.3,        # RGA5-1 structural shells + PC+ABS caps
+    'shin':    1743.7,       # structural + drivetrain + electronics + heatsink + fan
+    'ankle':   322.7,        # talus: rest — drivetrain + electronics + housing
+    'foot':    400.0,        # TODO no foot table yet
+}
+
+# ---- fabric / covering thermal masses [J/K] (Node 3) and structure->fabric R [K/W] ----
+_CF = {'hip': 63.0, 'thigh_u': 535.3, 'thigh_l': 126.9, 'shin': 2118.4}
+_RSTACK = {
+    'hip':     2.35,         # measured [K/W]
+    'thigh_u': 0.251,        # measured [K/W]
+    'thigh_l': 1.520,        # measured
+    'shin':    0.285,        # measured
+}
 
 CONFIG = LimbConfig(
     name='leg',
     ACTS=_ACTS,
     STRUCTS=_STRUCTS,
-    FABRICS=['thigh_u', 'thigh_l', 'shin'],          # TODO confirm covered segments
-    TOPO={                                            # TODO confirm (housing, output) per joint below pelvis
-        'SPN_Z':       ('spine', 'spine'),            # spine Z motor: leaf on spine (no link)
-        'SPN_X':       ('spine', 'pelvis'),           # spine X motor: links spine -> pelvis
-        'HIP_YAW':     ('pelvis', 'hip'),
-        'HIP_ROLL':    ('hip', 'thigh_u'),
-        'HIP_PITCH':   ('thigh_u', 'thigh_l'),
-        'KNEE':        ('thigh_l', 'shin'),
-        'ANKLE_PITCH': ('shin', 'ankle'),
-        'ANKLE_ROLL':  ('ankle', 'foot'),
+    FABRICS=['hip', 'thigh_u', 'thigh_l', 'shin'],   # segments with a Node 3 covering
+    TOPO={                                            # (housing, output); housing = segment the motor sits in
+        'SPN_Z':      ('spine', 'spine'),             # spine Z motor: leaf on spine (no link)
+        'SPN_X':      ('spine', 'pelvis'),            # spine X motor: links spine -> pelvis
+        'HIP_Y':      ('pelvis', 'hip'),              # links pelvis -> hip
+        'HIP_X':      ('hip', 'thigh_u'),             # links hip -> thigh_u
+        'THIGH_U':    ('thigh_u', 'thigh_l'),         # links thigh_u -> thigh_l
+        'SHIN_KNEE':  ('shin', 'thigh_l'),            # knee motor in shin; links shin -> thigh_l
+        'SHIN_ANKLE': ('shin', 'ankle'),              # ankle motor in shin; links shin -> ankle
+        'TALUS':      ('ankle', 'foot'),              # links ankle(talus) -> foot
     },
     TS_COLS={                                         # TODO match the leg thermocouple CSV columns
         'spine': 'Ts_spine', 'pelvis': 'Ts_pelvis', 'hip': 'Ts_hip',
@@ -71,22 +105,21 @@ CONFIG = LimbConfig(
         'ankle': 'Ts_ankle', 'foot': 'Ts_foot',
     },
 
-    # motor assembly C [J/K]: SPN_Z, SPN_X measured (SM85/2); the rest TODO
-    C_M=np.array([_SPN_CM, _SPN_CM, 150.0, 150.0, 150.0, 150.0, 150.0, 150.0]),
-    # winding C [J/K]: SPN_Z, SPN_X measured (SM85/2); the rest TODO
-    C_WIND=np.array([_SPN_CW, _SPN_CW, 15.0, 15.0, 15.0, 15.0, 15.0, 15.0]),
-    C_S_FIX={'spine': _SPN_CS, 'pelvis': 400.0, 'hip': 400.0, 'thigh_u': 400.0,
-             'thigh_l': 400.0, 'shin': 400.0, 'ankle': 400.0, 'foot': 400.0},   # spine measured; rest TODO
-    C_F_FIX={'thigh_u': 40.0, 'thigh_l': 40.0, 'shin': 30.0},   # TODO fabric C [J/K]
-
-    R_STACK={'thigh_u': 1.0, 'thigh_l': 1.0, 'shin': 1.0},      # TODO structure->fabric [K/W]
-    AREA=_AREA,                                       # measured (see above)
+    C_M=np.array([_CM[a] for a in _ACTS]),
+    C_WIND=np.array([_CW[a] for a in _ACTS]),
+    C_S_FIX=_CS,
+    C_F_FIX=_CF,
+    R_STACK=_RSTACK,
+    AREA=_AREA,
 
     QFET=4.0,                                         # TODO confirm FET load
     EXTRA_Q={},                                       # TODO any constant electronics load
 
     BOUNDARY_ACTS=[],                                 # TODO no measured torso boundary yet; spine motors driven
     ENCLOSED={},                                      # every segment has a measured ambient area
+
+    MOTOR={'SPN_Z': 'SM85', 'SPN_X': 'SM85', 'HIP_Y': 'SM85', 'HIP_X': 'SM72',
+           'THIGH_U': 'SM72', 'SHIN_KNEE': 'SM72', 'SHIN_ANKLE': 'SM85', 'TALUS': 'SM44L'},
 
     # leg uses the MEASURED winding mass directly (scale 1.0); the arm used 2.5 as a fit fudge.
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=1.0,
