@@ -147,13 +147,27 @@ class ThermalROM:
         """FET (always-on) + per-actuator extra constant load, shape like P."""
         return np.full_like(P, self.QFET) + self.extra_q[None, :]
 
-    def simulate(self, df, dt):
+    def simulate(self, df, dt, x0=None):
         cfg = self.cfg; NM, NX = self.NM, self.NX
         Tamb_t = df['T_amb'].to_numpy()
         Cser = self.cmotor_series(df)
         P = np.nan_to_num(df[['P_' + a for a in self.ACTS]].to_numpy())
         QF = self._fet_inputs(P)
         n = len(df); X = np.zeros((n, NX)); x = np.zeros(NX)
+
+        if x0 is not None:                                # caller-supplied initial state
+            x = np.asarray(x0, float).copy()
+            Tb = {i: df['Tm_' + self.ACTS[i]].to_numpy() for i in self.boundary_idx}
+            torso = [self.torso_temp] if self.has_torso else []
+            X[0] = x
+            for k in range(n - 1):
+                Ad, Bd = self._op_for_Cm(Cser[k], dt)
+                x = Ad @ x + Bd @ np.concatenate([P[k], QF[k], [Tamb_t[k]], torso])
+                for i, arr in Tb.items():
+                    if np.isfinite(arr[k + 1]):
+                        x[i] = arr[k + 1]
+                X[k + 1] = x
+            return X
 
         # init structure metal from the measured fabric/bare TC via the steady flux balance:
         #   T_struct = T_TC + (T_TC - T_amb)*b*A*R_stack   (bare: R_stack=0 -> T_struct=T_TC)
@@ -239,6 +253,21 @@ class ThermalROM:
             rhs = rhs + self.BQ_MAT[:, 2 * NM + 1] * self.torso_temp
         rhs[:NM] = rhs[:NM] + np.asarray(P)
         return np.linalg.solve(self.G_MAT, -rhs)
+
+    def steady_residual(self, iq, R20, Tamb, meas):
+        """steady-state operating-point residual: predicted − measured motor temp [C],
+        for instrumented motors. Build() must have been called. Self-consistent copper
+        power (P depends on winding temp). meas/iq/R20 are per-ACTS arrays (meas may be NaN)."""
+        iq = np.asarray(iq); R20 = np.asarray(R20); meas = np.asarray(meas)
+        Tw = np.where(np.isfinite(meas), meas, 80.0)
+        for _ in range(60):
+            P = 1.5 * iq ** 2 * R20 * (234.5 + Tw) / (234.5 + 20.0)
+            T = self.steady_state(P, Tamb)
+            if np.max(np.abs(T[:self.NM] - Tw)) < 1e-4:
+                Tw = T[:self.NM]; break
+            Tw = T[:self.NM]
+        ok = np.isfinite(meas)
+        return T[:self.NM][ok] - meas[ok]
 
     # ---------- fitting ----------
     def residuals(self, p, runs, dt=2.0):
