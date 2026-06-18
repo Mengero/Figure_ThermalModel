@@ -38,7 +38,7 @@ CONFIG = LimbConfig(
 
     BOUNDARY_ACTS=[],                      # J1 now predicted (no clamp); torso is its heat sink
     ENCLOSED={'shoulder': 'hum_u'},        # no TC; inherits humerus_u metal at init
-    TORSO=('J1', 35.0),                    # J1 motor sinks to a 40 C torso via fitted R_torso (its mount)
+    TORSO=('J1', 40.0),                    # J1 motor sinks to a 40 C torso via fitted R_torso (its mount)
 
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
 
@@ -51,5 +51,6 @@ CONFIG = LimbConfig(
 
     TRAIN=['i50', 'i25a', 'depal_ss'],
     # hi19a/b are 3-joint endurance runs validated separately (see pipeline/plot_hi19.py)
-    TEST=['depal_fast', 'i25b', 'depal_sat', 'hi19a', 'hi19b'],
+    # 0616cont = continuous left-arm (motors+structures), held out as a TEST case
+    TEST=['depal_fast', 'i25b', 'depal_sat', 'hi19a', 'hi19b', '0616cont'],
 )

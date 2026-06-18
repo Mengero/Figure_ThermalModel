@@ -5,3 +5,8 @@ figures/
 # python
 __pycache__/
 *.pyc
+
+# keep reference figures stored under data/
+!data/ups/*.png
+
+!data/depal/*.png

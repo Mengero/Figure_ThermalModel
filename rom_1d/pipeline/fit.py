@@ -50,7 +50,7 @@ r2_hi = [1.4] * NM
 r2_hi[M.ACTS.index('J1')] = 1.0               # J1 R2 capped tighter; others 1.4
 hi = np.concatenate([L(r2_hi), L([15] * NM), L([40] * M.NB)])
 if M.has_torso:                               # append fitted R_torso [K/W]
-    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(4.5))
+    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(2.0))
 
 r0 = resid(p0)
 print("init RMSE=%.2f (n=%d, params=%d, states=%d)%s" %

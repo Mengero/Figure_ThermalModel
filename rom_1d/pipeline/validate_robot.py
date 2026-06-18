@@ -22,7 +22,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument('--limb', default='arm')
 ap.add_argument('--csv', required=True)
 ap.add_argument('--burst', default='longest', help="burst index, 'longest', or 'all'")
-ap.add_argument('--amb-offset', type=float, default=-6.0)
+ap.add_argument('--amb-offset', type=float, default=0)
 ap.add_argument('--gap', type=float, default=120.0)
 ap.add_argument('--dt', type=float, default=4.0)
 ap.add_argument('--fit', action='store_true', help='fit conductances to the (single) selected burst')
@@ -65,6 +65,9 @@ def prep(b):
         Tm[J] = np.interp(grid, g['s'], g['Tmotor_degC'])
         P[J] = np.interp(grid, g['s'], g['real_power_W'])
     amb = np.interp(grid, d.sort_values('s')['s'], d.sort_values('s')['Tamb_filled']) + a.amb_offset
+    ds = d.sort_values('s')
+    # torso boundary = measured max cell temp if present, else None (engine falls back to fixed cfg torso = 40 C)
+    torso = np.interp(grid, ds['s'], ds['Tbatt_max_filled']) if 'Tbatt_max_filled' in d.columns else None
     on = None
     if a.start_min is not None:                      # manual start time
         on = int(np.argmax(grid >= a.start_min * 60))
@@ -77,11 +80,15 @@ def prep(b):
     if on:
         print('  (start at %.1f min, skipping %.1f min idle)' % (grid[on] / 60, grid[on] / 60))
         grid = grid[on:] - grid[on]; amb = amb[on:]
+        if torso is not None:
+            torso = torso[on:]
         for J in M.ACTS:
             P[J] = P[J][on:]
             if Tm[J] is not None:
                 Tm[J] = Tm[J][on:]
     df = pd.DataFrame({'t_s': grid, 'T_amb': amb})
+    if torso is not None:
+        df['T_torso'] = torso
     for J in M.ACTS:
         df['P_' + J] = P[J]; df['Tm_' + J] = Tm[J] if Tm[J] is not None else np.nan
     amb0 = amb[0]
@@ -90,9 +97,9 @@ def prep(b):
     for i, J in enumerate(M.ACTS):
         x0[i] = Tm[J][0] if Tm[J] is not None else reft[M.TOPO[J][0]]
     for s in M.STRUCTS:
-        x0[M.SIDX[s]] = reft[s] if (s in M.FABRICS or s in M.cfg.ENCLOSED) else (reft[s] + amb0) / 2
+        x0[M.SIDX[s]] = reft[s] # if (s in M.FABRICS or s in M.cfg.ENCLOSED) else (reft[s] - amb0) * 7 / 9 + amb0
     for s in M.FABRICS:
-        x0[M.FIDX[s]] = (reft[s] + amb0) / 2
+        x0[M.FIDX[s]] = reft[s] #  - amb0) * 7/9 + amb0
     return df, x0, Tm, grid
 
 

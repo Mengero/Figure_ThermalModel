@@ -154,15 +154,23 @@ class ThermalROM:
         P = np.nan_to_num(df[['P_' + a for a in self.ACTS]].to_numpy())
         QF = self._fet_inputs(P)
         n = len(df); X = np.zeros((n, NX)); x = np.zeros(NX)
+        # torso boundary: per-step from a 'T_torso' column if present, else the fixed cfg value
+        Ttor_t = ((df['T_torso'].to_numpy() if 'T_torso' in df.columns else np.full(n, self.torso_temp))
+                  if self.has_torso else None)
+
+        def _u(k):
+            parts = [P[k], QF[k], [Tamb_t[k]]]
+            if self.has_torso:
+                parts.append([Ttor_t[k]])
+            return np.concatenate(parts)
 
         if x0 is not None:                                # caller-supplied initial state
             x = np.asarray(x0, float).copy()
             Tb = {i: df['Tm_' + self.ACTS[i]].to_numpy() for i in self.boundary_idx}
-            torso = [self.torso_temp] if self.has_torso else []
             X[0] = x
             for k in range(n - 1):
                 Ad, Bd = self._op_for_Cm(Cser[k], dt)
-                x = Ad @ x + Bd @ np.concatenate([P[k], QF[k], [Tamb_t[k]], torso])
+                x = Ad @ x + Bd @ _u(k)
                 for i, arr in Tb.items():
                     if np.isfinite(arr[k + 1]):
                         x[i] = arr[k + 1]
@@ -194,12 +202,10 @@ class ThermalROM:
         for i, arr in Tb.items():
             if np.isfinite(arr[0]):
                 x[i] = arr[0]
-        torso = [self.torso_temp] if self.has_torso else []
         X[0] = x
         for k in range(n - 1):
             Ad, Bd = self._op_for_Cm(Cser[k], dt)
-            u = np.concatenate([P[k], QF[k], [Tamb_t[k]], torso])
-            x = Ad @ x + Bd @ u
+            x = Ad @ x + Bd @ _u(k)
             for i, arr in Tb.items():
                 if np.isfinite(arr[k + 1]):
                     x[i] = arr[k + 1]

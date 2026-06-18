@@ -18,10 +18,11 @@ STEPS = {
     'trainplot': ['plot_fit.py', '--split', 'train'],
     'testplot':  ['plot_fit.py', '--split', 'test'],
     'hi19':      ['plot_hi19.py'],
+    'conttest':  ['test_cont.py', '--case', '0616cont'],   # continuous run: motors+structures held-out test
     'energy':    ['energy.py'],
     'climit':    ['current_limit.py'],
 }
-ORDER = ['fit', 'trainplot', 'testplot', 'hi19', 'energy', 'climit']
+ORDER = ['fit', 'trainplot', 'testplot', 'hi19', 'conttest', 'energy', 'climit']
 DEFAULT = ['fit', 'trainplot', 'testplot']
 
 
