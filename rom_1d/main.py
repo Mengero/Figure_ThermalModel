@@ -19,10 +19,11 @@ STEPS = {
     'testplot':  ['plot_fit.py', '--split', 'test'],
     'hi19':      ['plot_hi19.py'],
     'conttest':  ['test_cont.py', '--case', '0616cont'],   # continuous run: motors+structures held-out test
+    'fdi':       ['validate_fdi.py', '--case', '0616cont', '--dt', '2', '--inject', 'YAW', 'dead', '60', '120'],   # fault-detect + virtual-sensor demo
     'energy':    ['energy.py'],
     'climit':    ['current_limit.py'],
 }
-ORDER = ['fit', 'trainplot', 'testplot', 'hi19', 'conttest', 'energy', 'climit']
+ORDER = ['fit', 'trainplot', 'testplot', 'hi19', 'conttest', 'fdi', 'energy', 'climit']
 DEFAULT = ['fit', 'trainplot', 'testplot']
 
 
