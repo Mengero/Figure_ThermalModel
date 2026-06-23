@@ -10,7 +10,10 @@ logic can run online. Per step:
 
 A clamped stuck sensor masks its own innovation, so the **flatline** check (reading frozen while
 the arm is clearly active) is the primary stuck detector; innovation catches dead/NaN/out-of-range
-/sudden jumps. `forced_drop` marks sensors faulted from boot (used by the dropout-limit sweep).
+/sudden jumps. A **common-mode** check catches data/logging glitches where every channel jumps
+together (physically impossible for independent motor temps) — on such a step no reading is
+trusted and the model prediction is held. `forced_drop` marks sensors faulted from boot (used by
+the dropout-limit sweep).
 
 innov_thresh is set to 30 °C (not a few °C): under depal cadence the adaptive motor capacitance is
 only approximate, so the model can over-predict a healthy motor by ~15-25 °C during sharp lifts.
@@ -27,7 +30,7 @@ import numpy as np
 class ThermalObserver:
     def __init__(self, M, innov_thresh=30.0, persist=3, clear_thresh=4.0, recover=5,
                  t_lo=0.0, t_hi=150.0, flatline_eps=0.5, flatline_min=5.0, active_eps=8.0,
-                 forced_drop=()):
+                 cm_jump=5.0, cm_spread=3.0, cm_min_ch=4, forced_drop=()):
         self.M = M
         self.innov_thresh = innov_thresh; self.persist = persist
         self.clear_thresh = clear_thresh; self.recover = recover
@@ -35,6 +38,9 @@ class ThermalObserver:
         # stuck/frozen: reading flat (range < flatline_eps) over a ~flatline_min window WHILE the
         # model (open-loop) expects motion > active_eps over that window.
         self.flatline_eps = flatline_eps; self.flatline_min = flatline_min; self.active_eps = active_eps
+        # common-mode data glitch: >= cm_min_ch channels jump together by > cm_jump in one step
+        # with cross-channel spread < cm_spread (physically impossible -> logging/reference error).
+        self.cm_jump = cm_jump; self.cm_spread = cm_spread; self.cm_min_ch = cm_min_ch
         self.forced = set(M.ACTS.index(a) if isinstance(a, str) else a for a in forced_drop)
         # REF: motors adjacent (housing or output) to each structure, for seeding unmeasured nodes
         self.REF = {s: [a for a in M.ACTS if s in M.TOPO[a]] for s in M.STRUCTS}
@@ -56,16 +62,21 @@ class ThermalObserver:
             return np.concatenate(parts)
 
         # ---- boot state ----
-        reft = {}
-        for s in M.STRUCTS:
-            vals = [Tm[0, M.ACTS.index(a)] for a in self.REF[s]]
-            vals = [v for v in vals if np.isfinite(v) and self.t_lo < v < self.t_hi]
-            reft[s] = np.mean(vals) if vals else Tamb[0]
-        x = np.zeros(NX)
+        # only the SURVIVING (healthy, non-dropped) thermistors are known at boot. A dropped
+        # sensor contributes nothing -> it does NOT seed itself from its own t=0 reading.
         flags0 = np.array([self._sane(Tm[0, i]) is not None or i in self.forced for i in range(NM)])
+        healthy0 = [i for i in range(NM) if not flags0[i] and np.isfinite(Tm[0, i])]
+        # no surviving thermistor -> seed everything from the battery/torso temp (the only known
+        # body temperature); fall back to ambient if there is no torso boundary.
+        gseed = (np.mean([Tm[0, i] for i in healthy0]) if healthy0
+                 else (Ttor[0] if Ttor is not None else Tamb[0]))
+        reft = {}
+        for s in M.STRUCTS:                                  # prefer an adjacent surviving motor,
+            vals = [Tm[0, M.ACTS.index(a)] for a in self.REF[s] if M.ACTS.index(a) in healthy0]
+            reft[s] = np.mean(vals) if vals else gseed       # else fall back to the survivor mean
+        x = np.zeros(NX)
         for i, a in enumerate(M.ACTS):
-            ok0 = np.isfinite(Tm[0, i]) and not flags0[i]
-            x[i] = Tm[0, i] if ok0 else reft[M.TOPO[a][0]]
+            x[i] = Tm[0, i] if i in healthy0 else reft[M.TOPO[a][0]]
         for s in M.STRUCTS:
             x[M.SIDX[s]] = reft[s]
         for s in M.FABRICS:
@@ -81,6 +92,7 @@ class ThermalObserver:
         X = np.zeros((n, NX)); X[0] = x
         eff = np.zeros((n, NM)); flags = np.zeros((n, NM), bool)
         innov = np.full((n, NM), np.nan); cause = [['' for _ in range(NM)] for _ in range(n)]
+        cm = np.zeros(n, bool)                                        # common-mode data-glitch step
         cnt = np.zeros(NM, int); rec = np.zeros(NM, int); faulted = flags0.copy()
         # step 0 bookkeeping
         for i in range(NM):
@@ -92,9 +104,14 @@ class ThermalObserver:
         for k in range(1, n):
             Ad, Bd = M._op_for_Cm(Cser[k - 1], dt)
             x_pred = Ad @ x + Bd @ u_of(k - 1)
+            cm[k] = self._commonmode(Tm, k)        # all channels jump together -> data glitch, trust none
             for i in range(NM):
                 m = Tm[k, i]; r = m - x_pred[i] if np.isfinite(m) else np.nan
                 innov[k, i] = r
+                if cm[k]:                                           # common-mode glitch: predict through,
+                    cnt[i] = 0; cause[k][i] = 'commonmode'          # don't latch a per-sensor fault
+                    flags[k, i] = faulted[i]
+                    continue
                 c = self._sane(m)                                   # NaN / OOR (instant)
                 if c is None and self._flatline(Tm, x_ol, k, i):
                     c = 'flatline'
@@ -114,15 +131,17 @@ class ThermalObserver:
                     if rec[i] >= self.recover:
                         faulted[i] = False
                 flags[k, i] = faulted[i]; cause[k][i] = c or ''
-            # accommodate: predict, then clamp the healthy motors to their reading
+            # accommodate: predict, then clamp the healthy motors to their reading. On a common-mode
+            # glitch step trust NO reading (all corrupt) -> hold the model prediction for every motor.
             x = x_pred.copy()
             for i in range(NM):
-                if not faulted[i] and np.isfinite(Tm[k, i]):
+                use_meas = (not cm[k]) and (not faulted[i]) and np.isfinite(Tm[k, i])
+                if use_meas:
                     x[i] = Tm[k, i]
-                eff[k, i] = Tm[k, i] if (not faulted[i] and np.isfinite(Tm[k, i])) else x_pred[i]
+                eff[k, i] = Tm[k, i] if use_meas else x_pred[i]
             X[k] = x
         return dict(t=df['t_s'].to_numpy() / 60.0, X=X, eff=eff, flags=flags,
-                    innov=innov, meas=Tm, cause=cause)
+                    innov=innov, meas=Tm, cause=cause, cm=cm)
 
     # ---------- detectors ----------
     def _sane(self, m):
@@ -131,6 +150,20 @@ class ThermalObserver:
         if m < self.t_lo or m > self.t_hi:
             return 'oor'
         return None
+
+    def _commonmode(self, Tm, k):
+        """one-step jump shared by most channels -> physically impossible, a logging/reference glitch.
+        Real motor temps move independently with their own power; a step where >= cm_min_ch channels
+        all jump by > cm_jump with cross-channel spread < cm_spread is a data error, not a thermal one."""
+        d = Tm[k] - Tm[k - 1]
+        d = d[np.isfinite(d)]
+        if len(d) < self.cm_min_ch:
+            return False
+        big = np.abs(d) > self.cm_jump
+        if big.sum() < self.cm_min_ch:
+            return False
+        db = d[big]
+        return (np.max(db) - np.min(db)) < self.cm_spread     # all jumped together, same sign+size
 
     def _flatline(self, Tm, x_ol, k, i):
         """reading frozen over the window while the MODEL (open-loop) expects the node to move.
