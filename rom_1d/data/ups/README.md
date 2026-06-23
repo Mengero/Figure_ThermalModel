@@ -3,7 +3,7 @@
 Real robot operation logs (long format: `timestamp_utc, actuator_name, power_W, Tmotor_degC,
 Tambient_degC, Tbatt_min/max_degC`). `power_W = ¾·iq²`; real copper loss = `1.5·iq²·R(T) =
 2·power_W·R(T)`. Battery **max** cell temp is used as the time-varying torso boundary
-(fallback 40 °C). Validate with `pipeline/validate_robot.py --csv data/ups/<cleaned>.csv`.
+(fallback 40 °C). Validate with `python studies/field_accuracy.py --csv data/ups/<cleaned>.csv --dt 4`.
 
 ## Files
 
