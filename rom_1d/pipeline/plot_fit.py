@@ -47,6 +47,8 @@ for c, tag in enumerate(tags):
     for r, grp, name in [(1, covered, 'COVERED STRUCTURES'), (2, bare, 'BARE STRUCTURES')]:
         ax = axes[r][c]; H = []; L = []
         for s in grp:
+            if s not in M.TS_COLS:                        # no TC (e.g. leg foot): nothing to compare, skip
+                continue
             ln, = ax.plot(t, df[M.TS_COLS[s]], lw=1.8, alpha=.9, color=COL[s])
             ax.plot(t, obs[s], '--', color=COL[s], lw=1.3); H.append(ln); L.append(s)
         ax.legend(H, L, fontsize=8, ncol=2, loc='upper left')

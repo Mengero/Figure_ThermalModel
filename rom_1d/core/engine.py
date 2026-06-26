@@ -190,6 +190,8 @@ class ThermalROM:
         for s, src in cfg.ENCLOSED.items():
             metal0[s] = metal0[src]                       # enclosed inherits neighbour metal
         for s in self.STRUCTS:
+            if metal0[s] is None:                         # no TC and not enclosed: start at ambient
+                metal0[s] = Tamb_t[0]
             x[self.SIDX[s]] = metal0[s]
         for s in self.FABRICS:
             x[self.FIDX[s]] = Ts0[s]

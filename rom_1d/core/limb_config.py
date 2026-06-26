@@ -50,7 +50,7 @@ class LimbConfig:
 
     # --- adaptive motor capacitance (rate-triggered dip + exponential recovery) ---
     DPDT_THRESH: float = 5.0     # |dP/dt| [W/s] that fully dips C to winding
-    CADAPT_TAU:  float = 80.0    # recovery time constant [s] back toward full C
+    CADAPT_TAU:  float = 40.0    # recovery time constant [s] back toward full C
     ADAPT_C:     bool  = True    # False -> constant full C_M
     C_WIND_SCALE: float = 2.5    # tuning multiplier applied to C_WIND
 

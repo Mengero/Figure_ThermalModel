@@ -1,0 +1,24 @@
+{
+    "_source": "c_1081 UPS Lower Body, last 5-min steady plateau; field case used to constrain R_torso",
+    "_note": "iq = RMS q-axis current [A] over plateau; Tm = measured steady motor (winding) temp [C]; T_amb from logger; torso(battery)=38.95 C ~= cfg 40 C. TALUS excluded (59.7 C unphysical at ~0 A).",
+    "T_amb": 28.77,
+    "iq": {
+        "SPN_Z": 0.167,
+        "SPN_X": 0.275,
+        "HIP_Y": 0.843,
+        "HIP_X": 0.392,
+        "THIGH_U": 0.242,
+        "SHIN_KNEE": 1.299,
+        "SHIN_ANKLE": 0.356,
+        "TALUS": 0.090
+    },
+    "Tm": {
+        "SPN_Z": 43.73,
+        "SPN_X": 44.72,
+        "HIP_Y": 45.22,
+        "HIP_X": 45.34,
+        "THIGH_U": 43.26,
+        "SHIN_KNEE": 39.62,
+        "SHIN_ANKLE": 39.99
+    }
+}
