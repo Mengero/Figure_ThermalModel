@@ -56,10 +56,18 @@ else:                                         # leg: SM85 R2 (~1.96 K/W) exceeds
 rest_p0 = np.concatenate([L([3] * NM), L([20] * M.NB)])        # R_link, b (always fitted)
 rest_lo = np.concatenate([L([0.0001] * NM), L([6] * M.NB)])
 rest_hi = np.concatenate([L([15] * NM), L([40] * M.NB)])
-if a.fix_r2 or M.cfg.FIX_R2:                   # R2 NOT optimized: solve only R_link/b/(R_torso)
+if a.fix_r2 or M.cfg.FIX_R2:                   # R2 NOT optimized: pinned to size-based values
     r2fix_log = L(np.array([R2_BY_SIZE[M.cfg.MOTOR[x]] for x in M.ACTS]))
     expand = lambda q: np.concatenate([r2fix_log, q])         # prepend fixed R2 -> full p
     p0, lo, hi = rest_p0.copy(), rest_lo.copy(), rest_hi.copy()
+elif M.cfg.TIE_R2:                             # R2 tied by motor size: one fitted value per size
+    uniq = sorted(set(M.cfg.MOTOR[x] for x in M.ACTS))        # unique motor sizes
+    sidx = np.array([uniq.index(M.cfg.MOTOR[x]) for x in M.ACTS])   # motor -> size-param index
+    ns = len(uniq)
+    expand = lambda q: np.concatenate([q[:ns][sidx], q[ns:]]) # size R2 -> per-motor R2
+    p0 = np.concatenate([L([0.7] * ns), rest_p0])
+    lo = np.concatenate([L([0.05] * ns), rest_lo])
+    hi = np.concatenate([L([3.0] * ns), rest_hi])
 else:                                          # R2 free: full vector [R2, R_link, b]
     expand = lambda q: q
     p0 = np.concatenate([L([0.7] * NM), rest_p0])

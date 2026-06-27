@@ -58,6 +58,7 @@ class LimbConfig:
     R20:   dict = field(default_factory=dict)   # actuator -> phase resistance at 20 C [ohm]
     MOTOR: dict = field(default_factory=dict)   # actuator -> motor family label (display only)
     FIX_R2: bool = False                        # fit: pin R2 to size-based values (fit.py honors this; no --fix-r2 flag needed)
+    TIE_R2: bool = False                        # fit: tie R2 across motors of the same size (one fitted value per size, not pinned)
 
     # --- train/test split (tags of data/<limb>/data_<tag>.csv) ---
     TRAIN: list = field(default_factory=list)

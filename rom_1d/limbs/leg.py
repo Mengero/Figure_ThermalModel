@@ -130,7 +130,7 @@ CONFIG = LimbConfig(
     # NOTE: 2.5 was hand-tuned on arm data; revisit once leg data exists (leg C_WIND is measured).
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
 
-    FIX_R2=True,                                      # leg R2 pinned to size-based values by default (no --fix-r2 flag needed)
+    TIE_R2=True,                                      # leg R2 tied per motor size (one fitted value per size; not pinned to provided values)
     TRAIN=['hi19b', 'depal_ss', 'i25b'],              # high-power + near-steady + TALUS-heating spread
     TEST=['i50', 'i25a', 'hi19a', 'depal_fast', 'depal_sat'],
 )
