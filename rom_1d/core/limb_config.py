@@ -57,6 +57,7 @@ class LimbConfig:
     # --- electrical (optional; used by pipeline/current_limit.py) ---
     R20:   dict = field(default_factory=dict)   # actuator -> phase resistance at 20 C [ohm]
     MOTOR: dict = field(default_factory=dict)   # actuator -> motor family label (display only)
+    FIX_R2: bool = False                        # fit: pin R2 to size-based values (fit.py honors this; no --fix-r2 flag needed)
 
     # --- train/test split (tags of data/<limb>/data_<tag>.csv) ---
     TRAIN: list = field(default_factory=list)

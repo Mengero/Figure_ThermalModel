@@ -56,7 +56,7 @@ else:                                         # leg: SM85 R2 (~1.96 K/W) exceeds
 rest_p0 = np.concatenate([L([5] * NM), L([20] * M.NB)])        # R_link, b (always fitted)
 rest_lo = np.concatenate([L([0.0001] * NM), L([3] * M.NB)])
 rest_hi = np.concatenate([L([15] * NM), L([40] * M.NB)])
-if a.fix_r2:                                   # R2 NOT optimized: solve only R_link/b/(R_torso)
+if a.fix_r2 or M.cfg.FIX_R2:                   # R2 NOT optimized: solve only R_link/b/(R_torso)
     r2fix_log = L(np.array([R2_BY_SIZE[M.cfg.MOTOR[x]] for x in M.ACTS]))
     expand = lambda q: np.concatenate([r2fix_log, q])         # prepend fixed R2 -> full p
     p0, lo, hi = rest_p0.copy(), rest_lo.copy(), rest_hi.copy()
