@@ -53,8 +53,8 @@ if 'J1' in M.ACTS:                            # arm: cap J1 R2 tighter; others 1
     r2_hi[M.ACTS.index('J1')] = 1.0
 else:                                         # leg: SM85 R2 (~1.96 K/W) exceeds the arm's 1.4 cap
     r2_hi = [3.0] * NM
-rest_p0 = np.concatenate([L([5] * NM), L([20] * M.NB)])        # R_link, b (always fitted)
-rest_lo = np.concatenate([L([0.0001] * NM), L([3] * M.NB)])
+rest_p0 = np.concatenate([L([3] * NM), L([20] * M.NB)])        # R_link, b (always fitted)
+rest_lo = np.concatenate([L([0.0001] * NM), L([6] * M.NB)])
 rest_hi = np.concatenate([L([15] * NM), L([40] * M.NB)])
 if a.fix_r2 or M.cfg.FIX_R2:                   # R2 NOT optimized: solve only R_link/b/(R_torso)
     r2fix_log = L(np.array([R2_BY_SIZE[M.cfg.MOTOR[x]] for x in M.ACTS]))
@@ -66,7 +66,7 @@ else:                                          # R2 free: full vector [R2, R_lin
     lo = np.concatenate([L([0.05] * NM), rest_lo])
     hi = np.concatenate([L(r2_hi), rest_hi])
 if M.has_torso:                               # append fitted R_torso [K/W]
-    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(4.0))
+    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(5.0))
 
 r0 = resid(p0)
 print("init RMSE=%.2f (n=%d, params=%d, states=%d)%s" %
