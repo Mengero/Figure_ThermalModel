@@ -1,97 +1,243 @@
 Arm Thermal Analysis Results
 ==================================================
 
-Solve time: 0.06 seconds
-Final residual norm: 4.18e-05
+Solve time: 17.77 seconds
+Final residual norm: 1.49e-02
 Solution converged successfully!
 
 Region Results:
 --------------------------------------------------
 
-Region: FIG4_KNEE_LILAC_PANCAKE
-Average Temperature: 29.38°C
-Min Temperature: 29.25°C
-Max Temperature: 29.55°C
-Total Heat Transfer Rate: 0.00 W
+Region: shoulder
+Average Temperature: 79.40°C
+Min Temperature: 67.02°C
+Max Temperature: 85.48°C
+Plastic Covered Surface Heat Transfer: 8.52 W
+Constant Heat Flux Surface Heat Transfer: 0.00 W
+Actuator Connected Surface Heat Transfer: 0.05 W
+Total Heat Transfer Rate: 8.57 W
 
-Boundary Condition Temperatures for Region FIG4_KNEE_LILAC_PANCAKE:
+Boundary Condition Temperatures for Region shoulder:
+  PLASTIC_COVERED Boundary:
+    Elements: 938
+    Average Temperature: 79.39°C
+    Min Temperature: 67.19°C
+    Max Temperature: 85.41°C
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 294
+    Average Temperature: 82.57°C
+    Min Temperature: 67.02°C
+    Max Temperature: 85.48°C
+  CONST_Q Boundary:
+    Elements: 28
+    Average Temperature: 82.01°C
+    Min Temperature: 81.98°C
+    Max Temperature: 82.04°C
+    Heat Flux: 1.00 W/m²
+
+Region: humerus_upper
+Average Temperature: 39.92°C
+Min Temperature: 20.00°C
+Max Temperature: 48.54°C
+Plastic Covered Surface Heat Transfer: 3.38 W
+Actuator Connected Surface Heat Transfer: 0.13 W
+Total Heat Transfer Rate: 3.51 W
+
+Boundary Condition Temperatures for Region humerus_upper:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 2264
+    Average Temperature: 46.10°C
+    Min Temperature: 33.99°C
+    Max Temperature: 48.54°C
+  MAPPED Boundary:
+    Elements: 2
+    Average Temperature: 39.58°C
+    Min Temperature: 39.58°C
+    Max Temperature: 39.58°C
+  ADIABATIC Boundary:
+    Elements: 2
+    Average Temperature: 39.58°C
+    Min Temperature: 39.58°C
+    Max Temperature: 39.58°C
+  PLASTIC_COVERED Boundary:
+    Elements: 23129
+    Average Temperature: 39.92°C
+    Min Temperature: 20.00°C
+    Max Temperature: 48.52°C
+
+Region: humerus_lower
+Average Temperature: 43.45°C
+Min Temperature: 36.57°C
+Max Temperature: 49.28°C
+Plastic Covered Surface Heat Transfer: 6.55 W
+Actuator Connected Surface Heat Transfer: 0.21 W
+Total Heat Transfer Rate: 6.76 W
+
+Boundary Condition Temperatures for Region humerus_lower:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 5420
+    Average Temperature: 46.05°C
+    Min Temperature: 41.82°C
+    Max Temperature: 49.28°C
+  PLASTIC_COVERED Boundary:
+    Elements: 19516
+    Average Temperature: 43.45°C
+    Min Temperature: 36.57°C
+    Max Temperature: 49.26°C
+
+Region: forearm_upper
+Average Temperature: 80.38°C
+Min Temperature: 78.75°C
+Max Temperature: 84.58°C
+Plastic Covered Surface Heat Transfer: 21.51 W
+Actuator Connected Surface Heat Transfer: 0.45 W
+Total Heat Transfer Rate: 21.96 W
+
+Boundary Condition Temperatures for Region forearm_upper:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 588
+    Average Temperature: 79.86°C
+    Min Temperature: 78.75°C
+    Max Temperature: 84.58°C
+  MAPPED Boundary:
+    Elements: 4
+    Average Temperature: 84.57°C
+    Min Temperature: 84.55°C
+    Max Temperature: 84.58°C
+  PLASTIC_COVERED Boundary:
+    Elements: 756
+    Average Temperature: 80.37°C
+    Min Temperature: 78.75°C
+    Max Temperature: 84.55°C
+
+Region: forearm_lower
+Average Temperature: 80.90°C
+Min Temperature: 74.33°C
+Max Temperature: 101.18°C
+Plastic Covered Surface Heat Transfer: 10.97 W
+Actuator Connected Surface Heat Transfer: 0.04 W
+Total Heat Transfer Rate: 11.01 W
+
+Boundary Condition Temperatures for Region forearm_lower:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 115
+    Average Temperature: 82.79°C
+    Min Temperature: 75.89°C
+    Max Temperature: 101.18°C
+  PLASTIC_COVERED Boundary:
+    Elements: 1275
+    Average Temperature: 80.91°C
+    Min Temperature: 74.33°C
+    Max Temperature: 101.18°C
+
+Region: wrist
+Average Temperature: 77.73°C
+Min Temperature: 64.27°C
+Max Temperature: 87.54°C
+Actuator Connected Surface Heat Transfer: 0.04 W
+Total Heat Transfer Rate: 0.04 W
+
+Boundary Condition Temperatures for Region wrist:
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 374
+    Average Temperature: 83.32°C
+    Min Temperature: 75.19°C
+    Max Temperature: 87.54°C
   NODE_CONNECTED Boundary:
-    Elements: 368
-    Average Temperature: 29.44°C
-    Min Temperature: 29.35°C
-    Max Temperature: 29.55°C
-    Connected to Node: FIG4_LILAC_PANCAKE_GEARBOX
-    Thermal Resistance: 12.34 K/W
-  USERDEF_CONVECTION Boundary:
-    Elements: 598
-    Average Temperature: 29.37°C
-    Min Temperature: 29.25°C
-    Max Temperature: 29.49°C
+    Elements: 135
+    Average Temperature: 65.23°C
+    Min Temperature: 64.27°C
+    Max Temperature: 66.86°C
+    Connected to Node: YAW_HS
+    Thermal Resistance: 1.00 K/W
 
-Region: FIG4_KNEE_LILAC_FLIPCUP
-Average Temperature: 34.70°C
-Min Temperature: 34.64°C
-Max Temperature: 34.81°C
-Total Heat Transfer Rate: 0.00 W
+Region: HOOK
+Average Temperature: 45.52°C
+Min Temperature: 43.74°C
+Max Temperature: 49.07°C
+Actuator Connected Surface Heat Transfer: 0.04 W
+Total Heat Transfer Rate: 0.04 W
 
-Boundary Condition Temperatures for Region FIG4_KNEE_LILAC_FLIPCUP:
-  NODE_CONNECTED Boundary:
-    Elements: 474
-    Average Temperature: 34.78°C
-    Min Temperature: 34.76°C
-    Max Temperature: 34.81°C
-    Connected to Node: FIG4_LILAC_FLIPCUP_GEARBOX
-    Thermal Resistance: 22.57 K/W
-  USERDEF_CONVECTION Boundary:
-    Elements: 711
-    Average Temperature: 34.65°C
-    Min Temperature: 34.64°C
-    Max Temperature: 34.66°C
+Boundary Condition Temperatures for Region HOOK:
+  CONST_T Boundary:
+    Elements: 196
+    Average Temperature: 45.00°C
+    Min Temperature: 45.00°C
+    Max Temperature: 45.00°C
+    Set Temperature: 45.00°C
+  ACTUATOR_CONNECTED Boundary:
+    Elements: 210
+    Average Temperature: 47.67°C
+    Min Temperature: 45.17°C
+    Max Temperature: 49.07°C
 
 Node Network Temperature Results:
 --------------------------------------------------
 
-Network: FIG4_LILAC_PANCAKE_GEARBOX
+Network: hand
 Description: 
-  Node 'FIG4_LILAC_PANCAKE_GEARBOX': 41.71°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_PANCAKE_GEARBOX
-  Network Connections (1):
-    region_FIG4_KNEE_LILAC_PANCAKE_boundary → FIG4_LILAC_PANCAKE_GEARBOX: 12.34 K/W
-
-Network: FIG4_LILAC_PANCAKE_MOTOR
-Description: 
-  Node 'FIG4_LILAC_PANCAKE_MOTOR': 30.12°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_PANCAKE_MOTOR
-  Network Connections (1):
-    region_FIG4_KNEE_LILAC_PANCAKE_boundary → FIG4_LILAC_PANCAKE_MOTOR: 0.69 K/W
-
-Network: FIG4_LILAC_PANCAKE_FETS
-Description: 
-  Node 'FIG4_LILAC_PANCAKE_FETS': 31.34°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_PANCAKE_FETS
-  Network Connections (1):
-    region_FIG4_KNEE_LILAC_PANCAKE_boundary → FIG4_LILAC_PANCAKE_FETS: 1.80 K/W
-
-Network: FIG4_LILAC_FLIPCUP_FETS
-Description: 
-  Node 'FIG4_LILAC_FLIPCUP_FETS': 36.61°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_FLIPCUP_FETS
-
-Network: FIG4_LILAC_FLIPCUP_MOTOR
-Description: 
-  Node 'FIG4_LILAC_FLIPCUP_MOTOR': 36.37°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_FLIPCUP_MOTOR
-
-Network: FIG4_LILAC_FLIPCUP_GEARBOX
-Description: 
-  Node 'FIG4_LILAC_FLIPCUP_GEARBOX': 57.36°C
-    Heat Source: 1.00 W
-    Name: FIG4_LILAC_FLIPCUP_GEARBOX
+  Node 'BACKHAND': 47.62°C
+  Node 'YAW_HS': 59.55°C
+    Heat Source: 4.90 W
+  Network Connections (4):
+    YAW_HS → BACKHAND: 1.90 K/W
+    YAW_HS → air: 9.20 K/W
+    BACKHAND → air: 4.40 K/W
+    region_wrist_boundary → YAW_HS: 1.00 K/W
 
 Actuator Results:
 --------------------------------------------------
+
+Actuator: J2
+  FETs Temperature: 91.40°C (Heat: 4.00 W)
+  Motor Temperature: 96.17°C (Heat: 17.10 W)
+  Gearbox Temperature: 66.43°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 21.10 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 84.20°C
+  Output Structure Temperature: 47.73°C
+
+Actuator: upper_arm_twist
+  FETs Temperature: 52.64°C (Heat: 4.00 W)
+  Motor Temperature: 47.77°C (Heat: 3.32 W)
+  Gearbox Temperature: 42.63°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 7.32 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 45.44°C
+  Output Structure Temperature: 39.67°C
+
+Actuator: elbow
+  FETs Temperature: 86.69°C (Heat: 4.00 W)
+  Motor Temperature: 86.76°C (Heat: 10.38 W)
+  Gearbox Temperature: 64.51°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 14.38 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 79.49°C
+  Output Structure Temperature: 48.74°C
+
+Actuator: ROLL
+  FETs Temperature: 103.42°C (Heat: 4.00 W)
+  Motor Temperature: 96.84°C (Heat: 0.88 W)
+  Gearbox Temperature: 90.55°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 4.88 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 96.22°C
+  Output Structure Temperature: 84.58°C
+
+Actuator: PITCH
+  FETs Temperature: 90.52°C (Heat: 4.00 W)
+  Motor Temperature: 87.98°C (Heat: 6.66 W)
+  Gearbox Temperature: 80.20°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 10.66 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 83.32°C
+  Output Structure Temperature: 76.91°C
+
+Actuator: J1
+  FETs Temperature: 54.87°C (Heat: 4.00 W)
+  Motor Temperature: 50.73°C (Heat: 4.36 W)
+  Gearbox Temperature: 57.15°C (Heat: 0.00 W)
+  Total Actuator Heat Generation: 8.36 W
+  Thermal Resistances: R1=1.80, R2=0.70, R3=3.80, R4=4.00, R5=200.00 K/W
+  Housing Structure Temperature: 47.67°C
+  Output Structure Temperature: 67.12°C

@@ -1,7 +1,7 @@
 {
   "environment": {
     "ambient_temperature": 20.0,
-    "heat_transfer_coefficient": 15.0,
+    "heat_transfer_coefficient": 5.0,
     "plastic_conductivity": 0.25
   },
   "regions": [
@@ -35,7 +35,7 @@
           "thickness": 0.0,
           "plastic_thickness": 6.0,
           "contact_resistance": 1e-05,
-          "heat_transfer_coefficient": 15.0,
+          "heat_transfer_coefficient": 5.0,
           "ambient_temperature": 20.0
         },
         {
@@ -172,7 +172,7 @@
           "plastic_thickness": 3.0,
           "plastic_conductivity": 0.25,
           "contact_resistance": 0.0001,
-          "heat_transfer_coefficient": 15.0,
+          "heat_transfer_coefficient": 5.0,
           "ambient_temperature": 20.0
         }
       ]
@@ -234,7 +234,7 @@
           "plastic_thickness": 3.0,
           "plastic_conductivity": 0.25,
           "contact_resistance": 1e-06,
-          "heat_transfer_coefficient": 15.0,
+          "heat_transfer_coefficient": 5.0,
           "ambient_temperature": 20.0
         },
         {
@@ -325,10 +325,10 @@
           "width": 195.27,
           "height": 342.9,
           "thickness": 0.0,
-          "plastic_thickness": 2.248,
+          "plastic_thickness": 0.5,
           "plastic_conductivity": 0.25,
           "contact_resistance": 0.001,
-          "heat_transfer_coefficient": 15.0,
+          "heat_transfer_coefficient": 5.0,
           "ambient_temperature": 20.0
         },
         {
@@ -421,10 +421,10 @@
           "width": 246.43,
           "height": 139.64,
           "thickness": 0.0,
-          "plastic_thickness": 1.25,
+          "plastic_thickness": 0.5,
           "plastic_conductivity": 0.25,
           "contact_resistance": 0.001,
-          "heat_transfer_coefficient": 15.0,
+          "heat_transfer_coefficient": 5.0,
           "ambient_temperature": 20.0
         }
       ]
@@ -533,10 +533,10 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 0.9,
-        "R3": 200.0,
-        "R4": 0.3,
-        "R5": 4.0
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
+        "R5": 200.0
       }
     },
     {
@@ -548,10 +548,10 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 0.9,
-        "R3": 200.0,
-        "R4": 0.3,
-        "R5": 4.0
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
+        "R5": 200.0
       }
     },
     {
@@ -563,10 +563,10 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 0.9,
-        "R3": 200.0,
-        "R4": 0.3,
-        "R5": 4.0
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
+        "R5": 200.0
       }
     },
     {
@@ -578,10 +578,10 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 0.9,
-        "R3": 200.0,
-        "R4": 0.3,
-        "R5": 4.0
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
+        "R5": 200.0
       }
     },
     {
@@ -593,10 +593,10 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 0.9,
-        "R3": 200.0,
-        "R4": 0.3,
-        "R5": 4.0
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
+        "R5": 200.0
       }
     },
     {
@@ -608,9 +608,9 @@
       },
       "thermal_resistance": {
         "R1": 1.8,
-        "R2": 1.1,
-        "R3": 1.2,
-        "R4": 10.6,
+        "R2": 0.7,
+        "R3": 3.8,
+        "R4": 4.0,
         "R5": 200.0
       }
     }
@@ -625,7 +625,7 @@
           "id": "BACKHAND",
           "name": "",
           "thermal_capacity": 0.0,
-          "heat_source": 22.36
+          "heat_source": 0.0
         },
         {
           "id": "YAW_HS",
