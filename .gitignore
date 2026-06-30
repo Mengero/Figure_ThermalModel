@@ -147,3 +147,9 @@ temperature_distribution.png
 ehthumbs.db
 Thumbs.db
 *:Zone.Identifier
+
+# Local backup/scratch configs
+*.bak
+
+# Claude Code local settings
+.claude/
