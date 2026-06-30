@@ -117,3 +117,34 @@ Correlations (use for analogy to unmeasured gearboxes):
 - Then **R_GB→Output = R_cyl + R_cont** with R_cyl = ln(OD/ID)/(2π·k·H), k = 33.5 W/(m·K).
 
 Validity: interpolation A ≈ 1200–2600 mm². Exponent 0.45 (≠1) suggests contact pressure / constriction effects vary with size; the two models diverge ~2× below A≈600 mm² (small CSD-14 wrist gearboxes) — a third measurement on a small actuator (e.g. Papaya wrist) would discriminate. Plot: `F03_actuator_temp/_Rcont_correlation.png`.
+
+## Motor → Housing resistance (R2)
+
+Three series layers from winding to housing outer surface:
+1. **Lamination conduction** (winding at IID → lamination/stator OD), radial through stator iron, **k_lam = 20 W/(m·K)**: `R_lam = ln(sOD/IID)/(2π·k_lam·H)`
+2. **Contact** at lamination-OD ↔ housing-bore, area A = π·sOD·H: `R_cont`
+3. **Housing wall** (bore sOD → housing OD), RGA-5 **k = 120 W/(m·K)**: `R_housing = ln(hOD/sOD)/(2π·k·H)`
+
+So `R2_measured = R_lam + R_cont + R_housing`  →  `R_cont = R2 − R_lam − R_housing`.
+
+| Motor | Family | IID [mm] | stator OD [mm] | housing OD [mm] | H [mm] | A=π·sOD·H [mm²] | R_lam (k=20) [K/W] | R_housing (k=120) [K/W] | R2 measured [K/W] | R_cont [K/W] | h_c [W/(m²·K)] |
+|-------|--------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| SM67 | Citrine | 52.2 | 67 | 80 | 12 | 2526 | 0.166 | 0.020 | 0.70 | 0.515 | 769 |
+| SM72 | Jade (hip_x) | 46.7 | 72 | 78.6 | 11 | 2488 | 0.313 | 0.011 | 1.10 | 0.776 | 518 |
+| SM85 | Lapis (hip_y) | 55.2 | 85 | 93.9 | 12 | 3204 | 0.286 | 0.011 | 1.96 | 1.663 | 188 |
+
+**Findings:**
+- The **lamination layer (k=20) is significant** (0.17–0.31 K/W, ~20–30% of R2) and the largest *physics-based* contributor after contact; the housing wall (k=120) is negligible (≤0.02).
+- Even after removing R_lam and R_housing, the **contact resistance still grows with motor size** (0.52→0.78→1.66; h_c 769→518→188) — so the lamination layer doesn't fully explain it; the contact interface quality/pressure also degrades with size.
+- Net: **R2 still scales with motor family**, not contact area (R2 ≈ 0.069·OD_stator − 3.92). hip_x is consistent here (it was only the gearbox-side outlier).
+
+**Analogy rule (motor side): transfer R2 by MOTOR FAMILY, independent of housing:**
+
+| Motor | R2 [K/W] | Used by joints |
+|-------|:--------:|----------------|
+| SM67 | 0.70 | shoulder_j2, elbow, upper_arm_twist |
+| SM72 | 1.10 | shoulder_j1, hip_x, hip_z, ankle_y |
+| SM85 | 1.96 | hip_y, knee (Lapis); spine_x, spine_z (Sapphire) |
+| SM44 (S/L) | **unknown** | wrist roll/pitch/yaw, neck (Papaya); ankle_x (Carrot) — needs one measurement |
+
+Plots: `F03_actuator_temp/_R2_motor_vs_size.png` (correlation), `_Rcont_motor_correlation.png` (area-scaling failure).
