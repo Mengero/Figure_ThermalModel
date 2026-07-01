@@ -49,19 +49,19 @@ _ACTS = ['SPN_Z', 'SPN_X', 'HIP_Y', 'HIP_X', 'THIGH_U', 'SHIN_KNEE', 'SHIN_ANKLE
 # ---- motor thermal masses [J/K]  (assembly = Node 1 ; winding = Winding TM) ----
 # only the spine SM85s (SPN_Z, SPN_X) are HALVED (centerline, shared L/R); HIP_Y is
 # per-leg so it's EXACT, and hip and below are EXACT.
-_CM = {  # assembly thermal mass
-    'SPN_Z': 237.5 / 2, 'SPN_X': 237.5 / 2,   # SM85  (halved) = 118.75
-    'HIP_Y': 237.5,                            # SM85  (exact, per-leg)
-    'HIP_X': 151.0, 'THIGH_U': 151.0, 'SHIN_ANKLE': 151.0,  # SM72  (exact)
-    'SHIN_KNEE': 237.5,                        # SM85  (exact)  knee = Lapis SM85
-    'TALUS': 259.9,                            # SM44L (exact)
+_CM = {  # assembly thermal mass [J/K] — RE-MEASURED motor mass (SM85=491.2, SM72=158.35, SM44L=144.22)
+    'SPN_Z': 491.2 / 2, 'SPN_X': 491.2 / 2,    # SM85 spine (halved, centerline) = 245.6
+    'HIP_Y': 491.2,                            # SM85  (per-leg)
+    'HIP_X': 158.35, 'THIGH_U': 158.35, 'SHIN_ANKLE': 158.35,  # SM72
+    'SHIN_KNEE': 491.2,                        # SM85 knee
+    'TALUS': 144.22,                           # SM44L ankle_x
 }
-_CW = {  # winding thermal mass
+_CW = {  # winding thermal mass [J/K] — UNCHANGED (same as before)
     'SPN_Z': 74.8 / 2, 'SPN_X': 74.8 / 2,      # SM85  (halved) = 37.40
-    'HIP_Y': 74.8,                             # SM85  (exact, per-leg)
-    'HIP_X': 39.95, 'THIGH_U': 39.95, 'SHIN_ANKLE': 39.95,  # SM72  (exact)
-    'SHIN_KNEE': 74.77,                        # SM85  (exact)  knee = Lapis SM85
-    'TALUS': 19.03,                            # SM44L (exact)
+    'HIP_Y': 74.8,                             # SM85  (per-leg)
+    'HIP_X': 39.95, 'THIGH_U': 39.95, 'SHIN_ANKLE': 39.95,  # SM72
+    'SHIN_KNEE': 74.77,                        # SM85 knee
+    'TALUS': 19.03,                            # SM44L ankle_x
 }
 
 # ---- structure thermal masses [J/K] (Node 2) ----
