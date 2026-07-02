@@ -86,7 +86,7 @@ for tag, af, tf in RUNS:
             if c.startswith(('Tm_', 'Ts_')) or c == 'T_amb':
                 if df[c].notna().all():
                     df[c] = savgol_filter(df[c].values, w, 2)
-    df['T_torso'] = df['T_amb']          # torso boundary tracks ambient air-inlet temp (recorded ambient)
+    # benchtop: no battery log -> no T_torso column, engine uses the fixed cfg torso (40 C), same as arm benchtop
     df.to_csv(os.path.join(OUT, f'data_{tag}.csv'), index=False)
     nT = df.filter(like='Tm_').notna().any().sum()
     rise = {c.replace('Tm_', ''): round(df[c].iloc[-1] - df[c].iloc[0], 1)

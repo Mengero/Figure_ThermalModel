@@ -118,7 +118,7 @@ CONFIG = LimbConfig(
 
     BOUNDARY_ACTS=[],                                 # SPN_Z predicted (not clamped); torso is its sink (see TORSO)
     ENCLOSED={},                                      # every segment has a measured ambient area
-    TORSO=('SPN_Z', 25.0),                            # SPN_Z sinks to torso via fitted R_torso; temp = ambient air inlet (T_torso col=T_amb per run); 25 C default if no recorded ambient
+    TORSO=('SPN_Z', 40.0),                            # SPN_Z sinks to torso via fitted R_torso; battery cell temp (arm treatment): field cases pull T_torso from Tbatt_max via fields.py; 40 C fallback for benchtop
 
     MOTOR={'SPN_Z': 'SM85', 'SPN_X': 'SM85', 'HIP_Y': 'SM85', 'HIP_X': 'SM72',
            'THIGH_U': 'SM72', 'SHIN_KNEE': 'SM85', 'SHIN_ANKLE': 'SM72', 'TALUS': 'SM44L'},

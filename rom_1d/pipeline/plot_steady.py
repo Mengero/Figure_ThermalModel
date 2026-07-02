@@ -27,8 +27,8 @@ R20 = np.array([M.cfg.R20[x] for x in ACTS])
 meas = np.array([d['Tm'].get(x, np.nan) for x in ACTS])
 Tamb = d['T_amb']
 
-if M.has_torso:
-    M.torso_temp = Tamb          # torso = this case's ambient air-inlet temp (matches new TORSO rule)
+if M.has_torso and 'T_torso' in d:
+    M.torso_temp = d['T_torso']  # field case: torso = battery cell temp (else cfg fallback 40 C)
 # self-consistent steady solve (matches engine.steady_residual)
 Tw = np.where(np.isfinite(meas), meas, 80.0)
 for _ in range(60):
