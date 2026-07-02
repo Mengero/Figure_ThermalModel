@@ -131,6 +131,7 @@ CONFIG = LimbConfig(
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
 
     TIE_R2=True,                                      # leg R2 tied per motor size (one fitted value per size; not pinned to provided values)
+    FIT_RSTACK=True,                                  # fit structure->fabric R_STACK (else fixed measured values)
     HALVED_ACTS=('SPN_Z', 'SPN_X'),                   # spine motors halved (centerline): C/2, power/2, area/2 -> R2 x2
     STEADY_CASE='steady_c1081',                       # fold c_1081 steady point into the fit (constrains R_torso), same as arm
     TRAIN=['hi19a', 'depal_ss', 'i25b'],              # high-power + near-steady + TALUS-heating spread

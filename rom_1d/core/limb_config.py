@@ -65,6 +65,7 @@ class LimbConfig:
     TRAIN: list = field(default_factory=list)
     TEST:  list = field(default_factory=list)
     STEADY_CASE: str = ''                        # steady-state operating point (data/<limb>/<case>.json) folded into fit; '' = none
+    FIT_RSTACK: bool = False                     # fit: make structure->fabric R_STACK fitted params (else fixed)
 
     def __post_init__(self):
         self.C_M = np.asarray(self.C_M, float)

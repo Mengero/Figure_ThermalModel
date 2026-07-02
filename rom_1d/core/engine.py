@@ -55,8 +55,10 @@ class ThermalROM:
             tn = cfg.TORSO[0]                       # may be an actuator (motor node) or a structure
             self.torso_node = self.ACTS.index(tn) if tn in self.ACTS else self.SIDX[tn]
             self.torso_temp = float(cfg.TORSO[1])
+        self.fit_rstack = getattr(cfg, 'FIT_RSTACK', False)
+        self.n_rstack = self.NF if self.fit_rstack else 0
         self.n_in = 2 * self.NM + 1 + (1 if self.has_torso else 0)   # width of u
-        self.NP = 2 * self.NM + self.NB + (1 if self.has_torso else 0)   # number of fit params
+        self.NP = 2 * self.NM + self.NB + self.n_rstack + (1 if self.has_torso else 0)   # number of fit params
 
         self._opcache = {}
         self.G_MAT = self.BQ_MAT = self.R2_VEC = self.B_COEF = self.R_TORSO = None
@@ -119,14 +121,16 @@ class ThermalROM:
             if o != h:
                 couple(h, o, Rl[i])      # housing==output (boundary act) -> no link
             Bq[h, NM + i] += 1.0         # FET (+extra load) into housing structure
+        self.RSTACK = ({s: 10 ** p[2 * NM + self.NB + k] for k, s in enumerate(self.FABRICS)}
+                       if self.fit_rstack else dict(cfg.R_STACK))
         for s in self.FABRICS:
-            couple(self.SIDX[s], self.FIDX[s], cfg.R_STACK[s])
+            couple(self.SIDX[s], self.FIDX[s], self.RSTACK[s])
             couple(self.FIDX[s], 'amb', 1 / (self.B_COEF[s] * cfg.AREA[s]))
         for s in self.BARE:
             couple(self.SIDX[s], 'amb', 1 / (self.B_COEF[s] * cfg.AREA[s]))
         # enclosed structures: no ambient, no extra link (anchored only via their actuators)
         if self.has_torso:
-            self.R_TORSO = 10 ** p[2 * NM + self.NB]          # fitted torso-link resistance [K/W]
+            self.R_TORSO = 10 ** p[2 * NM + self.NB + self.n_rstack]          # fitted torso-link resistance [K/W]
             G[self.torso_node, self.torso_node] -= 1 / self.R_TORSO
             Bq[self.torso_node, 2 * NM + 1] += 1 / self.R_TORSO   # fixed torso temp = column 2NM+1
         self.G_MAT, self.BQ_MAT = G, Bq; self._opcache.clear()
@@ -184,7 +188,7 @@ class ThermalROM:
         for s in self.STRUCTS:
             if np.isfinite(Ts0[s]):
                 Q0 = max(Ts0[s] - Tamb_t[0], 0.0) * (self.B_COEF[s] * cfg.AREA[s])
-                metal0[s] = Ts0[s] + Q0 * cfg.R_STACK.get(s, 0.0)
+                metal0[s] = Ts0[s] + Q0 * self.RSTACK.get(s, 0.0)
             else:
                 metal0[s] = None
         for s, src in cfg.ENCLOSED.items():

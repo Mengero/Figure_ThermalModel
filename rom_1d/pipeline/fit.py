@@ -57,6 +57,10 @@ else:                                         # leg: SM85 R2 (~1.96 K/W) exceeds
 rest_p0 = np.concatenate([L([3] * NM), L([20] * M.NB)])        # R_link, b (always fitted)
 rest_lo = np.concatenate([L([0.0001] * NM), L([6] * M.NB)])
 rest_hi = np.concatenate([L([15] * NM), L([40] * M.NB)])
+if M.fit_rstack:                               # append per-fabric structure->fabric R_stack [K/W]
+    rest_p0 = np.concatenate([rest_p0, L([M.cfg.R_STACK[x] for x in M.FABRICS])])  # init at measured
+    rest_lo = np.concatenate([rest_lo, L([0.02] * M.NF)])
+    rest_hi = np.concatenate([rest_hi, L([5.0] * M.NF)])
 if a.fix_r2 or M.cfg.FIX_R2:                   # R2 NOT optimized: pinned to size-based values
     r2fix_log = L(np.array([R2_BY_SIZE[M.cfg.MOTOR[x]] for x in M.ACTS]))
     expand = lambda q: np.concatenate([r2fix_log, q])         # prepend fixed R2 -> full p
@@ -100,9 +104,11 @@ R2, Rl, b = M.unpack(xf)
 out = dict(R2=dict(zip(M.ACTS, R2.round(3))),
            R_link=dict(zip(M.ACTS, Rl.round(3))),
            b=dict(zip(M.BSTRUCTS, b.round(2))),
+           R_stack=({x: round(M.RSTACK[x], 3) for x in M.FABRICS} if M.fit_rstack else None),
            p=list(xf))
 if M.has_torso:
     out['R_torso'] = round(float(M.R_TORSO), 3)
 C.save_params(a.limb, out)
 print("R2:", out['R2']); print("R_link:", out['R_link']); print("b:", out['b'])
+if out.get("R_stack"): print("R_stack:", out["R_stack"])
 if M.has_torso: print("R_torso:", out['R_torso'], "K/W  (torso @ %.0f C)" % M.torso_temp)
