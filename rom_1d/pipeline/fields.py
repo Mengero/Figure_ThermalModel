@@ -18,7 +18,9 @@ import _common as C
 # robot actuator_name -> ROM joint key (CSVs may already carry a 'J' column)
 SH = {'left_shoulder_j1': 'J1', 'left_shoulder_j2': 'J2', 'left_upper_arm_twist': 'TWIST',
       'left_elbow': 'ELBOW', 'left_wrist_roll': 'ROLL', 'left_wrist_pitch': 'PITCH',
-      'left_wrist_yaw': 'YAW'}
+      'left_wrist_yaw': 'YAW',
+      'spine_z': 'SPN_Z', 'spine_x': 'SPN_X', 'left_hip_y': 'HIP_Y', 'left_hip_x': 'HIP_X',
+      'left_hip_z': 'THIGH_U', 'left_knee': 'SHIN_KNEE', 'left_ankle_y': 'SHIN_ANKLE', 'left_ankle_x': 'TALUS'}
 
 
 def load_field(M, path, dt, amb_offset=0.0):
@@ -41,6 +43,8 @@ def load_field(M, path, dt, amb_offset=0.0):
             df['Tm_' + J] = np.nan; df['P_' + J] = 0.0; continue
         Tm = np.interp(grid, g['s'], g['Tmotor_degC'])
         P = 2.0 * np.interp(grid, g['s'], g['power_W']) * R20[J] * (234.5 + Tm) / 254.5
+        if J in getattr(M.cfg, 'HALVED_ACTS', ()):
+            P = P * 0.5              # spine modeled at half -> halve field power too
         df['Tm_' + J] = Tm; df['P_' + J] = P
     ac = 'Tamb_filled' if 'Tamb_filled' in d.columns else 'Tambient_degC'
     aa = d.dropna(subset=[ac]).sort_values('s')
