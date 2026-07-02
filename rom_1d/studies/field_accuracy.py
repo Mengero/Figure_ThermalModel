@@ -76,7 +76,7 @@ if a.csv:
     ax[0].set_ylabel('motor T [C] (solid=exp, dashed=sim)')
     ax[0].set_title('%s — open-loop prediction vs experiment (overall motor RMSE %.2f C)' % (tag, allr))
     ax[0].grid(alpha=.3); ax[0].legend(fontsize=8, ncol=4, loc='upper left')
-    ax[1].set_ylabel('sim - exp [C]'); ax[1].grid(alpha=.3); ax[1].legend(fontsize=8, ncol=7)
+    ax[1].set_ylabel('sim - exp [C]'); ax[1].set_ylim(-10, 10); ax[1].grid(alpha=.3); ax[1].legend(fontsize=8, ncol=7)
     ax[2].set_ylabel('motor copper power [W]'); ax[2].set_xlabel('time [min]'); ax[2].grid(alpha=.3); ax[2].legend(fontsize=8, ncol=7)
     short = '_'.join(tag.split('_')[:3]).lower()
     out = C.fig_path('field_%s.png' % short, a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
