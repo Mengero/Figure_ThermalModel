@@ -73,6 +73,9 @@ for tag, af, tf in RUNS:
             P['P_' + SHORT[j]] = 0.0
         if 'Tm_' + SHORT[j] not in Tm:
             Tm['Tm_' + SHORT[j]] = np.nan
+    for m in ('SPN_Z', 'SPN_X'):               # spine motors modeled at half (centerline): halve power too
+        if 'P_' + m in P:
+            P['P_' + m] *= 0.5
     S = load_tc(tf)
     Sg = S.reindex(S.index.union(grid)).interpolate('time').reindex(grid)
     df = pd.concat([Tm.sort_index(axis=1), P.sort_index(axis=1), Sg], axis=1)

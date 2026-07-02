@@ -64,7 +64,8 @@ elif M.cfg.TIE_R2:                             # R2 tied by motor size: one fitt
     uniq = sorted(set(M.cfg.MOTOR[x] for x in M.ACTS))        # unique motor sizes
     sidx = np.array([uniq.index(M.cfg.MOTOR[x]) for x in M.ACTS])   # motor -> size-param index
     ns = len(uniq)
-    expand = lambda q: np.concatenate([q[:ns][sidx], q[ns:]]) # size R2 -> per-motor R2
+    r2off = np.array([L(2.0) if x in M.cfg.HALVED_ACTS else 0.0 for x in M.ACTS])  # halved motor: A/2 -> R2 x2
+    expand = lambda q: np.concatenate([q[:ns][sidx] + r2off, q[ns:]]) # size R2 (x2 for halved) -> per-motor R2
     p0 = np.concatenate([L([0.7] * ns), rest_p0])
     lo = np.concatenate([L([0.05] * ns), rest_lo])
     hi = np.concatenate([L([3.0] * ns), rest_hi])

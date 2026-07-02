@@ -131,6 +131,7 @@ CONFIG = LimbConfig(
     DPDT_THRESH=5.0, CADAPT_TAU=80.0, ADAPT_C=True, C_WIND_SCALE=2.5,
 
     TIE_R2=True,                                      # leg R2 tied per motor size (one fitted value per size; not pinned to provided values)
+    HALVED_ACTS=('SPN_Z', 'SPN_X'),                   # spine motors halved (centerline): C/2, power/2, area/2 -> R2 x2
     TRAIN=['hi19b', 'depal_ss', 'i25b'],              # high-power + near-steady + TALUS-heating spread
     TEST=['i50', 'i25a', 'hi19a', 'depal_fast', 'depal_sat'],
 )
