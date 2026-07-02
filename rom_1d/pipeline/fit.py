@@ -75,7 +75,7 @@ else:                                          # R2 free: full vector [R2, R_lin
     lo = np.concatenate([L([0.05] * NM), rest_lo])
     hi = np.concatenate([L(r2_hi), rest_hi])
 if M.has_torso:                               # append fitted R_torso [K/W]
-    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(5.0))
+    p0 = np.append(p0, L(1.5)); lo = np.append(lo, L(0.05)); hi = np.append(hi, L(10.0))
 
 r0 = resid(p0)
 print("init RMSE=%.2f (n=%d, params=%d, states=%d)%s" %
