@@ -57,7 +57,7 @@ ax.set_xticks(x); ax.set_xticklabels(ACTS, rotation=30, ha='right')
 ax.set_ylabel('motor temp [°C]')
 ax.set_title(f'{a.limb} steady-state fit — {a.steady}  (RMSE={rmse:.2f} °C; +/- = model−measured)')
 ax.legend(fontsize=8); ax.grid(axis='y', alpha=.3)
-out = C.fig_path(f'{a.limb}_{a.steady}_steady.png')
+out = C.fig_path(f'{a.steady}_steady.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)
 print('wrote', out, ' steady RMSE=%.2f C' % rmse)
 for i, aa in enumerate(ACTS):

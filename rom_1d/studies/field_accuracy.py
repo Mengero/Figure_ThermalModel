@@ -78,7 +78,8 @@ if a.csv:
     ax[0].grid(alpha=.3); ax[0].legend(fontsize=8, ncol=4, loc='upper left')
     ax[1].set_ylabel('sim - exp [C]'); ax[1].grid(alpha=.3); ax[1].legend(fontsize=8, ncol=7)
     ax[2].set_ylabel('motor copper power [W]'); ax[2].set_xlabel('time [min]'); ax[2].grid(alpha=.3); ax[2].legend(fontsize=8, ncol=7)
-    out = C.fig_path('%s_predict.png' % tag); plt.tight_layout(); plt.savefig(out, dpi=600)
+    short = '_'.join(tag.split('_')[:3]).lower()
+    out = C.fig_path('field_%s.png' % short, a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
     print('overall motor RMSE = %.2f C  ->  saved %s' % (allr, out))
 
 # ---------------- all cases ----------------
@@ -99,6 +100,6 @@ elif a.all:
     ax.axhline(15, color='k', ls='--', lw=1, label='+/-15 C')
     ax.set_xticks(x + 2 * w); ax.set_xticklabels(M.ACTS); ax.set_ylabel('open-loop prediction RMSE [C]')
     ax.set_title('Field prediction accuracy per joint — UPS vs depal'); ax.grid(axis='y', alpha=.3); ax.legend(fontsize=8)
-    out = C.fig_path('field_compare.png'); plt.tight_layout(); plt.savefig(out, dpi=600); print('\nsaved', out)
+    out = C.fig_path('field_compare.png', a.limb); plt.tight_layout(); plt.savefig(out, dpi=600); print('\nsaved', out)
 else:
     ap.error('give --csv <case> or --all')

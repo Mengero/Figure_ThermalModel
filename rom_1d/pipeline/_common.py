@@ -40,6 +40,7 @@ def save_params(limb, obj):
     json.dump(obj, open(fit_path(limb), 'w'), indent=1, default=float)
 
 
-def fig_path(name):
-    os.makedirs(FIG_DIR, exist_ok=True)
-    return os.path.join(FIG_DIR, name)
+def fig_path(name, sub=None):
+    d = FIG_DIR if sub is None else os.path.join(FIG_DIR, sub)
+    os.makedirs(d, exist_ok=True)
+    return os.path.join(d, name)

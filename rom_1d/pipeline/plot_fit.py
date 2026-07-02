@@ -83,7 +83,7 @@ for c, tag in enumerate(tags):
     ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(alpha=.3); ax.set_xlabel('time [min]')
     if c == 0: ax.set_ylabel('P [W]')
 
-out = C.fig_path(f'{a.limb}_{a.split}_fit.png')
+out = C.fig_path(f'{a.split}_fit.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)
 print(f'saved {out}')
 
