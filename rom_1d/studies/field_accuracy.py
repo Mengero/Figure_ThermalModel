@@ -44,8 +44,19 @@ M = C.rom(a.limb); M.build(C.load_params(a.limb))
 
 
 def predict(df, dt):
-    """open-loop model prediction; motor temps initialized from the first measured reading."""
-    X = M.simulate(df, dt)                                    # simulate seeds motors from Tm[0]
+    """open-loop model prediction; motors init from first measured reading, structures/fabrics
+    seeded from their housing motor (field CSVs carry no structure thermocouples)."""
+    Tm0 = df[['Tm_' + a for a in M.ACTS]].iloc[0].to_numpy(dtype=float)
+    Tamb0 = float(df['T_amb'].iloc[0])
+    x0 = np.zeros(M.NX)
+    for i in range(M.NM):
+        x0[i] = Tm0[i] if np.isfinite(Tm0[i]) else Tamb0
+    for st in M.STRUCTS:
+        hz = [Tm0[i] for i, a in enumerate(M.ACTS) if M.TOPO[a][0] == st and np.isfinite(Tm0[i])]
+        x0[M.SIDX[st]] = float(np.mean(hz)) if hz else Tamb0
+    for st in M.FABRICS:
+        x0[M.FIDX[st]] = x0[M.SIDX[st]]
+    X = M.simulate(df, dt, x0=x0)
     meas = df[['Tm_' + a for a in M.ACTS]].to_numpy(dtype=float).copy()
     meas[(meas < 0) | (meas > 150)] = np.nan
     return df['t_s'].to_numpy() / 60.0, X[:, :M.NM], meas
