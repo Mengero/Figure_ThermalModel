@@ -100,7 +100,7 @@ def main():
         ax[1].plot(t, r['innov'][:, i], lw=1, label='innovation'); ax[1].fill_between(t, 0, 1, where=fl, transform=ax[1].get_xaxis_transform(), color='r', alpha=.15, label='FAULT flag')
         ax[1].axhline(0, color='k', lw=.5); ax[1].set_ylabel('innovation [°C]'); ax[1].set_xlabel('time [min]'); ax[1].legend(fontsize=8); ax[1].grid(alpha=.3)
         ax[0].set_title('FDI inject: %s %s on %s (lat %s, virt RMSE %.1f C)' % (sensor, ftype, tag, '%.0fs' % lat if np.isfinite(lat) else 'miss', np.sqrt(np.nanmean(we**2))))
-        out = C.fig_path('%s_fdi_%s_%s_%s.png' % (a.limb, tag, sensor, ftype)); plt.tight_layout(); plt.savefig(out, dpi=600); print('  saved', out)
+        out = C.fig_path('fdi_%s_%s_%s.png' % (tag, sensor, ftype), a.limb); plt.tight_layout(); plt.savefig(out, dpi=600); print('  saved', out)
 
     elif a.real:
         r = ThermalObserver(M).run(df, a.dt); t = r['t']
@@ -115,7 +115,7 @@ def main():
         if 'T_torso' in df: ax.plot(t, df['T_torso'], 'k:', lw=1, label='battery/torso')
         ax.set_xlabel('time [min]'); ax.set_ylabel('T [°C]'); ax.set_title('FDI on %s — effective temps (virtual where flagged)' % tag)
         ax.grid(alpha=.3); ax.legend(fontsize=8, ncol=4)
-        out = C.fig_path('%s_fdi_real_%s.png' % (a.limb, tag)); plt.tight_layout(); plt.savefig(out, dpi=600); print('  saved', out)
+        out = C.fig_path('fdi_real_%s.png' % tag, a.limb); plt.tight_layout(); plt.savefig(out, dpi=600); print('  saved', out)
 
     elif a.sweep:
         truth = {J: df['Tm_' + J].to_numpy() for J in M.ACTS}
@@ -138,7 +138,7 @@ def main():
         ax.axhline(USABLE, color='k', ls='--', label='±%g C usable' % USABLE)
         ax.set_xlabel('# thermistors dropped'); ax.set_ylabel('max virtual-sensor error [°C]')
         ax.set_title('%s FDI dropout limit (%s)' % (a.limb, tag)); ax.grid(alpha=.3); ax.legend()
-        out = C.fig_path('%s_fdi_sweep_%s.png' % (a.limb, tag)); plt.tight_layout(); plt.savefig(out, dpi=600); print('saved', out)
+        out = C.fig_path('fdi_sweep_%s.png' % tag, a.limb); plt.tight_layout(); plt.savefig(out, dpi=600); print('saved', out)
         ok = [r[0] for r in rows if r[2] <= USABLE]
         print('=> worst-case stays within ±%g C up to %d simultaneous dropouts' % (USABLE, max(ok) if ok else 0))
 

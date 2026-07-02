@@ -114,7 +114,7 @@ ax2.set_ylabel('structure T [°C]'); ax2.set_xlabel('time [min]')
 ax2.set_title('structure nodes (dashed = analytic steady state)')
 ax2.grid(alpha=.3); ax2.legend(fontsize=8, ncol=2, loc='lower right')
 
-out = C.fig_path(f'{a.limb}_current_limit_transient.png')
+out = C.fig_path('current_limit_transient.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)
 print(f"\nslowest thermal time constant ~ {tau_slow/60:.0f} min; integrated {t[-1]:.0f} min")
 print(f"final motor T range: {X[-1, mot].min():.1f}–{X[-1, mot].max():.1f} C (target {a.tlimit:.0f})")

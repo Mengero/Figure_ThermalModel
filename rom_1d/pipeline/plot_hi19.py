@@ -52,6 +52,6 @@ for c, tag in enumerate(a.tags):
     ax.legend(H, M.ACTS, fontsize=8, ncol=4, loc='upper right')
     ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(alpha=.3); ax.set_xlabel('time [min]'); ax.set_ylabel('P [W]')
 
-out = C.fig_path(f'{a.limb}_hi19_validation.png')
+out = C.fig_path('hi19_validation.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)
 print(f'saved {out}')

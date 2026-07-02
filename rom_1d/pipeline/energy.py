@@ -75,7 +75,7 @@ if a.mode in ('all', 'dist'):
     ax.set_ylabel('share of heat input [%]')
     ax.set_title(f'{a.limb} — energy distribution per case'); ax.legend(loc='upper right', fontsize=9)
     ax.grid(axis='y', alpha=.3)
-    out = C.fig_path(f'{a.limb}_energy_dist.png'); plt.tight_layout(); plt.savefig(out, dpi=600)
+    out = C.fig_path('energy_dist.png', a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
     print(f'saved {out}')
 
 if a.mode in ('all', 'time'):
@@ -95,5 +95,5 @@ if a.mode in ('all', 'time'):
     for k in range(len(CASES), nr * nc):
         axes[k // nc][k % nc].axis('off')
     plt.suptitle(f'{a.limb} — time-resolved energy flows', fontsize=14)
-    out = C.fig_path(f'{a.limb}_energy_time.png'); plt.tight_layout(); plt.savefig(out, dpi=600)
+    out = C.fig_path('energy_time.png', a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
     print(f'saved {out}')

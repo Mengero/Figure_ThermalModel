@@ -47,7 +47,7 @@ for j, case in enumerate(a.cases):
     if a.tmax is not None:
         aC.set_xlim(0, a.tmax)
 if a.tmax is not None and ncol == 1:
-    out = C.fig_path('capacitance_%s_first%.0fmin.png' % (os.path.basename(a.cases[0]).replace('.csv', ''), a.tmax))
+    out = C.fig_path('capacitance_%s_first%.0fmin.png' % (os.path.basename(a.cases[0]).replace('.csv', ''), a.tmax), 'studies')
 else:
-    out = C.fig_path('capacitance_vs_time.png')
+    out = C.fig_path('capacitance_vs_time.png', 'studies')
 plt.tight_layout(); plt.savefig(out, dpi=600); print('saved', out)

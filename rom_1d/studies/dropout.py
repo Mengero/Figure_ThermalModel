@@ -73,7 +73,7 @@ if a.mode in ('midrun', 'boot'):
         PL.plot_true_vs_virtual(axes[j], t, true, virt, col[J], ttl, post=post)
         if a.mode == 'midrun':
             axes[j].axvline(a.t0, color='r', ls=':', lw=1.2)
-    out = C.fig_path('dropout_%s_%s.png' % (a.mode, tag))
+    out = C.fig_path('dropout_%s_%s.png' % (a.mode, tag), 'studies')
     PL.finish_grid(fig, axes, NM, '%s single-sensor dropout vs withheld truth (%s)' % (a.mode, tag), out)
 
 # ---- all dropped: one open-loop run, seeded from battery ----
@@ -93,7 +93,7 @@ elif a.mode == 'allzero':
         ttl = '%s   max %s   RMSE %s' % (J, '--' if np.isnan(mx) else '%.1f' % mx,
                                          '--' if np.isnan(rm) else '%.1f' % rm)
         PL.plot_true_vs_virtual(axes[j], t, true, virt, col[J], ttl, extra=('battery/torso', Tbatt))
-    out = C.fig_path('dropout_allzero_%s.png' % tag)
+    out = C.fig_path('dropout_allzero_%s.png' % tag, 'studies')
     PL.finish_grid(fig, axes, NM, 'ALL dropped — open-loop (init from battery %.1f C) — %s  mean RMSE %.1f C'
                    % (Tbatt[0], tag, np.nanmean(rmses)), out)
 
@@ -119,7 +119,7 @@ elif a.mode == 'solo':
                     ha='center', va='center', fontsize=8, color='blue' if np.isnan(RMSE[i, j]) else 'black')
     ax.set_title('Virtual-prediction RMSE [C] — only 1 survivor, 6 dropped (%s)' % tag)
     fig.colorbar(im, label='RMSE [C] (capped 20)')
-    out = C.fig_path('dropout_solo_%s.png' % tag); fig.tight_layout(); fig.savefig(out, dpi=600)
+    out = C.fig_path('dropout_solo_%s.png' % tag, 'studies'); fig.tight_layout(); fig.savefig(out, dpi=600)
     print('only 1 survivor, 6 dropped (%s), run %.0f min' % (tag, dur))
     print('%-8s %12s %12s  %s' % ('survivor', 'mean RMSE', 'worst max', 'worst joint'))
     for S, mr, mx, wj in sorted(rows, key=lambda z: z[1]):
@@ -140,6 +140,6 @@ elif a.mode == 'solo':
                 mx, rm, _ = PL.score(virt, true)
                 PL.plot_true_vs_virtual(axes[j], t, true, virt, col[J],
                                         '%s dropped  max %.1f  RMSE %.1f' % (J, mx, rm))
-        out2 = C.fig_path('dropout_solo_%s_%s_ts.png' % (tag, S))
+        out2 = C.fig_path('dropout_solo_%s_%s_ts.png' % (tag, S), 'studies')
         PL.finish_grid(fig2, axes, NM, 'Only %s survives, other 6 predicted (%s)' % (S, tag), out2)
         print('saved', out2)

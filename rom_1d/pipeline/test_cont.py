@@ -46,7 +46,7 @@ ax[0].set_title('%s — %s test (motor RMSE %.2f C, struct RMSE %.2f C)' % (a.li
 ax[1].set_ylabel('structure T [°C]'); ax[1].set_xlabel('time [min]')
 for x in ax:
     x.grid(alpha=.3); x.legend(fontsize=8, ncol=7, loc='lower right')
-out = C.fig_path('%s_%s_test.png' % (a.limb, a.case)); plt.tight_layout(); plt.savefig(out, dpi=600)
+out = C.fig_path('%s_test.png' % a.case, a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
 print('saved %s' % out)
 print('motor RMSE = %.2f C   structure RMSE = %.2f C' % (mR, sR))
 for i, act in enumerate(order):
