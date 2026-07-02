@@ -49,6 +49,7 @@ CONFIG = LimbConfig(
            'ELBOW': 'Citrine SM67', 'ROLL': 'Papaya SM44S', 'PITCH': 'Papaya SM44S',
            'YAW': 'Papaya SM44S'},
 
+    STEADY_CASE='steady_061526',                # steady point folded into the fit (was fit.py's hardcoded default)
     TRAIN=['i50', 'i25a', 'depal_ss'],
     # hi19a/b are 3-joint endurance runs validated separately (see pipeline/plot_hi19.py)
     # 0616cont = continuous left-arm (motors+structures), held out as a TEST case

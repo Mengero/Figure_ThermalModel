@@ -64,6 +64,7 @@ class LimbConfig:
     # --- train/test split (tags of data/<limb>/data_<tag>.csv) ---
     TRAIN: list = field(default_factory=list)
     TEST:  list = field(default_factory=list)
+    STEADY_CASE: str = ''                        # steady-state operating point (data/<limb>/<case>.json) folded into fit; '' = none
 
     def __post_init__(self):
         self.C_M = np.asarray(self.C_M, float)

@@ -16,8 +16,8 @@ import _common as C
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--limb', default='arm')
-ap.add_argument('--steady', default='steady_061526',
-                help="steady-state case to fold into training (data/<limb>/<case>.json); '' to disable")
+ap.add_argument('--steady', default=None,
+                help="steady-state case to fold into training (data/<limb>/<case>.json); default = cfg.STEADY_CASE; '' to disable")
 ap.add_argument('--steady-weight', type=float, default=10.0,
                 help="per-residual weight on the steady point (it's 7 pts vs ~thousands transient)")
 ap.add_argument('--fix-r2', action='store_true',
@@ -27,16 +27,17 @@ R2_BY_SIZE = {'SM85': 1.96, 'SM72': 1.0, 'SM44L': 1.0475}   # K/W: SM72 from J1 
 
 M = C.rom(a.limb)
 runs = [C.load(a.limb, t) for t in M.cfg.TRAIN]
+steady_case = a.steady if a.steady is not None else getattr(M.cfg, 'STEADY_CASE', '')  # per-limb default
 
 # optional steady-state operating point folded into training
 SP = None
-sp_path = os.path.join(C.DATA_DIR, a.limb, str(a.steady) + '.json')
-if a.steady and M.cfg.R20 and os.path.exists(sp_path):
+sp_path = os.path.join(C.DATA_DIR, a.limb, str(steady_case) + '.json')
+if steady_case and M.cfg.R20 and os.path.exists(sp_path):
     d = json.load(open(sp_path))
     SP = dict(iq=np.array([d['iq'].get(x, 0.0) for x in M.ACTS]),
               R20=np.array([M.cfg.R20[x] for x in M.ACTS]),
               meas=np.array([d['Tm'].get(x, np.nan) for x in M.ACTS]),
-              Tamb=d['T_amb'], W=a.steady_weight, tag=a.steady)
+              Tamb=d['T_amb'], W=a.steady_weight, tag=steady_case)
 
 
 def resid(q):
