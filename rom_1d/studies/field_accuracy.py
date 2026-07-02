@@ -44,10 +44,11 @@ M = C.rom(a.limb); M.build(C.load_params(a.limb))
 
 
 def predict(df, dt):
-    """open-loop: force every motor dropped so eff = pure model prediction."""
-    r = ThermalObserver(M, forced_drop=tuple(range(M.NM))).run(df, dt)
-    meas = r['meas'].copy(); meas[(meas < 0) | (meas > 150)] = np.nan
-    return r['t'], r['eff'], meas
+    """open-loop model prediction; motor temps initialized from the first measured reading."""
+    X = M.simulate(df, dt)                                    # simulate seeds motors from Tm[0]
+    meas = df[['Tm_' + a for a in M.ACTS]].to_numpy(dtype=float).copy()
+    meas[(meas < 0) | (meas > 150)] = np.nan
+    return df['t_s'].to_numpy() / 60.0, X[:, :M.NM], meas
 
 
 # ---------------- single case ----------------
