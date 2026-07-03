@@ -39,8 +39,8 @@ _AREA = {
     'thigh_u': 0.1199,       #  upper thigh
     'thigh_l': 0.0281,       #  lower thigh / knee
     'shin':    0.0661,       #  lower leg / shin
-    'ankle':   0.0093,
-    'foot':    0.0440,
+    'ankle':   0.0093 * 0.5,
+    'foot':    0.0440 * 0.5,
 }
 
 # 8 real motors, ordered by housing segment (proximal -> distal)
