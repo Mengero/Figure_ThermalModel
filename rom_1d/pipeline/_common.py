@@ -2,6 +2,8 @@
 import os, sys, json
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.rcParams['legend.frameon'] = False   # aligned style: no legend box
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # rom_1d/
 sys.path.insert(0, ROOT)

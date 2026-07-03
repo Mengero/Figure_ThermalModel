@@ -105,14 +105,14 @@ ax1.axhline(a.tlimit, color='k', ls=':', lw=1.3, label=f'{a.tlimit:.0f} C limit'
 ax1.set_ylabel('motor winding T [°C]')
 ax1.set_title(f'{a.limb} — climb to continuous-current steady state '
               f'(all motors driven, ambient {a.tamb:.0f} C)')
-ax1.grid(alpha=.3); ax1.legend(fontsize=8, ncol=2, loc='lower right')
+ax1.grid(axis='x', alpha=.3); ax1.legend(fontsize=8, ncol=2, loc='lower right')
 
 for j, s in enumerate(M.STRUCTS):
     ax2.plot(t, X[:, M.SIDX[s]], lw=1.6, color=palette[j % 10], label=s)
     ax2.axhline(T[M.SIDX[s]], color=palette[j % 10], ls='--', lw=.8, alpha=.5)
 ax2.set_ylabel('structure T [°C]'); ax2.set_xlabel('time [min]')
 ax2.set_title('structure nodes (dashed = analytic steady state)')
-ax2.grid(alpha=.3); ax2.legend(fontsize=8, ncol=2, loc='lower right')
+ax2.grid(axis='x', alpha=.3); ax2.legend(fontsize=8, ncol=2, loc='lower right')
 
 out = C.fig_path('current_limit_transient.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)

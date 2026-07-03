@@ -26,7 +26,7 @@ def plot_true_vs_virtual(ax, t, true, virt, color, title, post=None, extra=None)
     if extra is not None:
         ax.plot(t, extra[1], ':', lw=1.1, color='tab:brown', label=extra[0])
     ax.set_title(title, fontsize=9.5); ax.set_ylabel('motor T [C]')
-    ax.grid(alpha=.3); ax.legend(fontsize=8, loc='best')
+    ax.grid(axis='x', alpha=.3); ax.legend(fontsize=8, loc='best')
 
 
 def finish_grid(fig, axes, n_used, suptitle, out, dpi=600):

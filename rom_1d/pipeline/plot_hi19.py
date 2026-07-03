@@ -38,19 +38,19 @@ for c, tag in enumerate(a.tags):
     ax.axhline(120, color='k', ls=':', lw=1.2, alpha=.7)
     ax.legend(H, L, fontsize=9, loc='upper right')
     ax.set_title(f'{tag} — MOTORS (solid=exp, dashed=model; dotted=120C clamp)')
-    ax.grid(alpha=.3); ax.set_ylabel('T [°C]')
+    ax.grid(axis='x', alpha=.3); ax.set_ylabel('T [°C]')
     for r, grp, name in [(1, covered, 'COVERED STRUCTURES'), (2, bare, 'BARE STRUCTURES')]:
         ax = axes[r][c]; H = []; L = []
         for s in grp:
             ln, = ax.plot(t, df[M.TS_COLS[s]], lw=1.8, alpha=.9, color=COL[s])
             ax.plot(t, obs[s], '--', color=COL[s], lw=1.4); H.append(ln); L.append(s)
         ax.legend(H, L, fontsize=9, loc='upper right')
-        ax.set_title(f'{tag} — {name} (solid=TC, dashed=model)'); ax.grid(alpha=.3); ax.set_ylabel('T [°C]')
+        ax.set_title(f'{tag} — {name} (solid=TC, dashed=model)'); ax.grid(axis='x', alpha=.3); ax.set_ylabel('T [°C]')
     ax = axes[3][c]; H = []
     for act in M.ACTS:
         ln, = ax.plot(t, df['P_' + act], lw=1.5); H.append(ln)
     ax.legend(H, M.ACTS, fontsize=8, ncol=4, loc='upper right')
-    ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(alpha=.3); ax.set_xlabel('time [min]'); ax.set_ylabel('P [W]')
+    ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(axis='x', alpha=.3); ax.set_xlabel('time [min]'); ax.set_ylabel('P [W]')
 
 out = C.fig_path('hi19_validation.png', a.limb)
 plt.tight_layout(); plt.savefig(out, dpi=600)

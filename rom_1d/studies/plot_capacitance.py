@@ -42,8 +42,8 @@ for j, case in enumerate(a.cases):
         aP.plot(t, P[:, i], lw=1.0, color=col[J], label=J)
     label = os.path.basename(case).replace('.csv', '')
     ttl = '%s — adaptive motor capacitance%s' % (label, '' if a.tmax is None else ', first %.0f min' % a.tmax)
-    aC.set_title(ttl); aC.set_ylabel('motor C [J/K]'); aC.grid(alpha=.3); aC.legend(fontsize=7, ncol=2)
-    aP.set_ylabel('motor copper power [W]'); aP.set_xlabel('time [min]'); aP.grid(alpha=.3); aP.legend(fontsize=7, ncol=4)
+    aC.set_title(ttl); aC.set_ylabel('motor C [J/K]'); aC.grid(axis='x', alpha=.3); aC.legend(fontsize=7, ncol=2)
+    aP.set_ylabel('motor copper power [W]'); aP.set_xlabel('time [min]'); aP.grid(axis='x', alpha=.3); aP.legend(fontsize=7, ncol=4)
     if a.tmax is not None:
         aC.set_xlim(0, a.tmax)
 if a.tmax is not None and ncol == 1:

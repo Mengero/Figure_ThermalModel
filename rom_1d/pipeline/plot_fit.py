@@ -41,7 +41,7 @@ for c, tag in enumerate(tags):
         ln, = ax.plot(t, m, lw=1.8, alpha=.9)
         ax.plot(t, X[:, i], '--', color=ln.get_color(), lw=1.3); H.append(ln); L.append(act)
     ax.legend(H, L, fontsize=8, ncol=2, loc='upper left')
-    ax.set_title(f'{tag} — MOTORS (solid=exp, dashed=model)'); ax.grid(alpha=.3)
+    ax.set_title(f'{tag} — MOTORS (solid=exp, dashed=model)'); ax.grid(axis='x', alpha=.3)
     if c == 0: ax.set_ylabel('T [°C]')
 
     for r, grp, name in [(1, covered, 'COVERED STRUCTURES'), (2, bare, 'BARE STRUCTURES')]:
@@ -52,35 +52,35 @@ for c, tag in enumerate(tags):
             ln, = ax.plot(t, df[M.TS_COLS[s]], lw=1.8, alpha=.9, color=COL[s])
             ax.plot(t, obs[s], '--', color=COL[s], lw=1.3); H.append(ln); L.append(s)
         ax.legend(H, L, fontsize=8, ncol=2, loc='upper left')
-        ax.set_title(f'{tag} — {name}'); ax.grid(alpha=.3)
+        ax.set_title(f'{tag} — {name}'); ax.grid(axis='x', alpha=.3)
         if c == 0: ax.set_ylabel('T [°C]')
 
     ax = axes[3][c]; H = []; L = []
     for s in metal_nodes:
         ln, = ax.plot(t, X[:, M.SIDX[s]], lw=1.6, alpha=.9, color=COL[s]); H.append(ln); L.append(s)
     ax.legend(H, L, fontsize=8, ncol=2, loc='upper left')
-    ax.set_title(f'{tag} — METAL STRUCTURES (simulated)'); ax.grid(alpha=.3)
+    ax.set_title(f'{tag} — METAL STRUCTURES (simulated)'); ax.grid(axis='x', alpha=.3)
     if c == 0: ax.set_ylabel('T [°C]')
 
     ax = axes[4][c]; H = []; ts = df['t_s'].to_numpy()
     for act in M.ACTS:
         ln, = ax.plot(t, np.gradient(df['P_' + act].to_numpy(), ts), lw=1.2); H.append(ln)
     ax.axhline(0, color='k', lw=.5); ax.legend(H, M.ACTS, fontsize=7, ncol=2, loc='upper right')
-    ax.set_title(f'{tag} — dP/dt [W/s]'); ax.grid(alpha=.3)
+    ax.set_title(f'{tag} — dP/dt [W/s]'); ax.grid(axis='x', alpha=.3)
     if c == 0: ax.set_ylabel('dP/dt [W/s]')
 
     ax = axes[5][c]; H = []; L = []; Cser = M.cmotor_series(df)
     for i in M.free_mot:
         ln, = ax.plot(t, Cser[:, i], lw=1.4); H.append(ln); L.append(M.ACTS[i])
     ax.legend(H, L, fontsize=7, ncol=2, loc='lower right')
-    ax.set_title(f'{tag} — motor C(t) [J/K] (winding↔assembly)'); ax.grid(alpha=.3)
+    ax.set_title(f'{tag} — motor C(t) [J/K] (winding↔assembly)'); ax.grid(axis='x', alpha=.3)
     if c == 0: ax.set_ylabel('C [J/K]')
 
     ax = axes[6][c]; H = []
     for act in M.ACTS:
         ln, = ax.plot(t, df['P_' + act], lw=1.5); H.append(ln)
     ax.legend(H, M.ACTS, fontsize=7, ncol=2, loc='upper right')
-    ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(alpha=.3); ax.set_xlabel('time [min]')
+    ax.set_title(f'{tag} — MOTOR POWER'); ax.grid(axis='x', alpha=.3); ax.set_xlabel('time [min]')
     if c == 0: ax.set_ylabel('P [W]')
 
 out = C.fig_path(f'{a.split}_fit.png', a.limb)

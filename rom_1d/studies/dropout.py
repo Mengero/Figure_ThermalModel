@@ -135,7 +135,7 @@ elif a.mode == 'solo':
             if J == S:
                 axes[j].plot(t, true, lw=1.5, color=col[J], label='true (clamped)')
                 axes[j].set_title('%s — SURVIVING thermistor' % J, fontsize=9.5)
-                axes[j].set_ylabel('motor T [C]'); axes[j].grid(alpha=.3); axes[j].legend(fontsize=8)
+                axes[j].set_ylabel('motor T [C]'); axes[j].grid(axis='x', alpha=.3); axes[j].legend(fontsize=8)
             else:
                 mx, rm, _ = PL.score(virt, true)
                 PL.plot_true_vs_virtual(axes[j], t, true, virt, col[J],

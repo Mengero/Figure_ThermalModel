@@ -74,7 +74,7 @@ if a.mode in ('all', 'dist'):
         bottom += vals
     ax.set_ylabel('share of heat input [%]')
     ax.set_title(f'{a.limb} — energy distribution per case'); ax.legend(loc='upper right', fontsize=9)
-    ax.grid(axis='y', alpha=.3)
+    ax.grid(axis='x', alpha=.3)
     out = C.fig_path('energy_dist.png', a.limb); plt.tight_layout(); plt.savefig(out, dpi=600)
     print(f'saved {out}')
 
@@ -89,7 +89,7 @@ if a.mode in ('all', 'time'):
         ax.plot(fl['t'], fl['mot'], color='tab:red', lw=1.7, label='stored: motors')
         ax.plot(fl['t'], fl['struct'], color='tab:orange', lw=1.7, label='stored: structures')
         ax.plot(fl['t'], fl['amb'], color='tab:blue', lw=1.7, label='to ambient')
-        ax.set_title(tag); ax.grid(alpha=.3); ax.axhline(0, color='k', lw=.5); ax.set_xlabel('time [min]')
+        ax.set_title(tag); ax.grid(axis='x', alpha=.3); ax.axhline(0, color='k', lw=.5); ax.set_xlabel('time [min]')
         if k % nc == 0: ax.set_ylabel('power [W]')
         if k == 0: ax.legend(fontsize=8)
     for k in range(len(CASES), nr * nc):
